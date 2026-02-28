@@ -560,4 +560,4 @@ CONSTRAINTS
 
 **Document Version**: 1.0.0
 **Last Updated**: 2026-02-27
-**Applies To**: mbse-stacks and all projects using this stack
+**Applies To**: cosmicringforge and all projects using this stack

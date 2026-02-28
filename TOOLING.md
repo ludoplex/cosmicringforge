@@ -147,7 +147,7 @@ template-init:  scripts/template-init.sh
 
 ```bash
 #!/bin/sh
-# Initialize mbse-stacks as a new project from template
+# Initialize cosmicringforge as a new project from template
 # Usage: ./scripts/template-init.sh <project-name>
 
 set -e
@@ -158,7 +158,7 @@ if [ -z "$PROJECT" ]; then
     exit 1
 fi
 
-echo "=== Initializing $PROJECT from mbse-stacks template ==="
+echo "=== Initializing $PROJECT from cosmicringforge template ==="
 
 # 1. Verify Ring 0 tools build
 echo "--- Building Ring 0 generators ---"
@@ -200,18 +200,18 @@ echo "Next: cd $PROJECT && make"
 ```yaml
 # Template repository configuration
 template:
-  name: mbse-stacks
+  name: cosmicringforge
   description: Model-Based Systems Engineering code generation framework
 
   # Files to update on template instantiation
   update_files:
     - path: README.md
       replacements:
-        - find: "mbse-stacks"
+        - find: "cosmicringforge"
           replace: "{{PROJECT_NAME}}"
     - path: Makefile
       replacements:
-        - find: "PROJECT ?= mbse-stacks"
+        - find: "PROJECT ?= cosmicringforge"
           replace: "PROJECT ?= {{PROJECT_NAME}}"
 
   # Directories to preserve
@@ -234,7 +234,7 @@ template:
 For GitHub template deployment:
 
 ```
-mbse-stacks/
+cosmicringforge/
 ├── .github/
 │   ├── template-repo.yml          # Template config
 │   └── workflows/

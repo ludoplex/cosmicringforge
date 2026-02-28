@@ -30,7 +30,7 @@ make PROFILE=ape       # cosmocc, Actually Portable Executable
 
 ## Directory Structure
 ```
-mbse-stacks/
+cosmicringforge/
 ├── strict-purist/     # C+sh only stack
 │   ├── gen/           # Ring-0 generators
 │   ├── vendor/        # Vendored C libraries

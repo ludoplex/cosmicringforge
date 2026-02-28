@@ -51,7 +51,7 @@ WASM:           Binaryen, WAMR
 ## Directory Map
 
 ```
-mbse-stacks/
+cosmicringforge/
 ├── strict-purist/           # C + sh + make only
 │   ├── gen/                 # In-tree generators
 │   ├── vendor/              # Ring 0 libraries

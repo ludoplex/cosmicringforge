@@ -62,8 +62,8 @@ All stacks generate from three specification types:
 
 ```sh
 # Clone the repository
-git clone git@github.com:ludoplex/mbse-stacks.git
-cd mbse-stacks
+git clone git@github.com:ludoplex/cosmicringforge.git
+cd cosmicringforge
 
 # Choose a stack and follow its README
 cd strict-purist/  # or commercial/ or foss-visual/

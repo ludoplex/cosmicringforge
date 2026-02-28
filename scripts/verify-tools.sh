@@ -4,7 +4,7 @@
 # ═══════════════════════════════════════════════════════════════════════════
 #
 # Checks each ring's tools and reports status.
-# Use this to verify a system is ready for mbse-stacks development.
+# Use this to verify a system is ready for cosmicringforge development.
 #
 # Exit codes:
 #   0 - All Ring 0 tools present (minimum viable)
@@ -209,7 +209,7 @@ fi
 
 echo
 if [ "$RING0_OK" = "1" ]; then
-    echo "System is ready for mbse-stacks development."
+    echo "System is ready for cosmicringforge development."
     exit 0
 else
     echo "Install missing Ring 0 tools before proceeding."

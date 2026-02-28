@@ -1,0 +1,54 @@
+# StateSmith Example: Blinker State Machine
+# This describes the draw.io file structure for StateSmith
+#
+# In draw.io, create shapes with StateSmith notation:
+#
+# ┌─────────────────────────────────────────────────────────────┐
+# │ $STATEMACHINE: Blinker                                      │
+# │ $INITIAL_STATE: Off                                         │
+# └─────────────────────────────────────────────────────────────┘
+#
+# ┌─────────────────────────────────────────────────────────────┐
+# │ Off                                                         │
+# │ ─────────────────────────                                   │
+# │ entry / led_off();                                          │
+# │                                                             │
+# │ TOGGLE / → On                                               │
+# └─────────────────────────────────────────────────────────────┘
+#
+# ┌─────────────────────────────────────────────────────────────┐
+# │ On                                                          │
+# │ ─────────────────────────                                   │
+# │ entry / led_on();                                           │
+# │                                                             │
+# │ TOGGLE / → Off                                              │
+# │ after 1000ms / → Off                                        │
+# └─────────────────────────────────────────────────────────────┘
+#
+# Build command:
+#   dotnet StateSmith.Cli run blinker.drawio --lang=C99 -o gen/
+#
+# Generated files:
+#   gen/Blinker.h   - State enum, function declarations
+#   gen/Blinker.c   - State machine implementation
+#
+# Usage in C code:
+#   #include "Blinker.h"
+#
+#   Blinker sm;
+#   Blinker_ctor(&sm);
+#   Blinker_start(&sm);
+#
+#   // On button press:
+#   Blinker_dispatch_event(&sm, Blinker_EventId_TOGGLE);
+#
+#   // In timer interrupt:
+#   Blinker_dispatch_event(&sm, Blinker_EventId_DO);  // Triggers time-based transitions
+
+# StateSmith Render Config (create as blinker.csx):
+# ```csharp
+# SmRunner runner = new(diagramPath: "blinker.drawio");
+# runner.Settings.transpilerId = TranspilerId.C99;
+# runner.Settings.outputDirectory = "gen/";
+# runner.Run();
+# ```

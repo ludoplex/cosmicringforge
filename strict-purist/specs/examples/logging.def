@@ -1,0 +1,54 @@
+# Logging Definitions - Example .def File
+# Demonstrates: constants, enums with X-Macros, flags, config
+
+# ── Constants ──────────────────────────────────────────────────
+
+const LOG_VERSION = "1.0.0"
+const LOG_MAX_MESSAGE_LEN = 4096
+const LOG_MAX_HANDLERS = 8
+const LOG_BUFFER_SIZE = 1 << 16    # Expression: 65536
+
+# ── Enums ──────────────────────────────────────────────────────
+
+enum LogLevel [prefix: "LOG_"] {
+    TRACE = 0   # Most verbose
+    DEBUG = 1   # Debugging info
+    INFO = 2    # Normal operation
+    WARN = 3    # Warning conditions
+    ERROR = 4   # Error conditions
+    FATAL = 5   # Fatal, will exit
+}
+
+enum LogOutput [prefix: "LOG_OUT_"] {
+    STDOUT = 0
+    STDERR = 1
+    FILE = 2
+    SYSLOG = 3
+    CALLBACK = 4
+}
+
+# ── Flags ──────────────────────────────────────────────────────
+
+flags LogFlags [prefix: "LOG_FLAG_"] {
+    TIMESTAMP = 0x01    # Include timestamp
+    LEVEL = 0x02        # Include level name
+    FILE_LINE = 0x04    # Include __FILE__:__LINE__
+    FUNCTION = 0x08     # Include __func__
+    COLOR = 0x10        # ANSI color output
+    THREAD_ID = 0x20    # Include thread ID
+}
+
+# Convenient preset
+const LOG_FLAGS_DEFAULT = LOG_FLAG_TIMESTAMP | LOG_FLAG_LEVEL
+const LOG_FLAGS_VERBOSE = LOG_FLAG_TIMESTAMP | LOG_FLAG_LEVEL | LOG_FLAG_FILE_LINE | LOG_FLAG_FUNCTION
+
+# ── Config ─────────────────────────────────────────────────────
+
+config LogConfig {
+    level: LogLevel = INFO
+    output: LogOutput = STDERR
+    flags: LogFlags = LOG_FLAGS_DEFAULT
+    file_path: string[256] = ""
+    max_file_size: u32 = 10485760 [range: 1024..1073741824]  # 1KB to 1GB
+    rotate_count: u8 = 5 [range: 1..99]
+}

@@ -1,0 +1,108 @@
+# BDDgen AST Types - Self-Hosting Spec
+# This schema is consumed by schemagen to generate bddgen's types.
+# BDDgen parses .feature files and generates C test harness code.
+#
+# Generated: bddgen_types.h, bddgen_types.c
+
+# ── Step Definition ─────────────────────────────────────────────
+
+type BddStep {
+    keyword: u8 [range: 0..4]          # 0=Given, 1=When, 2=Then, 3=And, 4=But
+    text: string[512] [not_empty]
+    has_docstring: i32 [default: 0]
+    docstring: string[4096]
+    has_datatable: i32 [default: 0]
+    datatable_rows: i32 [default: 0]
+    datatable_cols: i32 [default: 0]
+    line_number: i32 [default: 0]
+}
+
+# ── Data Table Cell ─────────────────────────────────────────────
+
+type BddDataCell {
+    row: i32
+    col: i32
+    value: string[256]
+}
+
+# ── Scenario ────────────────────────────────────────────────────
+
+type BddScenario {
+    name: string[256] [not_empty]
+    step_count: i32 [range: 0..64]
+    is_outline: i32 [default: 0]
+    example_count: i32 [default: 0]
+    tags: string[256]
+    line_number: i32 [default: 0]
+}
+
+# ── Background ──────────────────────────────────────────────────
+
+type BddBackground {
+    step_count: i32 [range: 0..16]
+    line_number: i32 [default: 0]
+}
+
+# ── Examples Table ──────────────────────────────────────────────
+
+type BddExamples {
+    name: string[128]
+    row_count: i32 [range: 0..256]
+    col_count: i32 [range: 0..32]
+    tags: string[256]
+    line_number: i32 [default: 0]
+}
+
+# ── Feature ─────────────────────────────────────────────────────
+
+type BddFeature {
+    name: string[256] [not_empty]
+    description: string[2048]
+    scenario_count: i32 [range: 0..128]
+    has_background: i32 [default: 0]
+    tags: string[256]
+    language: string[8]
+    line_number: i32 [default: 0]
+}
+
+# ── Step Pattern (for step definitions) ─────────────────────────
+
+type BddStepPattern {
+    pattern: string[512] [not_empty]   # Regex with captures
+    function_name: string[128]
+    param_count: i32 [range: 0..8]
+    param_types: string[128]           # "char*,int,double"
+}
+
+# ── Test Result ─────────────────────────────────────────────────
+
+type BddTestResult {
+    scenario_name: string[256]
+    step_index: i32
+    status: u8 [range: 0..4]           # pass/fail/skip/pending/error
+    duration_us: i64 [default: 0]
+    error_message: string[512]
+    line_number: i32 [default: 0]
+}
+
+# ── Parse State ─────────────────────────────────────────────────
+
+type BddParseState {
+    feature_count: i32 [range: 0..128]
+    total_scenarios: i32 [range: 0..1024]
+    total_steps: i32 [range: 0..8192]
+    current_line: i32 [default: 1]
+    error_code: i32 [default: 0]
+    error_msg: string[256]
+}
+
+# ── Generator Configuration ─────────────────────────────────────
+
+type BddGenConfig {
+    input_path: string[512] [not_empty]
+    output_dir: string[512] [not_empty]
+    test_framework: string[32]         # unity, minunit, custom
+    generate_runner: i32 [default: 1]
+    generate_skeletons: i32 [default: 1]
+    strict_mode: i32 [default: 0]
+}

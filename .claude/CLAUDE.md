@@ -1,45 +1,71 @@
-# MBSE Stacks - LLM Context
+# CosmicRingForge - LLM Context
 
 ## Overview
-Model-Based Systems Engineering code generation framework with three stacks:
-- **Commercial**: Safety-critical, vendor toolchains (MATLAB, Rhapsody)
-- **FOSS Visual**: Best diagram-to-C productivity (StateSmith, EEZ)
-- **Strict Purist**: Self-hostable, C+sh only bootstrap
+**Behavior Driven Engineering with Models** — BDE with Models.
+
+Framework for the design and development of any application. All paths lead to C.
 
 ## Architecture Principle
 Separate **authoring** (how you create models) from **shipping** (what's required to build).
-Ring-2 authoring tools generate Ring-0 compatible C code that's committed and drift-gated.
+Ring 2 tools (FOSS or commercial) generate Ring 0 compatible C code that's committed and drift-gated.
+
+**Key Insight:** All Ring 2 tools output C. All C compiles with cosmocc to APE binaries.
+The distinction is licensing/certification, not portability. Tools are auto-detected at regen time.
 
 ## Ring Classification
 | Ring | Bootstrap | Tools |
 |------|-----------|-------|
-| **0** | C + sh + make | schemagen, smgen, lexgen, bin2c, Lemon, SQLite, Nuklear, yyjson, CLIPS, CivetWeb, e9patch, kilo, Cosmopolitan |
-| **1** | Ring 0 + C tools | gengetopt, makeheaders, cppcheck, sanitizers, cosmo-disasm |
-| **2** | External toolchains | StateSmith, protobuf-c, EEZ Studio, LVGL, OpenModelica, Binaryen, WAMR, MATLAB, Rhapsody |
+| **0** | C + sh + make | schemagen, defgen, smgen, lexgen, bddgen, bin2c, Lemon, SQLite, Nuklear, yyjson, CLIPS, CivetWeb, flatcc, e9patch, kilo, Cosmopolitan |
+| **1** | Ring 0 + C tools | gengetopt, makeheaders, cppcheck, sanitizers (ASan/UBSan/TSan), cosmo-disasm |
+| **2** | External toolchains | StateSmith, protobuf-c, EEZ Studio, LVGL, OpenModelica, Binaryen, WAMR, MATLAB, Rhapsody, Qt Design Studio, RTI Connext DDS |
 
-## Three Specs Model
-1. **Behavior Spec** - State machines, control flow (`.sm`, `.clips`)
-2. **Data/Schema Spec** - Types, serialization (`.schema`, `.proto`)
-3. **Interface Spec** - UI layouts, protocols (`.ui`, `.api`)
+## Spec Types (15+)
+| Type | Generator | Purpose |
+|------|-----------|---------|
+| `.schema` | schemagen | Data types, structs, validation |
+| `.def` | defgen | Constants, enums, X-Macros, config |
+| `.impl` | implgen | Platform hints, SIMD, allocation |
+| `.sm` | smgen | Flat state machines |
+| `.hsm` | hsmgen | Hierarchical state machines |
+| `.lex` | lexgen | Lexer tokens, patterns |
+| `.grammar` | Lemon | Parser grammars (LALR) |
+| `.feature` | bddgen | BDD test scenarios (Gherkin) |
+| `.ggo` | gengetopt | CLI option specs |
+| `.proto` | protobuf-c | Wire protocol (Ring 2) |
+| `.fbs` | flatcc | Zero-copy serialization |
+| `.drawio` | StateSmith | Visual state machines (Ring 2) |
+| `.mo` | OpenModelica | Physics simulation (Ring 2) |
+| `.eez` | EEZ Studio | Embedded GUI (Ring 2) |
 
-## Build Profiles
+See `SPEC_TYPES.md` and `STACKS_REFERENCE.md` for complete details.
+
+## Build Commands
 ```bash
-make PROFILE=portable  # Native toolchain, system libs
-make PROFILE=ape       # cosmocc, Actually Portable Executable
+make regen    # Auto-detect Ring 2 tools, regenerate C code
+make          # Compile with cosmocc to APE binary
+make verify   # Regen + check for drift
 ```
 
 ## Directory Structure
 ```
 cosmicringforge/
-├── strict-purist/     # C+sh only stack
-│   ├── gen/           # Ring-0 generators
-│   ├── vendor/        # Vendored C libraries
-│   ├── src/           # Generated + hand-written code
-│   └── specs/         # Behavior/Data/Interface specs
-├── foss-visual/       # FOSS toolchain stack
-│   ├── gen/           # Ring-2 generators (outputs committed)
-│   └── ...
-├── commercial/        # Vendor toolchain stack
+├── specs/             # Source of truth (all spec types)
+│   ├── domain/        # .schema, .def, .rules
+│   ├── behavior/      # .sm, .hsm, .msm
+│   ├── interface/     # .api, .ggo, .proto, .fbs
+│   ├── parsing/       # .lex, .grammar
+│   └── testing/       # .feature
+├── model/             # Ring 2 visual sources
+│   ├── statesmith/    # .drawio files
+│   ├── openmodelica/  # .mo files
+│   └── simulink/      # .slx (commercial only)
+├── gen/               # Generated code (committed)
+│   ├── domain/        # From Ring 0 generators
+│   └── imported/      # From Ring 2 generators
+├── tools/             # Ring 0 generators (schemagen, etc.)
+├── vendor/            # Vendored C libraries
+├── src/               # Hand-written code
+├── scripts/           # Automation (regen.sh, verify.sh)
 └── .claude/           # LLM context, BDD specs
 ```
 
@@ -51,8 +77,11 @@ cosmicringforge/
 ## Key Files
 | Purpose | Path |
 |---------|------|
+| **Master Reference** | `STACKS_REFERENCE.md` |
+| Spec Types | `SPEC_TYPES.md` |
 | Tool Inventory | `TOOLING.md` |
 | Ring Classification | `RING_CLASSIFICATION.md` |
+| X-Macro Patterns | `strict-purist/docs/XMACROS.md` |
 | License Tracking | `LICENSES.md` |
 | LLM Context | `AGENTS.md` |
 | Conventions | `CONVENTIONS.md` |
@@ -62,13 +91,14 @@ cosmicringforge/
 ## Orchestration Scripts
 | Script | Purpose |
 |--------|---------|
-| `scripts/template-init.sh` | Initialize new project from template |
-| `scripts/regen-all.sh` | Regenerate all generated code |
-| `scripts/verify-tools.sh` | Verify toolchain availability |
+| `scripts/regen-all.sh` | Auto-detect tools, regenerate all code |
+| `scripts/regen-all.sh --verify` | Regen + check for drift |
+| `scripts/verify-tools.sh` | Check which tools are available |
+| `scripts/new-spec.sh` | Create new spec file with boilerplate |
 
 ## Regen-and-Diff Gate
 ```bash
-./scripts/regen-all.sh --verify  # Regenerate and check
+./scripts/regen-all.sh --verify  # Regenerate and check for drift
 git diff --exit-code gen/        # Must be clean before commit
 ```
 

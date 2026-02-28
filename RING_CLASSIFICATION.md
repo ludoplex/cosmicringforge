@@ -1,6 +1,8 @@
 # Ring Classification
 
-Tools and dependencies are classified into three rings based on their bootstrap requirements and toolchain dependencies.
+> **BDE with Models** — Behavior Driven Engineering with Models.
+
+Tools and dependencies are classified into three rings based on their bootstrap requirements and toolchain dependencies. All rings output C code that compiles with cosmocc.
 
 ---
 
@@ -60,13 +62,32 @@ Tools and dependencies are classified into three rings based on their bootstrap 
 
 **Requirement**: Ring 0 + additional C-based tools that enhance productivity but aren't strictly required.
 
-| Tool | Purpose | Fallback |
-|------|---------|----------|
-| gengetopt | CLI argument parser generator | Hand-written parser |
-| makeheaders | Auto-generate header files | Manual headers |
-| AddressSanitizer | Memory error detection | Valgrind or manual testing |
-| UBSan | Undefined behavior detection | Manual code review |
-| cppcheck | Static analysis | Manual review |
+| Tool | Purpose | Fallback | Spec File |
+|------|---------|----------|-----------|
+| gengetopt | CLI argument parser generator | Hand-written parser | `ring1/gengetopt.schema` |
+| makeheaders | Auto-generate header files | Manual headers | - |
+| AddressSanitizer | Memory error detection | Valgrind or manual testing | `ring1/sanitizers.schema` |
+| UBSan | Undefined behavior detection | Manual code review | `ring1/sanitizers.schema` |
+| ThreadSanitizer | Data race detection | Manual review | `ring1/sanitizers.schema` |
+| cppcheck | Static analysis | Manual review | `ring1/cppcheck.schema` |
+
+### Ring 1 Spec Files
+
+```
+strict-purist/specs/ring1/
+├── gengetopt.schema    # Meta-spec: what .ggo files contain
+├── gengetopt.ggo       # Example CLI specification
+├── cppcheck.schema     # Static analysis configuration
+└── sanitizers.schema   # Sanitizer options and suppressions
+```
+
+### Ring 1 Make Targets
+
+```makefile
+gen-cli:    gengetopt < specs/cli.ggo > gen/cmdline.c
+lint:       cppcheck --enable=all src/
+sanitize:   $(CC) -fsanitize=address,undefined $(SRCS)
+```
 
 **Rule**: If a Ring-1 tool is unavailable, the build must still succeed (possibly with reduced functionality or skipped checks).
 
@@ -76,13 +97,28 @@ Tools and dependencies are classified into three rings based on their bootstrap 
 
 **Requirement**: These tools require non-C toolchains. Their **outputs must be committed** to the repository.
 
+### Ring 2 Spec Files
+
+```
+foss-visual/specs/
+├── statesmith.schema        # StateSmith configuration
+├── protobuf.schema          # Protocol Buffer structure
+├── eez-studio.schema        # EEZ UI definition
+├── openmodelica.schema      # Modelica model structure
+├── wasm.schema              # Binaryen + WAMR configuration
+└── examples/
+    ├── blinker.drawio.notes # StateSmith example notes
+    ├── message.proto        # Protobuf example
+    └── pendulum.mo          # Modelica example
+```
+
 ### State Machine Generators
 
-| Tool | Toolchain Required | Generated Code | License |
-|------|--------------------|----------------|---------|
-| StateSmith | .NET (C#) | Zero-dependency C | Apache-2.0 |
-| IBM Rhapsody | IBM installation | C/C++ | Commercial |
-| Simulink/Stateflow | MATLAB | C/C++ (via Embedded Coder) | Commercial |
+| Tool | Toolchain Required | Generated Code | License | Spec File |
+|------|--------------------|----------------|---------|-----------|
+| StateSmith | .NET (C#) | Zero-dependency C | Apache-2.0 | `statesmith.schema` |
+| IBM Rhapsody | IBM installation | C/C++ | Commercial | - |
+| Simulink/Stateflow | MATLAB | C/C++ (via Embedded Coder) | Commercial | - |
 
 #### StateSmith Notes
 - Tool is implemented in C# (see [GitHub language breakdown](https://github.com/StateSmith/StateSmith))
@@ -126,16 +162,46 @@ Per the [README](https://github.com/eez-open/studio):
 
 ### Modeling/Simulation
 
-| Tool | Toolchain Required | Generated Code | License |
-|------|--------------------|----------------|---------|
-| OpenModelica | C++ compiler | C code | OSMC-PL |
-| Simulink Coder | MATLAB | C/C++ | Commercial |
-| Embedded Coder | MATLAB | Production C/C++ | Commercial |
+| Tool | Toolchain Required | Generated Code | License | Spec File |
+|------|--------------------|----------------|---------|-----------|
+| OpenModelica | C++ compiler | C code | OSMC-PL | `openmodelica.schema` |
+| Simulink Coder | MATLAB | C/C++ | Commercial | - |
+| Embedded Coder | MATLAB | Production C/C++ | Commercial | - |
 
 #### OpenModelica Notes
 Per the [scripting documentation](https://build.openmodelica.org/Documentation/OpenModelica.Scripting.html):
 - `translateModel` → translate Modelica to **C code**
 - `buildModel` → translate to **C** and build executable
+
+### WebAssembly Tools
+
+| Tool | Toolchain Required | Purpose | License | Spec File |
+|------|--------------------|---------|---------|-----------|
+| Binaryen | C++ compiler | WASM optimization | Apache-2.0 | `wasm.schema` |
+| WAMR (interp) | C only! | WASM runtime | Apache-2.0 | `wasm.schema` |
+
+#### WAMR Notes
+WAMR in interpreter mode is **Ring 0 compatible**! It compiles with cosmocc and runs WASM modules portably. The AOT/JIT modes require platform-specific code.
+
+---
+
+## BDD Feature Files
+
+Each ring has corresponding BDD test scenarios:
+
+```
+.claude/features/
+├── schemagen.feature   # Ring 0: Schema generator
+├── defgen.feature      # Ring 0: Definition generator
+├── lemon.feature       # Ring 0: Parser generator
+├── ring1.feature       # Ring 1: gengetopt, cppcheck, sanitizers
+└── ring2.feature       # Ring 2: StateSmith, protobuf, EEZ, WASM
+```
+
+Run BDD tests:
+```bash
+./build/bddgen --run .claude/features/
+```
 
 ---
 

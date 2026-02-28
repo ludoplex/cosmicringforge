@@ -1,0 +1,131 @@
+# OpenModelica Meta-Spec - Modelica Simulation
+# Ring 2 tool - C++/OCaml toolchain, generates simulation C code
+#
+# OpenModelica processes .mo (Modelica) files containing:
+# - Physical system models (electrical, mechanical, thermal)
+# - Differential-algebraic equations (DAEs)
+# - Component-based modeling
+#
+# Generates C code for simulation runtime.
+#
+# Workflow:
+#   1. Write Modelica models in .mo files
+#   2. Compile: omc model.mo
+#   3. Generated: model.c, model_functions.c, model.makefile
+
+# ── Variable Definition ─────────────────────────────────────────
+
+type MoVariable {
+    name: string[128] [not_empty]
+    var_type: u8 [range: 0..5]           # 0=Real, 1=Integer, 2=Boolean, 3=String, 4=enum, 5=record
+    variability: u8 [range: 0..3]        # 0=continuous, 1=discrete, 2=parameter, 3=constant
+    causality: u8 [range: 0..4]          # 0=internal, 1=input, 2=output, 3=local, 4=independent
+    start_value: string[64]
+    unit: string[32]                     # Physical unit (SI)
+    display_unit: string[32]
+    min_value: f64
+    max_value: f64
+    nominal: f64 [default: 1.0]
+    fixed: i32 [default: 0]
+    description: string[256]
+}
+
+# ── Equation Definition ─────────────────────────────────────────
+
+type MoEquation {
+    equation_type: u8 [range: 0..5]      # 0=simple, 1=connect, 2=for, 3=if, 4=when, 5=algorithm
+    lhs: string[512]
+    rhs: string[512]
+    condition: string[256]               # For if/when equations
+    is_initial: i32 [default: 0]
+}
+
+# ── Connector Definition ────────────────────────────────────────
+
+type MoConnector {
+    name: string[64] [not_empty]
+    connector_type: string[64]           # Modelica connector type
+    is_flow: i32 [default: 0]            # Flow variable
+    is_stream: i32 [default: 0]          # Stream variable
+    variable_count: i32 [range: 0..32]
+}
+
+# ── Component Instance ──────────────────────────────────────────
+
+type MoComponent {
+    name: string[64] [not_empty]
+    type_name: string[128] [not_empty]   # Component type
+    is_replaceable: i32 [default: 0]
+    is_final: i32 [default: 0]
+    is_inner: i32 [default: 0]
+    is_outer: i32 [default: 0]
+    modifier_count: i32 [default: 0]     # Parameter modifications
+}
+
+# ── Connection ──────────────────────────────────────────────────
+
+type MoConnection {
+    from_component: string[64] [not_empty]
+    from_connector: string[64] [not_empty]
+    to_component: string[64] [not_empty]
+    to_connector: string[64] [not_empty]
+}
+
+# ── Class Definition ────────────────────────────────────────────
+
+type MoClass {
+    name: string[128] [not_empty]
+    class_type: u8 [range: 0..7]         # 0=model, 1=class, 2=record, 3=type, 4=connector, 5=block, 6=function, 7=package
+    is_partial: i32 [default: 0]
+    is_encapsulated: i32 [default: 0]
+    extends_count: i32 [default: 0]      # Inheritance
+    variable_count: i32 [range: 0..256]
+    equation_count: i32 [range: 0..1024]
+    component_count: i32 [range: 0..128]
+    connection_count: i32 [range: 0..256]
+    description: string[512]
+}
+
+# ── Package Definition ──────────────────────────────────────────
+
+type MoPackage {
+    name: string[128] [not_empty]
+    version: string[32]
+    class_count: i32 [range: 0..512]
+    uses_count: i32 [range: 0..32]       # Dependencies on other packages
+}
+
+# ── Simulation Configuration ────────────────────────────────────
+
+type MoSimulationConfig {
+    start_time: f64 [default: 0.0]
+    stop_time: f64 [default: 1.0]
+    step_size: f64 [default: 0.001]
+    tolerance: f64 [default: 0.0001]
+    solver: string[32] [default: "dassl"] # dassl, euler, rungekutta, etc.
+    output_format: string[16] [default: "mat"]  # mat, csv, plt
+    number_of_intervals: i32 [default: 500]
+}
+
+# ── OMC Compiler Configuration ──────────────────────────────────
+
+type OmcCompilerConfig {
+    input_path: string[512] [not_empty]
+    output_dir: string[512] [not_empty]
+    target: string[16] [default: "gcc"]  # gcc, msvc, clang
+    generate_code: i32 [default: 1]
+    generate_makefile: i32 [default: 1]
+    debug_info: i32 [default: 0]
+    optimize: i32 [default: 1]
+    profiling: i32 [default: 0]
+}
+
+# ── FMU Export Configuration ────────────────────────────────────
+
+type MoFmuConfig {
+    fmu_name: string[64] [not_empty]
+    fmu_type: u8 [range: 0..2]           # 0=ModelExchange, 1=CoSimulation, 2=Both
+    fmu_version: string[8] [default: "2.0"]
+    include_source: i32 [default: 0]
+    platforms: string[128]               # win64, linux64, darwin64
+}

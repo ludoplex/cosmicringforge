@@ -1,0 +1,152 @@
+# BDDgen AST Types - Gherkin Feature File Spec
+# This schema defines .feature file types for Behavior-Driven Development
+#
+# Gherkin is the lingua franca of BDD. This spec enables:
+# 1. Parsing .feature files into structured AST
+# 2. Generating test harness code (Ring 0 C)
+# 3. Step definition skeletons
+# 4. Test coverage reporting
+#
+# Example .feature file:
+#   Feature: User Authentication
+#     As a user I want to log in so I can access my account
+#
+#     Background:
+#       Given the system is initialized
+#
+#     Scenario: Successful login
+#       Given a user "alice" with password "secret"
+#       When I login as "alice" with "secret"
+#       Then I should be authenticated
+#       And my session should be active
+#
+#     Scenario Outline: Failed login
+#       Given a user "alice" with password "secret"
+#       When I login as "<user>" with "<pass>"
+#       Then I should see error "<error>"
+#
+#       Examples:
+#         | user  | pass    | error              |
+#         | alice | wrong   | Invalid password   |
+#         | bob   | secret  | User not found     |
+
+# ── Step Definition ─────────────────────────────────────────────
+
+type FeatureStep {
+    keyword: i32 [range: 0..4]         # 0=Given, 1=When, 2=Then, 3=And, 4=But
+    text: string[512] [not_empty]
+    has_docstring: i32 [default: 0]
+    docstring: string[4096]
+    has_datatable: i32 [default: 0]
+    datatable_rows: i32 [default: 0]
+    datatable_cols: i32 [default: 0]
+    line_number: i32
+}
+
+# ── Data Table ──────────────────────────────────────────────────
+
+type FeatureDataTable {
+    row_count: i32 [range: 0..256]
+    col_count: i32 [range: 0..32]
+    has_header: i32 [default: 1]       # First row is header
+}
+
+type FeatureDataCell {
+    row: i32
+    col: i32
+    value: string[256]
+}
+
+# ── Scenario ────────────────────────────────────────────────────
+
+type FeatureScenario {
+    name: string[256] [not_empty]
+    step_count: i32 [range: 0..64]
+    is_outline: i32 [default: 0]       # Scenario Outline with Examples
+    example_count: i32 [default: 0]    # Number of example rows
+    tags: string[256]                  # Space-separated: @smoke @critical
+    line_number: i32
+}
+
+# ── Background ──────────────────────────────────────────────────
+
+type FeatureBackground {
+    step_count: i32 [range: 0..16]
+    line_number: i32
+}
+
+# ── Examples Table (for Scenario Outline) ───────────────────────
+
+type FeatureExamples {
+    name: string[128]                  # Optional name
+    row_count: i32 [range: 0..256]
+    col_count: i32 [range: 0..32]
+    tags: string[256]
+    line_number: i32
+}
+
+# ── Rule (Gherkin 6 grouping) ───────────────────────────────────
+
+type FeatureRule {
+    name: string[256] [not_empty]
+    description: string[1024]
+    scenario_count: i32 [range: 0..64]
+    has_background: i32 [default: 0]
+    line_number: i32
+}
+
+# ── Feature Definition ──────────────────────────────────────────
+
+type FeatureDef {
+    name: string[256] [not_empty]
+    description: string[2048]
+    scenario_count: i32 [range: 0..128]
+    rule_count: i32 [range: 0..32]
+    has_background: i32 [default: 0]
+    tags: string[256]
+    language: string[8] [default: "en"] # Gherkin i18n
+    line_number: i32
+}
+
+# ── Step Match Pattern ──────────────────────────────────────────
+# For generating step definitions from step text
+
+type FeatureStepPattern {
+    pattern: string[512] [not_empty]   # Regex pattern with captures
+    function_name: string[128]         # Generated C function name
+    param_count: i32 [range: 0..8]
+    param_types: string[128]           # Comma-separated: "char*,int,double"
+}
+
+# ── Test Result ─────────────────────────────────────────────────
+
+type FeatureTestResult {
+    scenario_name: string[256]
+    step_index: i32
+    status: i32 [range: 0..4]          # 0=pass, 1=fail, 2=skip, 3=pending, 4=error
+    duration_us: i64                   # Microseconds
+    error_message: string[512]
+    line_number: i32
+}
+
+# ── Parse State ─────────────────────────────────────────────────
+
+type FeatureParseState {
+    feature_count: i32 [range: 0..128]
+    total_scenarios: i32 [range: 0..1024]
+    total_steps: i32 [range: 0..8192]
+    current_line: i32 [default: 1]
+    error_code: i32 [default: 0]
+    error_msg: string[256]
+}
+
+# ── Generator Configuration ─────────────────────────────────────
+
+type FeatureGenConfig {
+    input_path: string[512] [not_empty]
+    output_dir: string[512] [not_empty]
+    test_framework: string[32] [default: "unity"]  # unity, minunit, custom
+    generate_runner: i32 [default: 1]    # Generate main() test runner
+    generate_skeletons: i32 [default: 1] # Generate step definition stubs
+    strict_mode: i32 [default: 0]        # Fail on undefined steps
+}

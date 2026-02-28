@@ -1,0 +1,132 @@
+# Implgen AST Types - Implementation Directives Spec
+# This schema defines .impl files: platform dispatch, optimization hints, memory
+#
+# .impl files specify HOW code should be generated/optimized, not WHAT.
+# They guide codegen without changing semantics.
+#
+# Example .impl file:
+#   impl platform {
+#       linux: "impl/linux.c"
+#       windows: "impl/windows.c"
+#       cosmo: "impl/cosmo.c"
+#   }
+#
+#   impl optimize Point {
+#       alignment: 16
+#       pack: true
+#       inline: [add, sub, scale]
+#   }
+#
+#   impl simd {
+#       target: [sse4, avx2, neon]
+#       fallback: scalar
+#   }
+
+# ── Platform Implementation ─────────────────────────────────────
+
+type ImplPlatformTarget {
+    platform: string[32] [not_empty]   # linux, windows, macos, cosmo, wasm
+    source_file: string[256] [not_empty]
+    enabled: i32 [default: 1]
+    priority: i32 [default: 0]         # Higher = preferred on multi-match
+}
+
+type ImplPlatform {
+    name: string[64] [not_empty]       # Function/module name
+    target_count: i32 [range: 0..16]
+    fallback_file: string[256]         # If no platform matches
+    dispatch_style: i32 [default: 0]   # 0=compile-time, 1=runtime
+}
+
+# ── Optimization Hints ──────────────────────────────────────────
+
+type ImplOptimizeFunc {
+    name: string[64] [not_empty]
+    force_inline: i32 [default: 0]
+    no_inline: i32 [default: 0]
+    hot: i32 [default: 0]              # __attribute__((hot))
+    cold: i32 [default: 0]             # __attribute__((cold))
+    pure: i32 [default: 0]             # __attribute__((pure))
+    const_func: i32 [default: 0]       # __attribute__((const))
+}
+
+type ImplOptimizeType {
+    name: string[64] [not_empty]
+    alignment: i32 [default: 0]        # 0 = natural, else explicit
+    pack: i32 [default: 0]             # __attribute__((packed))
+    cache_align: i32 [default: 0]      # Align to cache line (64)
+    inline_funcs: string[512]          # Comma-separated list
+}
+
+type ImplOptimize {
+    func_count: i32 [range: 0..256]
+    type_count: i32 [range: 0..128]
+}
+
+# ── SIMD Configuration ──────────────────────────────────────────
+
+type ImplSimdTarget {
+    name: string[32] [not_empty]       # sse2, sse4, avx, avx2, avx512, neon
+    enabled: i32 [default: 1]
+    priority: i32 [default: 0]         # Higher = preferred
+}
+
+type ImplSimd {
+    target_count: i32 [range: 0..8]
+    fallback: string[32] [default: "scalar"]
+    runtime_detect: i32 [default: 1]   # Check CPUID at runtime
+    compile_all: i32 [default: 0]      # Build all variants always
+}
+
+# ── Memory Allocation ───────────────────────────────────────────
+
+type ImplAllocArena {
+    name: string[64] [not_empty]
+    initial_size: i64 [default: 65536]
+    max_size: i64 [default: 0]         # 0 = unlimited
+    alignment: i32 [default: 16]
+}
+
+type ImplAllocPool {
+    name: string[64] [not_empty]
+    element_type: string[64] [not_empty]
+    initial_count: i32 [default: 64]
+    max_count: i32 [default: 0]        # 0 = unlimited
+    thread_local: i32 [default: 0]
+}
+
+type ImplAlloc {
+    arena_count: i32 [range: 0..16]
+    pool_count: i32 [range: 0..64]
+    default_allocator: string[32] [default: "malloc"]
+}
+
+# ── Error Handling Strategy ─────────────────────────────────────
+
+type ImplError {
+    strategy: i32 [default: 0]         # 0=return code, 1=errno, 2=exception obj
+    error_type: string[64]             # Custom error type name
+    generate_strerror: i32 [default: 1]
+    log_on_error: i32 [default: 0]
+}
+
+# ── Parse State ─────────────────────────────────────────────────
+
+type ImplParseState {
+    platform_count: i32 [range: 0..64]
+    optimize_count: i32 [range: 0..256]
+    simd_count: i32 [range: 0..8]
+    alloc_count: i32 [range: 0..32]
+    current_line: i32 [default: 1]
+    error_code: i32 [default: 0]
+    error_msg: string[256]
+}
+
+# ── Generator Configuration ─────────────────────────────────────
+
+type ImplGenConfig {
+    input_path: string[512] [not_empty]
+    output_dir: string[512] [not_empty]
+    target_platform: string[32]        # Override auto-detect
+    target_simd: string[32]            # Override auto-detect
+}

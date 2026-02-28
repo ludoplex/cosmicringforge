@@ -1,0 +1,196 @@
+# WebAssembly Toolchain Meta-Spec - Binaryen + WAMR
+# Ring 2 tools:
+#   - Binaryen: C++ WASM optimizer/toolchain
+#   - WAMR: C WASM Micro Runtime (Ring 0 compatible!)
+#
+# Workflow for WASM integration:
+#   1. Compile C to WASM: clang --target=wasm32 -c file.c
+#   2. Optimize: wasm-opt -O3 file.wasm -o file.opt.wasm
+#   3. Embed in APE: bin2c file.opt.wasm > file_wasm.h
+#   4. Execute with WAMR runtime
+
+# ═══ Binaryen Configuration ═════════════════════════════════════
+
+# ── Optimization Pass ───────────────────────────────────────────
+
+type WasmOptPass {
+    name: string[64] [not_empty]         # Pass name
+    enabled: i32 [default: 1]
+    options: string[256]
+}
+
+# ── Binaryen Optimizer Config ───────────────────────────────────
+
+type BinaryenConfig {
+    input_path: string[512] [not_empty]
+    output_path: string[512] [not_empty]
+
+    # Optimization level
+    optimize_level: i32 [range: 0..4]    # -O0 to -O4
+    shrink_level: i32 [range: 0..2]      # -Oz levels
+
+    # Feature flags
+    enable_simd: i32 [default: 0]
+    enable_threads: i32 [default: 0]
+    enable_bulk_memory: i32 [default: 1]
+    enable_reference_types: i32 [default: 0]
+    enable_gc: i32 [default: 0]
+    enable_exception_handling: i32 [default: 0]
+    enable_tail_call: i32 [default: 0]
+
+    # Codegen options
+    low_memory_unused: i32 [default: 0]
+    zero_filled_memory: i32 [default: 0]
+    fast_math: i32 [default: 0]
+
+    # Debug
+    debug_info: i32 [default: 0]
+    source_map: i32 [default: 0]
+    source_map_url: string[256]
+
+    # Output
+    emit_text: i32 [default: 0]          # Output .wat instead of .wasm
+}
+
+# ── wasm-opt Passes ─────────────────────────────────────────────
+
+type WasmOptConfig {
+    # Common passes (can be combined)
+    dce: i32 [default: 1]                # Dead code elimination
+    duplicate_function_elimination: i32 [default: 1]
+    inlining: i32 [default: 1]
+    local_cse: i32 [default: 1]          # Common subexpression elimination
+    memory_packing: i32 [default: 0]
+    optimize_instructions: i32 [default: 1]
+    precompute: i32 [default: 1]
+    remove_unused_names: i32 [default: 1]
+    reorder_functions: i32 [default: 0]
+    simplify_globals: i32 [default: 1]
+    simplify_locals: i32 [default: 1]
+    vacuum: i32 [default: 1]             # Remove dead code
+
+    # Advanced
+    asyncify: i32 [default: 0]           # For async/await support
+    flatten: i32 [default: 0]            # Flatten control flow
+    legalize_js_interface: i32 [default: 0]
+}
+
+# ═══ WAMR Runtime Configuration ═════════════════════════════════
+
+# ── WAMR Module ─────────────────────────────────────────────────
+
+type WamrModule {
+    name: string[64] [not_empty]
+    wasm_data: string[256]               # Path to .wasm or embedded symbol
+    wasm_size: i64 [default: 0]
+    heap_size: i64 [default: 65536]      # Managed heap for module
+    stack_size: i64 [default: 16384]
+}
+
+# ── WAMR Function Import ────────────────────────────────────────
+
+type WamrImport {
+    module_name: string[64] [not_empty]  # "env" typically
+    func_name: string[64] [not_empty]
+    signature: string[64] [not_empty]    # "(ii)i" format
+    native_func: string[64] [not_empty]  # C function to call
+}
+
+# ── WAMR Function Export ────────────────────────────────────────
+
+type WamrExport {
+    name: string[64] [not_empty]
+    signature: string[64] [not_empty]
+}
+
+# ── WAMR Runtime Config ─────────────────────────────────────────
+
+type WamrRuntimeConfig {
+    # Execution mode
+    exec_mode: u8 [range: 0..2]          # 0=interp, 1=aot, 2=jit
+    interp_mode: u8 [range: 0..2]        # 0=classic, 1=fast, 2=multi-tier
+
+    # Memory
+    global_heap_size: i64 [default: 1048576]  # 1MB
+    max_thread_num: i32 [default: 4]
+
+    # Features
+    enable_bulk_memory: i32 [default: 1]
+    enable_thread_mgr: i32 [default: 0]
+    enable_ref_types: i32 [default: 0]
+    enable_simd: i32 [default: 0]
+    enable_tail_call: i32 [default: 0]
+    enable_memory64: i32 [default: 0]
+    enable_multi_memory: i32 [default: 0]
+
+    # WASI support
+    enable_wasi: i32 [default: 1]
+    wasi_dirs: string[512]               # Preopened directories
+
+    # Debugging
+    enable_debug: i32 [default: 0]
+    debug_port: i32 [default: 1234]
+}
+
+# ── AOT Compilation Config ──────────────────────────────────────
+
+type WamrAotConfig {
+    input_wasm: string[256] [not_empty]
+    output_aot: string[256] [not_empty]
+
+    # Target
+    target_arch: string[16] [default: "x86_64"]  # x86_64, i386, aarch64, arm, thumb, etc.
+    target_abi: string[16] [default: "gnu"]      # gnu, gnueabihf, msvc
+    cpu: string[32]                       # Target CPU features
+
+    # Optimization
+    opt_level: i32 [range: 0..3] [default: 3]
+    size_level: i32 [range: 0..2] [default: 0]
+
+    # Features
+    enable_simd: i32 [default: 0]
+    enable_bulk_memory: i32 [default: 1]
+    enable_ref_types: i32 [default: 0]
+    bounds_checks: i32 [default: 1]
+    stack_bounds_checks: i32 [default: 1]
+}
+
+# ═══ Integration Types ══════════════════════════════════════════
+
+# ── WASM Embedding ──────────────────────────────────────────────
+
+type WasmEmbedding {
+    module_name: string[64] [not_empty]
+    wasm_file: string[256] [not_empty]
+    c_symbol: string[64] [not_empty]     # Symbol name for bin2c
+    compress: i32 [default: 0]           # Compress before embedding
+}
+
+# ── Build Pipeline ──────────────────────────────────────────────
+
+type WasmBuildConfig {
+    # Source
+    source_files: string[1024]           # C/C++ files to compile to WASM
+    include_dirs: string[512]
+    defines: string[256]
+
+    # Compilation
+    clang_target: string[32] [default: "wasm32-unknown-wasi"]
+    optimization: string[4] [default: "-O2"]
+
+    # Linking
+    link_wasi: i32 [default: 1]
+    export_all: i32 [default: 0]
+    stack_size: i64 [default: 65536]
+    initial_memory: i64 [default: 1048576]
+    max_memory: i64 [default: 0]         # 0 = unlimited
+
+    # Post-processing
+    run_wasm_opt: i32 [default: 1]
+    wasm_opt_level: i32 [default: 3]
+
+    # Output
+    output_wasm: string[256] [not_empty]
+    output_wat: i32 [default: 0]         # Also generate .wat
+    embed_in_c: i32 [default: 0]         # Generate C header
+}

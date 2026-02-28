@@ -1,0 +1,130 @@
+# StateSmith Meta-Spec - Visual State Machine Editor
+# Ring 2 tool - .NET/C# toolchain, generates Ring 0 C code
+#
+# StateSmith processes .drawio or .plantuml files containing state diagrams
+# and generates hierarchical state machine C code.
+#
+# This schema defines StateSmith configuration and output structure.
+#
+# Workflow:
+#   1. Design state machine in draw.io or PlantUML
+#   2. Add StateSmith annotations to states/transitions
+#   3. Run: dotnet StateSmith.Cli run machine.drawio
+#   4. Commit generated C code to gen/
+
+# ── State Definition ────────────────────────────────────────────
+
+type SmithState {
+    name: string[64] [not_empty]
+    parent: string[64]                   # Parent state name (for HSM)
+    initial: i32 [default: 0]            # Is this the initial state?
+    final: i32 [default: 0]              # Is this a final state?
+    entry_action: string[512]            # C code to run on entry
+    exit_action: string[512]             # C code to run on exit
+    do_action: string[512]               # C code to run while in state
+    history: u8 [range: 0..2]            # 0=none, 1=shallow, 2=deep
+}
+
+# ── Transition Definition ───────────────────────────────────────
+
+type SmithTransition {
+    source: string[64] [not_empty]
+    target: string[64] [not_empty]
+    event: string[64]                    # Trigger event (empty = completion)
+    guard: string[256]                   # Guard condition [guard]
+    action: string[512]                  # Transition action / action
+    order: i32 [default: 0]              # Evaluation order for multiple transitions
+}
+
+# ── Event Definition ────────────────────────────────────────────
+
+type SmithEvent {
+    name: string[64] [not_empty]
+    has_data: i32 [default: 0]
+    data_type: string[64]                # C type for event data
+}
+
+# ── Variable Definition ─────────────────────────────────────────
+
+type SmithVariable {
+    name: string[64] [not_empty]
+    var_type: string[64] [not_empty]     # C type
+    initial_value: string[128]
+    is_const: i32 [default: 0]
+}
+
+# ── State Machine Definition ────────────────────────────────────
+
+type SmithMachine {
+    name: string[64] [not_empty]
+    state_count: i32 [range: 1..256]
+    transition_count: i32 [range: 0..1024]
+    event_count: i32 [range: 0..128]
+    variable_count: i32 [range: 0..64]
+    initial_state: string[64] [not_empty]
+    output_format: u8 [range: 0..2]      # 0=C99, 1=C++, 2=C#
+}
+
+# ── Render Config (code generation options) ─────────────────────
+
+type SmithRenderConfig {
+    # File output
+    file_top: string[1024]               # Code at top of file
+    auto_expand_begin: string[256]       # Begin marker for auto-expand
+    auto_expand_end: string[256]         # End marker for auto-expand
+
+    # Code style
+    output_directory: string[256]
+    output_file_name_no_ext: string[64]
+    use_partial_class: i32 [default: 0]  # C# only
+
+    # C-specific options
+    c_file_extension: string[8] [default: ".c"]
+    h_file_extension: string[8] [default: ".h"]
+    c_state_enum_typedef: i32 [default: 1]
+    c_event_enum_typedef: i32 [default: 1]
+    c_use_switch_dispatch: i32 [default: 1]  # vs function pointers
+    c_use_packed_enum: i32 [default: 0]
+
+    # Tracing
+    trace_enabled: i32 [default: 0]
+    trace_entry: string[256]
+    trace_exit: string[256]
+    trace_transition: string[256]
+}
+
+# ── Input Source ────────────────────────────────────────────────
+
+type SmithInputSource {
+    input_type: u8 [range: 0..2]         # 0=drawio, 1=plantuml, 2=yaml
+    file_path: string[256] [not_empty]
+    page_name: string[64]                # For multi-page drawio
+}
+
+# ── Project Configuration ───────────────────────────────────────
+
+type SmithProjectConfig {
+    # Input
+    input_path: string[256] [not_empty]
+    input_type: string[16] [default: "drawio"]
+
+    # Output
+    output_dir: string[256] [not_empty]
+    output_lang: string[8] [default: "c"]  # c, cpp, csharp
+
+    # Rendering
+    render_config_file: string[256]      # Optional toml config
+
+    # Validation
+    validate_only: i32 [default: 0]
+    dump_graph: i32 [default: 0]
+}
+
+# ── Validation Error ────────────────────────────────────────────
+
+type SmithValidationError {
+    error_type: u8 [range: 0..10]
+    message: string[256]
+    state_name: string[64]
+    line_number: i32
+}

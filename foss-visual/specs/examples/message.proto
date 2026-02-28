@@ -1,0 +1,103 @@
+// Example Protobuf Definition
+// Ring 2 tool output - generates Ring 0 compatible C code
+//
+// Build: protoc --c_out=gen/ message.proto
+// Output: message.pb-c.h, message.pb-c.c
+
+syntax = "proto3";
+
+package cosmicringforge;
+
+// Import for timestamps
+import "google/protobuf/timestamp.proto";
+
+// ── Enums ──────────────────────────────────────────────────────
+
+enum LogLevel {
+    LOG_LEVEL_UNKNOWN = 0;
+    LOG_LEVEL_DEBUG = 1;
+    LOG_LEVEL_INFO = 2;
+    LOG_LEVEL_WARN = 3;
+    LOG_LEVEL_ERROR = 4;
+}
+
+enum EventType {
+    EVENT_TYPE_UNKNOWN = 0;
+    EVENT_TYPE_STATE_CHANGE = 1;
+    EVENT_TYPE_DATA_UPDATE = 2;
+    EVENT_TYPE_ERROR = 3;
+    EVENT_TYPE_COMMAND = 4;
+}
+
+// ── Messages ───────────────────────────────────────────────────
+
+// Point in 3D space
+message Point3D {
+    float x = 1;
+    float y = 2;
+    float z = 3;
+}
+
+// Sensor reading with metadata
+message SensorReading {
+    uint32 sensor_id = 1;
+    float value = 2;
+    string unit = 3;
+    google.protobuf.Timestamp timestamp = 4;
+    bool valid = 5;
+}
+
+// Configuration message
+message Config {
+    string device_name = 1;
+    uint32 sample_rate_hz = 2;
+    LogLevel log_level = 3;
+    repeated string enabled_features = 4;
+
+    // Nested message
+    message NetworkConfig {
+        string ip_address = 1;
+        uint32 port = 2;
+        bool use_tls = 3;
+    }
+    NetworkConfig network = 5;
+}
+
+// Event for state machine transitions
+message StateEvent {
+    EventType type = 1;
+    string state_machine = 2;
+    string from_state = 3;
+    string to_state = 4;
+    string event_name = 5;
+    bytes payload = 6;  // Arbitrary binary data
+}
+
+// Command message
+message Command {
+    uint32 sequence = 1;
+    string command_type = 2;
+
+    oneof params {
+        Point3D move_to = 3;
+        float set_speed = 4;
+        Config configure = 5;
+        bool enable = 6;
+    }
+}
+
+// Response message
+message Response {
+    uint32 sequence = 1;  // Matches command sequence
+    bool success = 2;
+    string error_message = 3;
+    bytes result = 4;
+}
+
+// ── Service Definition (optional, for RPC) ─────────────────────
+
+service DeviceControl {
+    rpc SendCommand(Command) returns (Response);
+    rpc GetConfig(google.protobuf.Empty) returns (Config);
+    rpc StreamReadings(google.protobuf.Empty) returns (stream SensorReading);
+}

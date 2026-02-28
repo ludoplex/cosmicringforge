@@ -1,0 +1,131 @@
+# Example gengetopt specification
+# Ring 1 tool - CLI option parser generator
+#
+# Build: gengetopt < example.ggo --output-dir=gen/
+# Output: cmdline.h, cmdline.c
+
+package "cosmicringforge"
+version "1.0.0"
+purpose "Model-Based Systems Engineering Code Generator"
+description "Generates type-safe C code from specification files (.schema, .sm, .def, etc.)"
+
+# ═══ Global Options ═════════════════════════════════════════════
+
+option "verbose" v "Enable verbose output"
+    flag off
+
+option "quiet" q "Suppress all output except errors"
+    flag off
+
+option "config" c "Configuration file path"
+    string
+    typestr="FILE"
+    optional
+
+option "output-dir" o "Output directory for generated files"
+    string
+    typestr="DIR"
+    default="gen/"
+    optional
+
+option "profile" p "Build profile"
+    values="portable","ape","debug"
+    enum
+    default="portable"
+    optional
+
+# ═══ Generator Selection ════════════════════════════════════════
+
+section "Generators"
+    sectiondesc="Select which generators to run"
+
+option "schema" S "Run schemagen on .schema files"
+    flag off
+    group="generators"
+
+option "def" D "Run defgen on .def files"
+    flag off
+    group="generators"
+
+option "sm" M "Run smgen on .sm files"
+    flag off
+    group="generators"
+
+option "lex" L "Run lexgen on .lex files"
+    flag off
+    group="generators"
+
+option "grammar" G "Run Lemon on .grammar files"
+    flag off
+    group="generators"
+
+option "feature" F "Run bddgen on .feature files"
+    flag off
+    group="generators"
+
+option "all" A "Run all generators"
+    flag off
+    group="generators"
+
+# ═══ Input Files ════════════════════════════════════════════════
+
+section "Input"
+    sectiondesc="Specify input files"
+
+option "input" i "Input specification file(s)"
+    string
+    typestr="FILE"
+    multiple
+    optional
+
+option "specs-dir" - "Directory containing spec files"
+    string
+    typestr="DIR"
+    default="specs/"
+    optional
+
+# ═══ Code Generation Options ════════════════════════════════════
+
+section "Code Generation"
+    sectiondesc="Control generated code"
+
+option "json" j "Generate JSON serialization"
+    flag off
+
+option "validate" - "Generate validation functions"
+    flag on
+
+option "xmacro" x "Generate X-Macro tables for enums"
+    flag on
+
+option "init" - "Generate _init() functions"
+    flag on
+
+# ═══ Verification ═══════════════════════════════════════════════
+
+section "Verification"
+    sectiondesc="Verify generated code"
+
+option "verify" - "Verify generated code matches committed"
+    flag off
+    details="Runs git diff --exit-code on gen/ directory"
+
+option "dry-run" n "Show what would be generated without writing"
+    flag off
+
+# ═══ Debug Options ══════════════════════════════════════════════
+
+section "Debug"
+    sectiondesc="Debugging options"
+
+option "dump-ast" - "Dump parsed AST to stdout"
+    flag off
+    hidden
+
+option "trace" - "Enable parser tracing"
+    flag off
+    hidden
+
+# ═══ Positional Arguments ═══════════════════════════════════════
+
+args "--unamed-opts=FILES"

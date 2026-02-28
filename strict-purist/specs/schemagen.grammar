@@ -1,0 +1,171 @@
+/*
+** Schemagen Parser Grammar - Lemon LALR(1)
+** Processes .schema files to extract type definitions
+**
+** Build: lemon schemagen.grammar
+** Output: schemagen_parser.c, schemagen_parser.h
+*/
+
+%include {
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
+#include "schemagen_types.h"
+#include "schemagen_lexer.h"
+
+/* Parser context passed through */
+typedef struct {
+    SchemaParseState *state;
+    SchemaTypeDef *types;
+    SchemaField *fields;
+    int max_types;
+    int max_fields_per_type;
+} ParseCtx;
+
+static ParseCtx *ctx;
+}
+
+%token_type { Token }
+%extra_argument { ParseCtx *pCtx }
+
+%syntax_error {
+    pCtx->state->error_code = 1;
+    snprintf(pCtx->state->error_msg, 256,
+             "Syntax error at line %d", pCtx->state->current_line);
+}
+
+%parse_failure {
+    pCtx->state->error_code = 2;
+    snprintf(pCtx->state->error_msg, 256, "Parse failed");
+}
+
+/* ═══ Precedence ═══════════════════════════════════════════════ */
+
+%left COMMA.
+%right LBRACKET RBRACKET.
+
+/* ═══ Start Symbol ═════════════════════════════════════════════ */
+
+schema ::= type_list.
+
+/* ═══ Type List ════════════════════════════════════════════════ */
+
+type_list ::= .
+type_list ::= type_list type_def.
+type_list ::= type_list COMMENT.
+
+/* ═══ Type Definition ══════════════════════════════════════════ */
+
+type_def ::= TYPE IDENT(N) LBRACE field_list RBRACE. {
+    if (pCtx->state->type_count < pCtx->max_types) {
+        SchemaTypeDef *t = &pCtx->types[pCtx->state->type_count];
+        SchemaTypeDef_init(t);
+        strncpy(t->name, N.str, 63);
+        pCtx->state->type_count++;
+    }
+}
+
+/* ═══ Field List ═══════════════════════════════════════════════ */
+
+field_list ::= .
+field_list ::= field_list field_def.
+field_list ::= field_list COMMENT.
+
+/* ═══ Field Definition ═════════════════════════════════════════ */
+
+field_def ::= IDENT(N) COLON type_spec(T) constraint_list(C). {
+    /* Add field to current type */
+    SchemaTypeDef *current = &pCtx->types[pCtx->state->type_count - 1];
+    if (current->field_count < pCtx->max_fields_per_type) {
+        int idx = current->field_count;
+        SchemaField *f = &pCtx->fields[pCtx->state->type_count * pCtx->max_fields_per_type + idx];
+        SchemaField_init(f);
+        strncpy(f->name, N.str, 63);
+        f->base = T.base_type;
+        f->array_size = T.array_size;
+        current->field_count++;
+    }
+}
+
+/* ═══ Type Specifier ═══════════════════════════════════════════ */
+
+%type type_spec { TypeSpec }
+
+type_spec(A) ::= base_type(B). {
+    A.base_type = B;
+    A.array_size = 0;
+}
+
+type_spec(A) ::= base_type(B) LBRACKET NUMBER(N) RBRACKET. {
+    A.base_type = B;
+    A.array_size = N.ival;
+}
+
+type_spec(A) ::= IDENT(N). {
+    A.base_type = TYPE_STRUCT;
+    A.array_size = 0;
+    /* Store struct name for later lookup */
+}
+
+/* ═══ Base Types ═══════════════════════════════════════════════ */
+
+%type base_type { int }
+
+base_type(A) ::= I8.      { A = TYPE_I8; }
+base_type(A) ::= I16.     { A = TYPE_I16; }
+base_type(A) ::= I32.     { A = TYPE_I32; }
+base_type(A) ::= I64.     { A = TYPE_I64; }
+base_type(A) ::= U8.      { A = TYPE_U8; }
+base_type(A) ::= U16.     { A = TYPE_U16; }
+base_type(A) ::= U32.     { A = TYPE_U32; }
+base_type(A) ::= U64.     { A = TYPE_U64; }
+base_type(A) ::= F32.     { A = TYPE_F32; }
+base_type(A) ::= F64.     { A = TYPE_F64; }
+base_type(A) ::= BOOL.    { A = TYPE_BOOL; }
+base_type(A) ::= STRING.  { A = TYPE_STRING; }
+
+/* ═══ Constraints ══════════════════════════════════════════════ */
+
+%type constraint_list { ConstraintSet }
+
+constraint_list(A) ::= . {
+    memset(&A, 0, sizeof(A));
+}
+
+constraint_list(A) ::= LBRACKET constraints(C) RBRACKET. {
+    A = C;
+}
+
+%type constraints { ConstraintSet }
+
+constraints(A) ::= constraint(C). {
+    A = C;
+}
+
+constraints(A) ::= constraints(L) COMMA constraint(C). {
+    /* Merge constraints */
+    A = L;
+    if (C.has_default) { A.has_default = 1; A.default_val = C.default_val; }
+    if (C.has_range) { A.has_range = 1; A.range_min = C.range_min; A.range_max = C.range_max; }
+    if (C.not_empty) { A.not_empty = 1; }
+}
+
+%type constraint { ConstraintSet }
+
+constraint(A) ::= DEFAULT COLON NUMBER(N). {
+    memset(&A, 0, sizeof(A));
+    A.has_default = 1;
+    A.default_val = N.ival;
+}
+
+constraint(A) ::= RANGE COLON NUMBER(L) DOTDOT NUMBER(H). {
+    memset(&A, 0, sizeof(A));
+    A.has_range = 1;
+    A.range_min = L.ival;
+    A.range_max = H.ival;
+}
+
+constraint(A) ::= NOT_EMPTY. {
+    memset(&A, 0, sizeof(A));
+    A.not_empty = 1;
+}

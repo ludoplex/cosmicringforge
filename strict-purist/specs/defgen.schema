@@ -1,0 +1,107 @@
+# Defgen AST Types - Self-Hosting Spec
+# This schema is consumed by schemagen to generate defgen's types.
+# Bootstrap: schemagen processes this, then defgen uses the generated types.
+#
+# Generated: defgen_types.h, defgen_types.c
+
+# ── Constant Definition ─────────────────────────────────────────
+
+type DefConstant {
+    name: string[64] [not_empty]
+    value_type: u8 [range: 0..3]       # 0=int, 1=float, 2=string, 3=expr
+    int_value: i64 [default: 0]
+    float_value: f64 [default: 0.0]
+    string_value: string[256]
+    expr_value: string[256]
+    doc_comment: string[256]
+}
+
+# ── Enum Value ──────────────────────────────────────────────────
+
+type DefEnumValue {
+    name: string[64] [not_empty]
+    value: i64 [default: 0]
+    auto_value: i32 [default: 1]
+    string_repr: string[64]
+    doc_comment: string[256]
+}
+
+# ── Enum Definition ─────────────────────────────────────────────
+
+type DefEnum {
+    name: string[64] [not_empty]
+    prefix: string[32]
+    value_count: i32 [range: 0..256]
+    underlying_type: string[16]
+    generate_xmacro: i32 [default: 1]
+    generate_strings: i32 [default: 1]
+    doc_comment: string[256]
+}
+
+# ── Flag Value ──────────────────────────────────────────────────
+
+type DefFlagValue {
+    name: string[64] [not_empty]
+    bit_position: i32 [range: 0..63]
+    explicit_value: i64 [default: -1]
+    string_repr: string[64]
+    doc_comment: string[256]
+}
+
+# ── Flags Definition ────────────────────────────────────────────
+
+type DefFlags {
+    name: string[64] [not_empty]
+    prefix: string[32]
+    flag_count: i32 [range: 0..64]
+    underlying_type: string[16]
+    generate_xmacro: i32 [default: 1]
+    generate_has_flag: i32 [default: 1]
+    generate_to_string: i32 [default: 1]
+    doc_comment: string[256]
+}
+
+# ── Config Field ────────────────────────────────────────────────
+
+type DefConfigField {
+    name: string[64] [not_empty]
+    field_type: string[32] [not_empty]
+    default_value: string[64]
+    range_min: i64 [default: 0]
+    range_max: i64 [default: 0]
+    has_range: i32 [default: 0]
+    doc_comment: string[256]
+}
+
+# ── Config Definition ───────────────────────────────────────────
+
+type DefConfig {
+    name: string[64] [not_empty]
+    field_count: i32 [range: 0..64]
+    generate_defaults: i32 [default: 1]
+    generate_validate: i32 [default: 1]
+    generate_from_ini: i32 [default: 1]
+    doc_comment: string[256]
+}
+
+# ── Parse State ─────────────────────────────────────────────────
+
+type DefParseState {
+    const_count: i32 [range: 0..1024]
+    enum_count: i32 [range: 0..128]
+    flags_count: i32 [range: 0..128]
+    config_count: i32 [range: 0..64]
+    current_line: i32 [default: 1]
+    error_code: i32 [default: 0]
+    error_msg: string[256]
+}
+
+# ── Generator Configuration ─────────────────────────────────────
+
+type DefGenConfig {
+    input_path: string[512] [not_empty]
+    output_dir: string[512] [not_empty]
+    header_guard_prefix: string[32]
+    xmacro_style: i32 [default: 0]     # 0=inline, 1=separate file
+    generate_json: i32 [default: 0]
+}

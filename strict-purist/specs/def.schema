@@ -1,0 +1,119 @@
+# Defgen AST Types - Definition File Spec
+# This schema defines .def file types: constants, enums, flags, configs
+# Generates: _defs.h (macros, enums, X-Macro tables), _defs.c (config defaults)
+#
+# X-Macro Philosophy:
+#   Define data once, expand many ways. Every enum gets an X-Macro table
+#   so consumers can generate: enum values, string lookups, validation, JSON.
+#
+# Example .def file:
+#   enum LogLevel { DEBUG=0, INFO=1, WARN=2, ERROR=3 }
+#   const MAX_BUFFER = 4096
+#   flags Permissions { READ=0x01, WRITE=0x02, EXEC=0x04 }
+#
+# Generated X-Macro pattern:
+#   #define LOGLEVEL_XMACRO(X) \
+#       X(LOG_DEBUG, 0, "DEBUG") \
+#       X(LOG_INFO, 1, "INFO") ...
+
+# ── Constant Definition ─────────────────────────────────────────
+
+type DefConstant {
+    name: string[64] [not_empty]
+    value_type: u8                    # 0=int, 1=float, 2=string, 3=expr
+    int_value: i64 [default: 0]
+    float_value: f64 [default: 0.0]
+    string_value: string[256]
+    expr_value: string[256]           # For computed: sizeof(X), 1<<10, etc.
+    doc_comment: string[256]
+}
+
+# ── Enum Value ──────────────────────────────────────────────────
+
+type DefEnumValue {
+    name: string[64] [not_empty]
+    value: i64 [default: 0]
+    auto_value: i32 [default: 1]      # If 1, value auto-increments
+    string_repr: string[64]           # For X-Macro string expansion
+    doc_comment: string[256]
+}
+
+# ── Enum Definition ─────────────────────────────────────────────
+
+type DefEnum {
+    name: string[64] [not_empty]
+    prefix: string[32]                # e.g., "LOG_" for LOG_DEBUG
+    value_count: i32 [range: 0..256]
+    underlying_type: string[16] [default: "int"]  # int, uint8_t, etc.
+    generate_xmacro: i32 [default: 1] # Generate X-Macro table
+    generate_strings: i32 [default: 1] # Generate _to_string function
+    doc_comment: string[256]
+}
+
+# ── Flag (Bitmask) Value ────────────────────────────────────────
+
+type DefFlagValue {
+    name: string[64] [not_empty]
+    bit_position: i32 [range: 0..63]  # Which bit: 0x01=0, 0x02=1, 0x04=2...
+    explicit_value: i64 [default: -1] # -1 means use 1 << bit_position
+    string_repr: string[64]
+    doc_comment: string[256]
+}
+
+# ── Flags Definition ────────────────────────────────────────────
+
+type DefFlags {
+    name: string[64] [not_empty]
+    prefix: string[32]
+    flag_count: i32 [range: 0..64]
+    underlying_type: string[16] [default: "uint32_t"]
+    generate_xmacro: i32 [default: 1]
+    generate_has_flag: i32 [default: 1]  # Generate FLAG_HAS(flags, FLAG_X)
+    generate_to_string: i32 [default: 1] # Generate flags_to_string()
+    doc_comment: string[256]
+}
+
+# ── Config Field ────────────────────────────────────────────────
+
+type DefConfigField {
+    name: string[64] [not_empty]
+    field_type: string[32] [not_empty]  # u16, LogLevel, string[64], etc.
+    default_value: string[64]
+    range_min: i64 [default: 0]
+    range_max: i64 [default: 0]
+    has_range: i32 [default: 0]
+    doc_comment: string[256]
+}
+
+# ── Config Definition ───────────────────────────────────────────
+
+type DefConfig {
+    name: string[64] [not_empty]
+    field_count: i32 [range: 0..64]
+    generate_defaults: i32 [default: 1]   # Generate _init() with defaults
+    generate_validate: i32 [default: 1]   # Generate _validate()
+    generate_from_ini: i32 [default: 1]   # Generate _from_ini() parser
+    doc_comment: string[256]
+}
+
+# ── Parse State ─────────────────────────────────────────────────
+
+type DefParseState {
+    const_count: i32 [range: 0..1024]
+    enum_count: i32 [range: 0..128]
+    flags_count: i32 [range: 0..128]
+    config_count: i32 [range: 0..64]
+    current_line: i32 [default: 1]
+    error_code: i32 [default: 0]
+    error_msg: string[256]
+}
+
+# ── Generator Configuration ─────────────────────────────────────
+
+type DefGenConfig {
+    input_path: string[512] [not_empty]
+    output_dir: string[512] [not_empty]
+    header_guard_prefix: string[32] [default: ""]
+    xmacro_style: i32 [default: 0]    # 0=inline, 1=separate .xm file
+    generate_json: i32 [default: 0]
+}

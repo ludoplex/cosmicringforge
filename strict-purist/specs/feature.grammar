@@ -1,0 +1,251 @@
+/*
+** BDDgen Parser Grammar - Lemon LALR(1)
+** Processes .feature files (Gherkin BDD format)
+**
+** Build: lemon feature.grammar
+** Output: feature_parser.c, feature_parser.h
+**
+** Gherkin structure:
+**   Feature: name
+**     Background:
+**       Given ...
+**     Scenario: name
+**       Given ...
+**       When ...
+**       Then ...
+**     Scenario Outline: name
+**       Given <param>
+**       Examples:
+**         | param |
+**         | value |
+*/
+
+%include {
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
+#include "bddgen_types.h"
+#include "feature_lexer.h"
+
+typedef struct {
+    BddParseState *state;
+    BddFeature *features;
+    BddScenario *scenarios;
+    BddStep *steps;
+    BddBackground *backgrounds;
+    BddExamples *examples;
+    BddDataCell *data_cells;
+    int current_feature;
+    int current_scenario;
+    int current_step;
+} BddParseCtx;
+
+static BddParseCtx *ctx;
+}
+
+%token_type { Token }
+%extra_argument { BddParseCtx *pCtx }
+
+%syntax_error {
+    pCtx->state->error_code = 1;
+    snprintf(pCtx->state->error_msg, 256,
+             "Syntax error at line %d", pCtx->state->current_line);
+}
+
+/* ═══ Start Symbol ═════════════════════════════════════════════ */
+
+feature_file ::= tag_list feature_def.
+feature_file ::= feature_def.
+
+/* ═══ Tags ═════════════════════════════════════════════════════ */
+
+tag_list ::= tag.
+tag_list ::= tag_list tag.
+
+tag ::= AT_TAG(T). {
+    /* Collect tags for next feature/scenario */
+}
+
+/* ═══ Feature Definition ═══════════════════════════════════════ */
+
+feature_def ::= FEATURE COLON TEXT_LINE(N) description feature_body. {
+    if (pCtx->state->feature_count < 128) {
+        BddFeature *f = &pCtx->features[pCtx->state->feature_count];
+        BddFeature_init(f);
+        strncpy(f->name, N.str, 255);
+        f->line_number = pCtx->state->current_line;
+        pCtx->current_feature = pCtx->state->feature_count;
+        pCtx->state->feature_count++;
+    }
+}
+
+description ::= .
+description ::= description TEXT_LINE.
+
+feature_body ::= .
+feature_body ::= feature_body background_def.
+feature_body ::= feature_body scenario_def.
+feature_body ::= feature_body scenario_outline_def.
+feature_body ::= feature_body rule_def.
+
+/* ═══ Background ══════════════════════════════════════════════ */
+
+background_def ::= BACKGROUND COLON step_list. {
+    BddFeature *f = &pCtx->features[pCtx->current_feature];
+    f->has_background = 1;
+}
+
+/* ═══ Scenario ════════════════════════════════════════════════ */
+
+scenario_def ::= tag_list SCENARIO COLON TEXT_LINE(N) step_list. {
+    if (pCtx->state->total_scenarios < 1024) {
+        BddScenario *s = &pCtx->scenarios[pCtx->state->total_scenarios];
+        BddScenario_init(s);
+        strncpy(s->name, N.str, 255);
+        s->is_outline = 0;
+        s->line_number = pCtx->state->current_line;
+        pCtx->current_scenario = pCtx->state->total_scenarios;
+
+        BddFeature *f = &pCtx->features[pCtx->current_feature];
+        f->scenario_count++;
+        pCtx->state->total_scenarios++;
+    }
+}
+
+scenario_def ::= SCENARIO COLON TEXT_LINE(N) step_list. {
+    if (pCtx->state->total_scenarios < 1024) {
+        BddScenario *s = &pCtx->scenarios[pCtx->state->total_scenarios];
+        BddScenario_init(s);
+        strncpy(s->name, N.str, 255);
+        s->is_outline = 0;
+        s->line_number = pCtx->state->current_line;
+        pCtx->current_scenario = pCtx->state->total_scenarios;
+
+        BddFeature *f = &pCtx->features[pCtx->current_feature];
+        f->scenario_count++;
+        pCtx->state->total_scenarios++;
+    }
+}
+
+/* ═══ Scenario Outline ════════════════════════════════════════ */
+
+scenario_outline_def ::= SCENARIO_OUTLINE COLON TEXT_LINE(N) step_list examples_section. {
+    if (pCtx->state->total_scenarios < 1024) {
+        BddScenario *s = &pCtx->scenarios[pCtx->state->total_scenarios];
+        BddScenario_init(s);
+        strncpy(s->name, N.str, 255);
+        s->is_outline = 1;
+        s->line_number = pCtx->state->current_line;
+        pCtx->current_scenario = pCtx->state->total_scenarios;
+
+        BddFeature *f = &pCtx->features[pCtx->current_feature];
+        f->scenario_count++;
+        pCtx->state->total_scenarios++;
+    }
+}
+
+/* ═══ Step List ═══════════════════════════════════════════════ */
+
+step_list ::= .
+step_list ::= step_list step.
+
+step ::= GIVEN TEXT_LINE(T) step_arg. {
+    add_step(pCtx, 0, T.str);  /* 0 = Given */
+}
+
+step ::= WHEN TEXT_LINE(T) step_arg. {
+    add_step(pCtx, 1, T.str);  /* 1 = When */
+}
+
+step ::= THEN TEXT_LINE(T) step_arg. {
+    add_step(pCtx, 2, T.str);  /* 2 = Then */
+}
+
+step ::= AND TEXT_LINE(T) step_arg. {
+    add_step(pCtx, 3, T.str);  /* 3 = And */
+}
+
+step ::= BUT TEXT_LINE(T) step_arg. {
+    add_step(pCtx, 4, T.str);  /* 4 = But */
+}
+
+step_arg ::= .
+step_arg ::= docstring.
+step_arg ::= data_table.
+
+/* ═══ Docstring ═══════════════════════════════════════════════ */
+
+docstring ::= DOCSTRING_START docstring_lines DOCSTRING_END. {
+    /* Mark current step as having docstring */
+    BddStep *s = &pCtx->steps[pCtx->state->total_steps - 1];
+    s->has_docstring = 1;
+}
+
+docstring_lines ::= .
+docstring_lines ::= docstring_lines TEXT_LINE.
+
+/* ═══ Data Table ══════════════════════════════════════════════ */
+
+data_table ::= table_rows. {
+    /* Mark current step as having datatable */
+    BddStep *s = &pCtx->steps[pCtx->state->total_steps - 1];
+    s->has_datatable = 1;
+}
+
+table_rows ::= table_row.
+table_rows ::= table_rows table_row.
+
+table_row ::= PIPE cell_list PIPE NEWLINE. {
+    /* Store row data */
+}
+
+cell_list ::= cell.
+cell_list ::= cell_list PIPE cell.
+
+cell ::= TEXT_LINE(T). {
+    /* Store cell value */
+}
+
+/* ═══ Examples Section ════════════════════════════════════════ */
+
+examples_section ::= .
+examples_section ::= examples_section examples_block.
+
+examples_block ::= EXAMPLES COLON table_rows. {
+    BddScenario *s = &pCtx->scenarios[pCtx->current_scenario];
+    s->example_count++;
+}
+
+examples_block ::= tag_list EXAMPLES COLON table_rows. {
+    BddScenario *s = &pCtx->scenarios[pCtx->current_scenario];
+    s->example_count++;
+}
+
+/* ═══ Rule (Gherkin 6) ════════════════════════════════════════ */
+
+rule_def ::= RULE COLON TEXT_LINE(N) rule_body. {
+    /* Rules group scenarios with shared context */
+}
+
+rule_body ::= .
+rule_body ::= rule_body background_def.
+rule_body ::= rule_body scenario_def.
+rule_body ::= rule_body scenario_outline_def.
+
+/* ═══ Helper Functions (in %include or separate file) ═════════ */
+
+%code {
+static void add_step(BddParseCtx *pCtx, int keyword, const char *text) {
+    if (pCtx->state->total_steps < 8192) {
+        BddStep *step = &pCtx->steps[pCtx->state->total_steps];
+        BddStep_init(step);
+        step->keyword = keyword;
+        strncpy(step->text, text, 511);
+        step->line_number = pCtx->state->current_line;
+
+        BddScenario *s = &pCtx->scenarios[pCtx->current_scenario];
+        s->step_count++;
+        pCtx->state->total_steps++;
+    }
+}
+}

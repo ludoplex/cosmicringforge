@@ -1,0 +1,247 @@
+/*
+** Defgen Parser Grammar - Lemon LALR(1)
+** Processes .def files: constants, enums, flags, configs
+**
+** Build: lemon def.grammar
+** Output: def_parser.c, def_parser.h
+*/
+
+%include {
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
+#include "defgen_types.h"
+#include "def_lexer.h"
+
+typedef struct {
+    DefParseState *state;
+    DefConstant *constants;
+    DefEnum *enums;
+    DefEnumValue *enum_values;
+    DefFlags *flags;
+    DefFlagValue *flag_values;
+    DefConfig *configs;
+    DefConfigField *config_fields;
+} DefParseCtx;
+
+static DefParseCtx *ctx;
+}
+
+%token_type { Token }
+%extra_argument { DefParseCtx *pCtx }
+
+%syntax_error {
+    pCtx->state->error_code = 1;
+    snprintf(pCtx->state->error_msg, 256,
+             "Syntax error at line %d", pCtx->state->current_line);
+}
+
+/* ═══ Precedence ═══════════════════════════════════════════════ */
+
+%left PIPE.
+%left AMPERSAND.
+%left LSHIFT RSHIFT.
+
+/* ═══ Start Symbol ═════════════════════════════════════════════ */
+
+def_file ::= definition_list.
+
+/* ═══ Definition List ══════════════════════════════════════════ */
+
+definition_list ::= .
+definition_list ::= definition_list definition.
+definition_list ::= definition_list COMMENT.
+
+definition ::= const_def.
+definition ::= enum_def.
+definition ::= flags_def.
+definition ::= config_def.
+
+/* ═══ Constant Definition ══════════════════════════════════════ */
+
+const_def ::= CONST IDENT(N) EQUALS const_value(V). {
+    if (pCtx->state->const_count < 1024) {
+        DefConstant *c = &pCtx->constants[pCtx->state->const_count];
+        DefConstant_init(c);
+        strncpy(c->name, N.str, 63);
+        c->value_type = V.type;
+        c->int_value = V.ival;
+        pCtx->state->const_count++;
+    }
+}
+
+%type const_value { ConstVal }
+
+const_value(A) ::= NUMBER(N). {
+    A.type = 0; /* int */
+    A.ival = N.ival;
+}
+
+const_value(A) ::= STRING_LIT(S). {
+    A.type = 2; /* string */
+    strncpy(A.sval, S.str, 255);
+}
+
+const_value(A) ::= expr(E). {
+    A.type = 3; /* expression */
+    A.ival = E;
+}
+
+/* ═══ Expression (for computed constants) ══════════════════════ */
+
+%type expr { int64_t }
+
+expr(A) ::= NUMBER(N). { A = N.ival; }
+expr(A) ::= expr(L) PIPE expr(R). { A = L | R; }
+expr(A) ::= expr(L) AMPERSAND expr(R). { A = L & R; }
+expr(A) ::= NUMBER(L) LSHIFT NUMBER(R). { A = L.ival << R.ival; }
+expr(A) ::= LPAREN expr(E) RPAREN. { A = E; }
+
+/* ═══ Enum Definition ══════════════════════════════════════════ */
+
+enum_def ::= ENUM IDENT(N) enum_options(O) LBRACE enum_body RBRACE. {
+    if (pCtx->state->enum_count < 128) {
+        DefEnum *e = &pCtx->enums[pCtx->state->enum_count];
+        DefEnum_init(e);
+        strncpy(e->name, N.str, 63);
+        strncpy(e->prefix, O.prefix, 31);
+        e->generate_xmacro = 1;  /* Always generate X-Macros */
+        e->generate_strings = 1;
+        pCtx->state->enum_count++;
+    }
+}
+
+%type enum_options { EnumOpts }
+
+enum_options(A) ::= . {
+    A.prefix[0] = '\0';
+}
+
+enum_options(A) ::= LBRACKET PREFIX COLON STRING_LIT(P) RBRACKET. {
+    strncpy(A.prefix, P.str, 31);
+}
+
+enum_body ::= .
+enum_body ::= enum_body enum_value.
+enum_body ::= enum_body COMMENT.
+
+enum_value ::= IDENT(N) EQUALS NUMBER(V). {
+    DefEnum *e = &pCtx->enums[pCtx->state->enum_count - 1];
+    int idx = e->value_count;
+    DefEnumValue *ev = &pCtx->enum_values[pCtx->state->enum_count * 256 + idx];
+    DefEnumValue_init(ev);
+    strncpy(ev->name, N.str, 63);
+    ev->value = V.ival;
+    ev->auto_value = 0;
+    e->value_count++;
+}
+
+enum_value ::= IDENT(N). {
+    DefEnum *e = &pCtx->enums[pCtx->state->enum_count - 1];
+    int idx = e->value_count;
+    DefEnumValue *ev = &pCtx->enum_values[pCtx->state->enum_count * 256 + idx];
+    DefEnumValue_init(ev);
+    strncpy(ev->name, N.str, 63);
+    ev->auto_value = 1;  /* Will be assigned sequentially */
+    e->value_count++;
+}
+
+/* ═══ Flags Definition ═════════════════════════════════════════ */
+
+flags_def ::= FLAGS IDENT(N) flags_options(O) LBRACE flags_body RBRACE. {
+    if (pCtx->state->flags_count < 128) {
+        DefFlags *f = &pCtx->flags[pCtx->state->flags_count];
+        DefFlags_init(f);
+        strncpy(f->name, N.str, 63);
+        strncpy(f->prefix, O.prefix, 31);
+        f->generate_xmacro = 1;
+        f->generate_has_flag = 1;
+        f->generate_to_string = 1;
+        pCtx->state->flags_count++;
+    }
+}
+
+%type flags_options { FlagsOpts }
+
+flags_options(A) ::= . {
+    A.prefix[0] = '\0';
+}
+
+flags_options(A) ::= LBRACKET PREFIX COLON STRING_LIT(P) RBRACKET. {
+    strncpy(A.prefix, P.str, 31);
+}
+
+flags_body ::= .
+flags_body ::= flags_body flag_value.
+flags_body ::= flags_body COMMENT.
+
+flag_value ::= IDENT(N) EQUALS HEX_NUMBER(V). {
+    DefFlags *f = &pCtx->flags[pCtx->state->flags_count - 1];
+    int idx = f->flag_count;
+    DefFlagValue *fv = &pCtx->flag_values[pCtx->state->flags_count * 64 + idx];
+    DefFlagValue_init(fv);
+    strncpy(fv->name, N.str, 63);
+    fv->explicit_value = V.ival;
+    f->flag_count++;
+}
+
+/* ═══ Config Definition ════════════════════════════════════════ */
+
+config_def ::= CONFIG IDENT(N) LBRACE config_body RBRACE. {
+    if (pCtx->state->config_count < 64) {
+        DefConfig *c = &pCtx->configs[pCtx->state->config_count];
+        DefConfig_init(c);
+        strncpy(c->name, N.str, 63);
+        c->generate_defaults = 1;
+        c->generate_validate = 1;
+        c->generate_from_ini = 1;
+        pCtx->state->config_count++;
+    }
+}
+
+config_body ::= .
+config_body ::= config_body config_field.
+config_body ::= config_body COMMENT.
+
+config_field ::= IDENT(N) COLON type_spec(T) config_constraints(C). {
+    DefConfig *cfg = &pCtx->configs[pCtx->state->config_count - 1];
+    int idx = cfg->field_count;
+    DefConfigField *f = &pCtx->config_fields[pCtx->state->config_count * 64 + idx];
+    DefConfigField_init(f);
+    strncpy(f->name, N.str, 63);
+    strncpy(f->field_type, T.str, 31);
+    if (C.has_default) strncpy(f->default_value, C.default_str, 63);
+    if (C.has_range) { f->has_range = 1; f->range_min = C.range_min; f->range_max = C.range_max; }
+    cfg->field_count++;
+}
+
+%type type_spec { TypeStr }
+%type config_constraints { ConfigConstraints }
+
+type_spec(A) ::= IDENT(T). {
+    strncpy(A.str, T.str, 31);
+}
+
+config_constraints(A) ::= . {
+    memset(&A, 0, sizeof(A));
+}
+
+config_constraints(A) ::= EQUALS const_value(V) opt_range(R). {
+    A.has_default = 1;
+    snprintf(A.default_str, 64, "%lld", (long long)V.ival);
+    A.has_range = R.has_range;
+    A.range_min = R.range_min;
+    A.range_max = R.range_max;
+}
+
+%type opt_range { RangeConstraint }
+
+opt_range(A) ::= . {
+    A.has_range = 0;
+}
+
+opt_range(A) ::= LBRACKET RANGE COLON NUMBER(L) DOTDOT NUMBER(H) RBRACKET. {
+    A.has_range = 1;
+    A.range_min = L.ival;
+    A.range_max = H.ival;
+}

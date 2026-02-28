@@ -1,0 +1,103 @@
+# Grammar Meta-Spec - Lemon Parser Grammar Structure
+# This schema defines what .grammar (Lemon) files contain.
+#
+# Lemon is THE Ring 0 parser generator - vendored from SQLite.
+# Every generator that parses specs uses: lexgen (.lex) + Lemon (.grammar)
+#
+# Lemon grammar file structure:
+#   %include { /* C code */ }
+#   %token_type { Token }
+#   %left PLUS MINUS.
+#   %right NOT.
+#   program ::= statement_list.
+#   statement ::= expr SEMI.
+
+# ── Token Declaration ───────────────────────────────────────────
+
+type GrammarToken {
+    name: string[64] [not_empty]       # TOKEN_NAME
+    value: i32 [default: 0]            # Numeric value if explicit
+    auto_value: i32 [default: 1]       # Auto-assign value
+}
+
+# ── Precedence Declaration ──────────────────────────────────────
+
+type GrammarPrecedence {
+    level: i32 [range: 0..255]         # Precedence level (higher = tighter)
+    assoc: u8 [range: 0..2]            # 0=left, 1=right, 2=nonassoc
+    token_count: i32 [range: 0..16]
+    tokens: string[256]                # Space-separated token names
+}
+
+# ── Symbol (terminal or non-terminal) ───────────────────────────
+
+type GrammarSymbol {
+    name: string[64] [not_empty]
+    is_terminal: i32 [default: 0]      # 1 if token, 0 if non-terminal
+    type_name: string[64]              # C type for semantic value
+    destructor: string[256]            # Code to free value
+    line_number: i32
+}
+
+# ── Production Rule ─────────────────────────────────────────────
+
+type GrammarRule {
+    lhs: string[64] [not_empty]        # Left-hand side non-terminal
+    rhs_count: i32 [range: 0..32]      # Number of RHS symbols
+    rhs_symbols: string[512]           # Space-separated RHS symbols
+    rhs_aliases: string[512]           # Aliases for semantic actions (A B(x) C(y))
+    action: string[4096]               # C code for reduction
+    precedence: string[64]             # Override precedence [PREC]
+    line_number: i32
+}
+
+# ── Directive ───────────────────────────────────────────────────
+
+type GrammarDirective {
+    name: string[64] [not_empty]       # include, token_type, left, etc.
+    value: string[1024]                # Directive argument/body
+    line_number: i32
+}
+
+# ── Grammar Definition ──────────────────────────────────────────
+
+type GrammarDef {
+    name: string[64] [not_empty]       # Grammar name (from filename)
+    start_symbol: string[64]           # Start non-terminal
+    token_type: string[64]             # %token_type value
+    token_count: i32 [range: 0..256]
+    rule_count: i32 [range: 0..1024]
+    precedence_levels: i32 [range: 0..32]
+    has_error_symbol: i32 [default: 0] # Uses 'error' for recovery
+}
+
+# ── Include Block ───────────────────────────────────────────────
+
+type GrammarInclude {
+    position: i32 [range: 0..2]        # 0=top, 1=token_type, 2=bottom
+    code: string[8192]
+    line_number: i32
+}
+
+# ── Parse State ─────────────────────────────────────────────────
+
+type GrammarParseState {
+    rule_count: i32 [range: 0..1024]
+    symbol_count: i32 [range: 0..512]
+    conflict_count: i32 [default: 0]   # Shift/reduce conflicts
+    current_line: i32 [default: 1]
+    error_code: i32 [default: 0]
+    error_msg: string[256]
+}
+
+# ── Lemon Output Configuration ──────────────────────────────────
+
+type LemonConfig {
+    input_path: string[512] [not_empty]
+    output_dir: string[512] [not_empty]
+    output_base: string[64]            # Base name for .c and .h
+    template_file: string[256]         # Custom lempar.c template
+    compress: i32 [default: 1]         # Compress action tables
+    statistics: i32 [default: 0]       # Print grammar statistics
+    trace: i32 [default: 0]            # Generate trace output
+}

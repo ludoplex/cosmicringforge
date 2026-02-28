@@ -1,0 +1,130 @@
+# Protobuf-C Meta-Spec - Protocol Buffer Compiler for C
+# Ring 2 tool - C++ toolchain, generates Ring 0 C code
+#
+# Protobuf-c processes .proto files and generates C serialization code.
+# Wire protocol compatible with Google Protocol Buffers.
+#
+# This schema defines .proto file structure for documentation/tooling.
+#
+# Workflow:
+#   1. Define messages in .proto file
+#   2. Run: protoc --c_out=gen/ message.proto
+#   3. Commit generated .pb-c.h and .pb-c.c
+
+# ── Field Definition ────────────────────────────────────────────
+
+type ProtoField {
+    name: string[64] [not_empty]
+    field_number: i32 [range: 1..536870911]  # Proto field numbers
+    field_type: u8 [range: 0..17]        # See ProtoFieldType enum
+    type_name: string[128]               # For message/enum types
+    label: u8 [range: 0..2]              # 0=optional, 1=required, 2=repeated
+    default_value: string[128]
+    oneof_index: i32 [default: -1]       # -1 if not in oneof
+    packed: i32 [default: 0]             # Packed encoding for repeated
+    deprecated: i32 [default: 0]
+    json_name: string[64]                # JSON field name
+}
+
+# ── Message Definition ──────────────────────────────────────────
+
+type ProtoMessage {
+    name: string[128] [not_empty]
+    full_name: string[256]               # package.MessageName
+    field_count: i32 [range: 0..512]
+    nested_type_count: i32 [range: 0..64]
+    enum_type_count: i32 [range: 0..32]
+    oneof_count: i32 [range: 0..16]
+    reserved_ranges: string[256]         # Reserved field numbers
+    reserved_names: string[256]          # Reserved field names
+    deprecated: i32 [default: 0]
+}
+
+# ── Enum Definition ─────────────────────────────────────────────
+
+type ProtoEnum {
+    name: string[128] [not_empty]
+    full_name: string[256]
+    value_count: i32 [range: 0..256]
+    allow_alias: i32 [default: 0]        # Allow duplicate values
+    deprecated: i32 [default: 0]
+}
+
+# ── Enum Value ──────────────────────────────────────────────────
+
+type ProtoEnumValue {
+    name: string[64] [not_empty]
+    number: i32                          # Can be negative
+    deprecated: i32 [default: 0]
+}
+
+# ── Oneof Definition ────────────────────────────────────────────
+
+type ProtoOneof {
+    name: string[64] [not_empty]
+    field_count: i32 [range: 0..32]
+}
+
+# ── Service Definition (for RPC) ────────────────────────────────
+
+type ProtoService {
+    name: string[128] [not_empty]
+    full_name: string[256]
+    method_count: i32 [range: 0..64]
+    deprecated: i32 [default: 0]
+}
+
+# ── RPC Method ──────────────────────────────────────────────────
+
+type ProtoMethod {
+    name: string[64] [not_empty]
+    input_type: string[256] [not_empty]  # Request message type
+    output_type: string[256] [not_empty] # Response message type
+    client_streaming: i32 [default: 0]
+    server_streaming: i32 [default: 0]
+    deprecated: i32 [default: 0]
+}
+
+# ── File Definition ─────────────────────────────────────────────
+
+type ProtoFile {
+    name: string[256] [not_empty]        # Filename
+    package: string[128]                 # Package name
+    syntax: string[8] [default: "proto3"] # proto2 or proto3
+    message_count: i32 [range: 0..256]
+    enum_count: i32 [range: 0..64]
+    service_count: i32 [range: 0..16]
+    dependency_count: i32 [range: 0..64] # import statements
+    public_dependency_count: i32 [default: 0]
+    weak_dependency_count: i32 [default: 0]
+}
+
+# ── Import Statement ────────────────────────────────────────────
+
+type ProtoImport {
+    file_path: string[256] [not_empty]
+    is_public: i32 [default: 0]
+    is_weak: i32 [default: 0]
+}
+
+# ── Protoc-C Generator Config ───────────────────────────────────
+
+type ProtocCConfig {
+    input_path: string[512] [not_empty]
+    output_dir: string[512] [not_empty]
+    include_paths: string[1024]          # -I paths
+    generate_rpc: i32 [default: 0]       # Generate RPC code
+    generate_pack: i32 [default: 1]      # Generate pack/unpack
+    generate_init: i32 [default: 1]      # Generate init functions
+}
+
+# ── Parse State ─────────────────────────────────────────────────
+
+type ProtoParseState {
+    file_count: i32 [range: 0..128]
+    message_count: i32 [range: 0..1024]
+    enum_count: i32 [range: 0..256]
+    service_count: i32 [range: 0..64]
+    error_code: i32 [default: 0]
+    error_msg: string[256]
+}

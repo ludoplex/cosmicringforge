@@ -1,0 +1,166 @@
+# EEZ Studio Meta-Spec - Embedded GUI Designer
+# Ring 2 tool - Node.js/Electron, generates Ring 0 C code (LVGL)
+#
+# EEZ Studio creates .eez-project files containing:
+# - GUI layouts with widgets
+# - Actions and data bindings
+# - Themes and styles
+#
+# Generates LVGL-compatible C code for embedded displays.
+#
+# Workflow:
+#   1. Design UI in EEZ Studio visual editor
+#   2. Export: File -> Build
+#   3. Commit generated ui.h, ui.c, screens/*.c
+
+# ── Widget Definition ───────────────────────────────────────────
+
+type EezWidget {
+    object_type: string[32] [not_empty]  # Container, Label, Button, etc.
+    name: string[64]
+    x: i32 [default: 0]
+    y: i32 [default: 0]
+    width: i32 [default: 100]
+    height: i32 [default: 50]
+    style: string[64]                    # Style reference
+    visible: i32 [default: 1]
+    enabled: i32 [default: 1]
+    data: string[256]                    # Data binding expression
+    action: string[256]                  # Action reference
+    children_count: i32 [default: 0]
+}
+
+# ── Label Widget ────────────────────────────────────────────────
+
+type EezLabel {
+    text: string[256]
+    text_type: u8 [range: 0..2]          # 0=literal, 1=translated, 2=data
+    font: string[64]
+    text_align: u8 [range: 0..2]         # 0=left, 1=center, 2=right
+}
+
+# ── Button Widget ───────────────────────────────────────────────
+
+type EezButton {
+    text: string[128]
+    icon: string[64]
+    checkable: i32 [default: 0]
+    checked: i32 [default: 0]
+    disabled_style: string[64]
+    pressed_style: string[64]
+}
+
+# ── Input Widget ────────────────────────────────────────────────
+
+type EezInput {
+    input_type: u8 [range: 0..4]         # 0=text, 1=number, 2=password, 3=textarea, 4=slider
+    min_value: f64 [default: 0.0]
+    max_value: f64 [default: 100.0]
+    step: f64 [default: 1.0]
+    placeholder: string[128]
+    unit: string[16]
+}
+
+# ── Style Definition ────────────────────────────────────────────
+
+type EezStyle {
+    name: string[64] [not_empty]
+    bg_color: u32 [default: 0xFFFFFF]
+    text_color: u32 [default: 0x000000]
+    border_color: u32 [default: 0x000000]
+    border_width: i32 [default: 0]
+    border_radius: i32 [default: 0]
+    padding_top: i32 [default: 0]
+    padding_bottom: i32 [default: 0]
+    padding_left: i32 [default: 0]
+    padding_right: i32 [default: 0]
+    font: string[64]
+    opacity: u8 [default: 255]
+}
+
+# ── Page/Screen Definition ──────────────────────────────────────
+
+type EezPage {
+    name: string[64] [not_empty]
+    width: i32 [default: 320]
+    height: i32 [default: 240]
+    widget_count: i32 [range: 0..256]
+    style: string[64]
+    close_page_if_touched_outside: i32 [default: 0]
+    use_style: i32 [default: 1]
+}
+
+# ── Action Definition ───────────────────────────────────────────
+
+type EezAction {
+    name: string[64] [not_empty]
+    action_type: u8 [range: 0..10]       # 0=native, 1=flow, 2=navigate, etc.
+    implementation: string[1024]          # C code or flow definition
+}
+
+# ── Data Item Definition ────────────────────────────────────────
+
+type EezDataItem {
+    name: string[64] [not_empty]
+    data_type: string[32] [not_empty]    # integer, float, string, enum, etc.
+    default_value: string[128]
+    enum_values: string[512]             # Comma-separated for enum type
+}
+
+# ── Font Definition ─────────────────────────────────────────────
+
+type EezFont {
+    name: string[64] [not_empty]
+    source: string[256]                  # TTF/OTF file path
+    size: i32 [range: 6..144]
+    bpp: u8 [range: 1..8]                # Bits per pixel
+    include_glyphs: string[256]          # Unicode ranges to include
+}
+
+# ── Bitmap/Image Definition ─────────────────────────────────────
+
+type EezBitmap {
+    name: string[64] [not_empty]
+    source: string[256] [not_empty]      # Image file path
+    bpp: u8 [range: 1..32]
+    compressed: i32 [default: 0]
+}
+
+# ── Theme Definition ────────────────────────────────────────────
+
+type EezTheme {
+    name: string[64] [not_empty]
+    colors: string[1024]                 # JSON color definitions
+    style_count: i32 [range: 0..64]
+}
+
+# ── Project Configuration ───────────────────────────────────────
+
+type EezProjectConfig {
+    project_name: string[64] [not_empty]
+    project_version: string[16]
+    display_width: i32 [default: 320]
+    display_height: i32 [default: 240]
+    color_format: string[16] [default: "RGB565"]
+    target: string[32] [default: "LVGL"]  # LVGL, EEZ-Framework
+    lvgl_version: string[8] [default: "8.3"]
+    page_count: i32 [range: 1..64]
+    font_count: i32 [range: 0..32]
+    bitmap_count: i32 [range: 0..128]
+    style_count: i32 [range: 0..64]
+    action_count: i32 [range: 0..128]
+    data_item_count: i32 [range: 0..256]
+}
+
+# ── Build Configuration ─────────────────────────────────────────
+
+type EezBuildConfig {
+    output_dir: string[256] [not_empty]
+    generate_images: i32 [default: 1]
+    generate_fonts: i32 [default: 1]
+    generate_styles: i32 [default: 1]
+    generate_screens: i32 [default: 1]
+    generate_actions: i32 [default: 1]
+    compress_images: i32 [default: 0]
+    lvgl_include_path: string[256]
+}

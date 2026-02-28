@@ -1,3 +1,60 @@
+# CosmicRingForge
+
+Spec-driven C code generation framework. Define types in `.schema` files, generate C code.
+
+## Quick Start
+
+```sh
+git clone https://github.com/ludoplex/cosmicringforge.git
+cd cosmicringforge
+make example
+```
+
+Output:
+```
+╔══════════════════════════════════════════════════════════════╗
+║           CosmicRingForge - Example Application              ║
+╚══════════════════════════════════════════════════════════════╝
+
+── App Configuration ──
+  Name:            MyApp
+  Port:            3000
+  Max Connections: 100
+  Status:          ✓ Valid
+```
+
+## How It Works
+
+1. Define types in `examples/config.schema`:
+```
+type AppConfig {
+    name: string[64] [not_empty]
+    port: i32 [range: 1..65535, default: 8080]
+    max_connections: i32 [range: 1..10000, default: 100]
+}
+```
+
+2. Generate C code:
+```sh
+make example  # Runs schemagen → generates config_types.{h,c}
+```
+
+3. Use in your code:
+```c
+#include "config_types.h"
+
+AppConfig app;
+AppConfig_init(&app);           // Sets defaults
+strncpy(app.name, "MyApp", 63);
+app.port = 3000;
+
+if (AppConfig_validate(&app)) {
+    // Valid configuration
+}
+```
+
+---
+
 # MBSE Code Generation Stacks
 
 Three approaches to Model-Based Systems Engineering (MBSE) code generation, organized by toolchain philosophy and bootstrap requirements.

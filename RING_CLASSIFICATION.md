@@ -1,8 +1,33 @@
 # Ring Classification
 
 > **BDE with Models** — Behavior Driven Engineering with Models.
+>
+> **THIS DOCUMENT IS REQUIRED READING** — See INTEROP_MATRIX.md for ground truth.
 
-Tools and dependencies are classified into three rings based on their bootstrap requirements and toolchain dependencies. All rings output C code that compiles with cosmocc.
+Tools and dependencies are classified into three rings based on their bootstrap requirements and toolchain dependencies. All rings output C code that compiles with cosmocc to Actually Portable Executables (APE).
+
+## Universal Portability via Cosmopolitan
+
+All Ring 0 and Ring 1 tools are built with [cosmocc](https://github.com/jart/cosmopolitan) to produce APE binaries that run on:
+- Linux (x86_64, aarch64)
+- macOS (x86_64, arm64)
+- Windows (x86_64)
+- FreeBSD, OpenBSD, NetBSD (x86_64)
+
+```bash
+# Install cosmocc (one-time setup)
+mkdir -p ~/.cosmocc
+curl -L https://cosmo.zip/pub/cosmocc/cosmocc.zip -o /tmp/cosmocc.zip
+unzip /tmp/cosmocc.zip -d ~/.cosmocc
+export PATH="$HOME/.cosmocc/bin:$PATH"
+
+# Build portable tools
+make tools    # Ring 0: schemagen, lemon (APE)
+make ring1    # Ring 1: makeheaders (APE)
+make app      # Application (APE)
+```
+
+Reference: [jart/cosmopolitan](https://github.com/jart/cosmopolitan)
 
 ---
 
@@ -58,38 +83,150 @@ Tools and dependencies are classified into three rings based on their bootstrap 
 
 ---
 
-## Ring 1: Velocity Tools
+## Ring 1: Velocity Tools (Portable)
 
 **Requirement**: Ring 0 + additional C-based tools that enhance productivity but aren't strictly required.
 
-| Tool | Purpose | Fallback | Spec File |
-|------|---------|----------|-----------|
-| gengetopt | CLI argument parser generator | Hand-written parser | `ring1/gengetopt.schema` |
-| makeheaders | Auto-generate header files | Manual headers | - |
-| AddressSanitizer | Memory error detection | Valgrind or manual testing | `ring1/sanitizers.schema` |
-| UBSan | Undefined behavior detection | Manual code review | `ring1/sanitizers.schema` |
-| ThreadSanitizer | Data race detection | Manual review | `ring1/sanitizers.schema` |
-| cppcheck | Static analysis | Manual review | `ring1/cppcheck.schema` |
+**Rule**: If a Ring-1 tool is unavailable, the build MUST still succeed (with reduced functionality or skipped checks).
 
-### Ring 1 Spec Files
+**Portability**: Ring 1 tools are built with cosmocc to APE format for universal OS support.
+
+### Ring 1 Tool Inventory
+
+| Tool | Source | Build | Format | Capability | Portable |
+|------|--------|-------|--------|------------|----------|
+| makeheaders | Vendored | `make ring1` | `.c` → `.h` | Auto-generate headers | ✓ APE |
+| gengetopt | Vendored | `make ring1` | `.ggo` → `.c` | CLI parser generator | ✓ APE |
+| cppcheck | System | see below | `.c` → report | Static analysis | ○ Native |
+| ASan/UBSan | Compiler | flags | runtime | Memory/UB detection | ✓ cosmocc |
+| TSan | Compiler | flags | runtime | Data race detection | ✓ cosmocc |
+
+### Portable Ring 1 Tools (APE Binaries)
+
+Tools in `tools/ring1/` are built with cosmocc to produce APE binaries:
+
+```bash
+# Build with cosmocc (portable)
+make ring1              # Auto-detects cosmocc
+
+# Or explicitly
+CC=cosmocc make ring1   # Force cosmocc
+
+# Resulting APE binaries work everywhere:
+./build/makeheaders     # Linux, macOS, Windows, BSD
+./build/gengetopt       # Linux, macOS, Windows, BSD
+```
+
+### Cosmopolitan Prebuilts Reference
+
+Some tools are available as prebuilt APE binaries from cosmopolitan:
+
+| Tool | Prebuilt | Source |
+|------|----------|--------|
+| make | [cosmo.zip/pub/cosmos/bin/make](https://cosmo.zip/pub/cosmos/bin/make) | GNU Make as APE |
+| gcc | [cosmo.zip/pub/cosmos/bin/gcc](https://cosmo.zip/pub/cosmos/bin/gcc) | GCC as APE |
+| vim | [cosmo.zip/pub/cosmos/bin/vim](https://cosmo.zip/pub/cosmos/bin/vim) | Vim as APE |
+
+See: [cosmo.zip/pub/cosmos/bin/](https://cosmo.zip/pub/cosmos/bin/) for full list.
+
+### Tool Capabilities
+
+#### makeheaders (Vendored)
+**Location**: `tools/ring1/makeheaders/makeheaders.c`
+**Build**: `make ring1`
+**Purpose**: Scans C source files and auto-generates corresponding header files with exported function declarations.
+
+```bash
+# Usage
+build/makeheaders src/*.c gen/domain/*.c
+
+# Capability
+# - Finds functions without 'static' keyword
+# - Generates .h with prototypes
+# - Avoids manual header maintenance
+```
+
+#### gengetopt (System)
+**Install**: `apt install gengetopt`
+**Format**: `.ggo` (gengetopt option file)
+**Purpose**: Generates C code for parsing command-line arguments.
+
+```bash
+# Example .ggo spec (specs/interface/myapp.ggo)
+package "myapp"
+version "1.0"
+option "verbose" v "Enable verbose output" flag off
+option "config"  c "Config file path" string optional
+
+# Generated
+gen/interface/myapp_cli.c
+gen/interface/myapp_cli.h
+```
+
+**Capability**: Type-safe CLI parsing, automatic --help/--version, man page generation.
+
+#### cppcheck (System)
+**Install**: `apt install cppcheck`
+**Purpose**: Static analysis for C/C++ code.
+
+```bash
+# Usage
+make lint
+
+# Capability
+# - Detects null pointer dereferences
+# - Finds memory leaks
+# - Identifies undefined behavior
+# - Style and portability warnings
+```
+
+#### Sanitizers (Compiler Built-in)
+**Requirement**: GCC 4.8+ or Clang 3.1+
+**Purpose**: Runtime error detection.
+
+```bash
+# AddressSanitizer + UBSan
+make sanitize
+# Detects: buffer overflows, use-after-free, memory leaks
+# Detects: integer overflow, null dereference, alignment issues
+
+# ThreadSanitizer
+make tsan
+# Detects: data races, deadlocks
+```
+
+### Ring 1 Files
 
 ```
-strict-purist/specs/ring1/
-├── gengetopt.schema    # Meta-spec: what .ggo files contain
-├── gengetopt.ggo       # Example CLI specification
-├── cppcheck.schema     # Static analysis configuration
-└── sanitizers.schema   # Sanitizer options and suppressions
+tools/ring1/
+├── VENDORS.txt              # External tool sources
+└── makeheaders/
+    └── makeheaders.c        # Vendored from SQLite
+
+specs/interface/
+└── *.ggo                    # CLI specs for gengetopt
 ```
 
 ### Ring 1 Make Targets
 
 ```makefile
-gen-cli:    gengetopt < specs/cli.ggo > gen/cmdline.c
-lint:       cppcheck --enable=all src/
-sanitize:   $(CC) -fsanitize=address,undefined $(SRCS)
+make ring1      # Build vendored Ring 1 tools (makeheaders)
+make headers    # Run makeheaders on src/*.c
+make lint       # Run cppcheck static analysis
+make sanitize   # Build with ASan + UBSan
+make tsan       # Build with ThreadSanitizer
 ```
 
-**Rule**: If a Ring-1 tool is unavailable, the build must still succeed (possibly with reduced functionality or skipped checks).
+### Ring 1 in regen-all.sh
+
+The regen script auto-detects Ring 1 tools:
+```
+── Ring 1: Velocity tools (auto-detected) ──────────────────────────────────
+   (Ring 0 + optional C tools)
+[makeheaders] Scanning src/*.c for exportable functions...
+[gengetopt] Processing specs/**/*.ggo...
+[cppcheck] Available for static analysis (run: make lint)
+```
 
 ---
 

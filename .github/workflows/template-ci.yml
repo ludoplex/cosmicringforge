@@ -1,0 +1,203 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# template-ci.yml - CI for projects USING CosmicRingForge as a template
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# This is the workflow that template users get when they create a project.
+# Tests the user's application, not the framework itself.
+#
+# After running `scripts/template-init.sh`, this file becomes `.github/workflows/ci.yml`
+#
+# Jobs:
+#   1. build - Build and test application
+#   2. drift - Verify generated code matches specs
+#   3. ape - Build APE binary (on main branch)
+#   4. bdd - Run BDD tests (when bddgen is available)
+#
+# For repo development CI, see: repo-ci.yml
+#
+# ══════════════════════════════════════════════════════════════════════════════
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  # Set to 'true' to enable APE builds on every push
+  ENABLE_APE_BUILD: 'false'
+
+jobs:
+  # ── Build and Test ─────────────────────────────────────────────────────────
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies (if needed)
+        run: |
+          # Uncomment to install optional dependencies:
+          # sudo apt-get update
+          # sudo apt-get install -y libsqlite3-dev
+
+      - name: Build Ring 0 tools
+        run: make tools
+
+      - name: Regenerate from specs
+        run: make regen
+
+      - name: Build application
+        run: make app
+
+      - name: Run tests
+        run: |
+          if [ -x scripts/test.sh ]; then
+            ./scripts/test.sh
+          else
+            echo "No test script found, skipping"
+          fi
+
+      - name: Run application (smoke test)
+        run: make run
+
+  # ── Drift Detection ────────────────────────────────────────────────────────
+  drift:
+    name: Drift Detection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build tools
+        run: make tools
+
+      - name: Regenerate from specs
+        run: make regen
+
+      - name: Check for drift
+        run: |
+          if ! git diff --quiet gen/; then
+            echo "══════════════════════════════════════════════════════════════"
+            echo " ERROR: Generated code has drifted from specs!"
+            echo "══════════════════════════════════════════════════════════════"
+            echo ""
+            echo "Files with drift:"
+            git diff --name-only gen/
+            echo ""
+            echo "To fix:"
+            echo "  1. Run 'make regen' locally"
+            echo "  2. Review the changes: git diff gen/"
+            echo "  3. Commit the regenerated code: git add gen/ && git commit"
+            echo ""
+            echo "══════════════════════════════════════════════════════════════"
+            exit 1
+          fi
+          echo "No drift detected - generated code matches specs"
+
+  # ── APE Build (Actually Portable Executable) ───────────────────────────────
+  ape:
+    name: APE Build
+    runs-on: ubuntu-latest
+    # Only run on main branch pushes (not PRs)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [build, drift]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cosmocc
+        run: |
+          mkdir -p ~/.cosmocc
+          curl -L https://cosmo.zip/pub/cosmocc/cosmocc.zip -o /tmp/cosmocc.zip
+          unzip -q /tmp/cosmocc.zip -d ~/.cosmocc
+          echo "$HOME/.cosmocc/bin" >> $GITHUB_PATH
+
+      - name: Build APE binary
+        run: |
+          export CC=cosmocc
+          make clean all
+
+      - name: Verify APE binary
+        run: |
+          file build/app
+          ls -la build/app
+
+      - name: Upload APE artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-ape
+          path: build/app
+          retention-days: 30
+
+  # ── BDD Tests ──────────────────────────────────────────────────────────────
+  bdd:
+    name: BDD Tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build tools
+        run: make tools
+
+      - name: List feature files
+        run: |
+          echo "BDD Feature Files:"
+          find specs -name "*.feature" 2>/dev/null | while read f; do
+            scenarios=$(grep -c "Scenario" "$f" 2>/dev/null || echo 0)
+            echo "  - $f ($scenarios scenarios)"
+          done || echo "  (no feature files found)"
+
+      - name: Run BDD tests
+        run: |
+          if [ -x build/bddgen ]; then
+            echo "Running BDD tests..."
+            make test
+          else
+            echo "bddgen not implemented yet"
+            echo "Feature files are validated for syntax only"
+
+            # Basic syntax validation of feature files
+            find specs -name "*.feature" 2>/dev/null | while read f; do
+              if grep -q "Feature:" "$f" && grep -q "Scenario" "$f"; then
+                echo "  [OK] $f"
+              else
+                echo "  [WARN] $f - may have syntax issues"
+              fi
+            done || echo "No feature files to validate"
+          fi
+
+  # ── Ring 2 Tools (Optional) ────────────────────────────────────────────────
+  ring2:
+    name: Ring 2 Tools
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Ring 2 tool availability
+        run: |
+          echo "Ring 2 Tool Detection:"
+          echo "  protoc:  $(command -v protoc && protoc --version || echo 'not installed')"
+          echo "  flatcc:  $(command -v flatcc && flatcc --version 2>&1 | head -1 || echo 'not installed')"
+          echo "  dotnet:  $(command -v dotnet && dotnet --version || echo 'not installed')"
+
+      - name: Install protobuf-c (optional)
+        run: |
+          if find gen -name "*.proto" 2>/dev/null | grep -q .; then
+            sudo apt-get update
+            sudo apt-get install -y protobuf-compiler protobuf-c-compiler
+          fi
+        continue-on-error: true
+
+      - name: Compile .proto files (if any)
+        run: |
+          if command -v protoc >/dev/null 2>&1; then
+            find gen -name "*.proto" 2>/dev/null | while read proto; do
+              echo "Compiling $proto..."
+              protoc --c_out=/tmp "$proto" 2>/dev/null || echo "  (compile skipped)"
+            done
+          fi
+        continue-on-error: true

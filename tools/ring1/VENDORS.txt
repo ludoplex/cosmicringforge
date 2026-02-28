@@ -1,22 +1,61 @@
-# Ring 1 Velocity Tools - External Sources
+# Ring 1 Velocity Tools - Portable via Cosmopolitan
 #
-# These tools are optional and can be installed from package managers
-# or built from source.
+# All Ring 1 tools compile with cosmocc to APE binaries.
+# APE binaries run on Linux, macOS, Windows, FreeBSD, OpenBSD, NetBSD.
+#
+# See: RING_CLASSIFICATION.md for complete documentation.
+# ══════════════════════════════════════════════════════════════════════════════
+
+makeheaders:
+  Source: https://www.hwaci.com/sw/mkhdr/
+  License: BSD-2-Clause
+  Author: D. Richard Hipp (SQLite author)
+  Purpose: Auto-generate header files from C source
+  Vendored: tools/ring1/makeheaders/makeheaders.c
+  Build: make ring1 (uses cosmocc if available)
 
 gengetopt:
   Source: https://ftp.gnu.org/gnu/gengetopt/
-  Package: apt install gengetopt
-  Purpose: CLI argument parser generator
+  License: GPL-3.0 (generated code has linking exception)
+  Purpose: CLI argument parser generator (.ggo → .c)
+  Vendored: tools/ring1/gengetopt/ (see README.md)
+  Build: make ring1 (uses cosmocc if available)
 
-makeheaders:
-  Source: https://sqlite.org/src/file/tool/makeheaders.c
-  Purpose: Auto-generate header files from C source
+# ── System Tools (not vendored) ──────────────────────────────────────────────
 
 cppcheck:
   Source: https://cppcheck.sourceforge.io/
-  Package: apt install cppcheck
+  License: GPL-3.0
+  Install: apt install cppcheck / brew install cppcheck
   Purpose: Static analysis
+  Note: Not yet available as APE, use system install
 
-AddressSanitizer/UBSan:
-  Included with GCC/Clang
-  Purpose: Runtime error detection
+# ── Compiler Built-ins ───────────────────────────────────────────────────────
+
+AddressSanitizer (ASan):
+  Included with: GCC 4.8+, Clang 3.1+, cosmocc
+  Purpose: Memory error detection (buffer overflow, use-after-free)
+  Build: make sanitize
+
+UndefinedBehaviorSanitizer (UBSan):
+  Included with: GCC 4.9+, Clang 3.3+, cosmocc
+  Purpose: Undefined behavior detection
+  Build: make sanitize
+
+ThreadSanitizer (TSan):
+  Included with: GCC 4.8+, Clang 3.2+
+  Purpose: Data race detection
+  Build: make tsan
+  Note: Not compatible with ASan, run separately
+
+# ── Cosmopolitan Prebuilts ───────────────────────────────────────────────────
+
+# These APE binaries are available from cosmo.zip:
+#   https://cosmo.zip/pub/cosmos/bin/
+#
+# Examples:
+#   make    - GNU Make as APE
+#   gcc     - GCC as APE
+#   vim     - Vim as APE
+#   python  - Python as APE
+#   lua     - Lua as APE

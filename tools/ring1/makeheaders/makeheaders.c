@@ -1,1436 +1,3377 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<base href="https://www.sqlite.org/src/doc/trunk/README.md">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' data:; script-src 'self' 'nonce-8bd7db49bdc726eafa2550fc165e12d1e45ea4eb8e025013'; style-src 'self' 'unsafe-inline'; img-src * data:">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SQLite: Documentation</title>
-<link rel="alternate" type="application/rss+xml" title="RSS Feed"  href="/src/timeline.rss">
-<link rel="stylesheet" href="/src/style.css?id=5f1744d2" type="text/css">
-</head>
-<body class="doc rpage-doc cpage-doc">
-<header>
-  <div class="title"><h1>SQLite</h1>Documentation</div>
-  <div class="status">
-    <a href='/src/login'>Login</a>
+static const char ident[] = "@(#) $Header: /cvstrac/cvstrac/makeheaders.c,v 1.4 2005/03/16 22:17:51 drh Exp $";
+/*
+** This program is free software; you can redistribute it and/or
+** modify it under the terms of the Simplified BSD License (also
+** known as the "2-Clause License" or "FreeBSD License".)
+**
+** Copyright 1993 D. Richard Hipp. All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or
+** without modification, are permitted provided that the following
+** conditions are met:
+**
+**   1. Redistributions of source code must retain the above copyright
+**      notice, this list of conditions and the following disclaimer.
+**
+**   2. Redistributions in binary form must reproduce the above copyright
+**      notice, this list of conditions and the following disclaimer in
+**      the documentation and/or other materials provided with the
+**      distribution.
+**
+** This software is provided "as is" and any express or implied warranties,
+** including, but not limited to, the implied warranties of merchantability
+** and fitness for a particular purpose are disclaimed.  In no event shall
+** the author or contributors be liable for any direct, indirect, incidental,
+** special, exemplary, or consequential damages (including, but not limited
+** to, procurement of substitute goods or services; loss of use, data or
+** profits; or business interruption) however caused and on any theory of
+** liability, whether in contract, strict liability, or tort (including
+** negligence or otherwise) arising in any way out of the use of this
+** software, even if advised of the possibility of such damage.
+**
+** This program is distributed in the hope that it will be useful,
+** but without any warranty; without even the implied warranty of
+** merchantability or fitness for a particular purpose.
+** appropriate header files.
+*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <memory.h>
+#include <sys/stat.h>
+#include <assert.h>
+#if defined( __MINGW32__) ||  defined(__DMC__) || defined(_MSC_VER) || defined(__POCC__)
+#  ifndef WIN32
+#    define WIN32
+#  endif
+# include <string.h>
+#else
+# include <unistd.h>
+#endif
 
-  </div>
-</header>
-<nav class="mainmenu" title="Main Menu">
-  <a id='hbbtn' href='/src/sitemap' aria-label='Site Map'>&#9776;</a><a href='https://sqlite.org/' class=''>Home</a>
-<a href='/src/timeline' class=''>Timeline</a>
-<a href='https://sqlite.org/forum/forum' class='desktoponly'>Forum</a>
+/*
+** Macros for debugging.
+*/
+#ifdef DEBUG
+static int debugMask = 0;
+# define debug0(F,M)       if( (F)&debugMask ){ fprintf(stderr,M); }
+# define debug1(F,M,A)     if( (F)&debugMask ){ fprintf(stderr,M,A); }
+# define debug2(F,M,A,B)   if( (F)&debugMask ){ fprintf(stderr,M,A,B); }
+# define debug3(F,M,A,B,C) if( (F)&debugMask ){ fprintf(stderr,M,A,B,C); }
+# define PARSER      0x00000001
+# define DECL_DUMP   0x00000002
+# define TOKENIZER   0x00000004
+#else
+# define debug0(Flags, Format)
+# define debug1(Flags, Format, A)
+# define debug2(Flags, Format, A, B)
+# define debug3(Flags, Format, A, B, C)
+#endif
 
-</nav>
-<nav id="hbdrop" class='hbdrop' title="sitemap"></nav>
-<div class="content"><span id="debugMsg"></span>
-<div class="markdown">
+/*
+** The following macros are purely for the purpose of testing this
+** program on itself.  They don't really contribute to the code.
+*/
+#define INTERFACE 1
+#define EXPORT_INTERFACE 1
+#define EXPORT
 
-<p><h1 align="center">SQLite Source Repository</h1></p>
-
-<p>This repository contains the complete source code for the
-<a href="https://sqlite.org/">SQLite database engine</a> going back
-to 2000-05-29.  The tree includes many tests and some
-documentation, though additional tests and most documentation
-are managed separately.</p>
-
-<p>See the <a href="https://sqlite.org/">on-line documentation</a> for more information
-about what SQLite is and how it works from a user's perspective.  This
-README file is about the source code that goes into building SQLite,
-not about how SQLite is used.</p>
-
-<h2 id="version-control">Version Control</h2>
-<p>SQLite sources are managed using
-<a href="https://fossil-scm.org/">Fossil</a>, a distributed version control system
-that was specifically designed and written to support SQLite development.
-The <a href="https://sqlite.org/src/timeline">Fossil repository</a> contains the urtext.</p>
-
-<p>If you are reading this on GitHub or some other Git repository or service,
-then you are looking at a mirror.  The names of check-ins and
-other artifacts in a Git mirror are different from the official
-names for those objects.  The official names for check-ins are
-found in a footer on the check-in comment for authorized mirrors.
-The official check-in name can also be seen in the <code>manifest.uuid</code> file
-in the root of the tree.  Always use the official name, not  the
-Git-name, when communicating about an SQLite check-in.</p>
-
-<p>If you pulled your SQLite source code from a secondary source and want to
-verify its integrity, there are hints on how to do that in the
-<a href="#vauth">Verifying Code Authenticity</a> section below.</p>
-
-<h2 id="contacting-the-sqlite-developers">Contacting The SQLite Developers</h2>
-<p>The preferred way to ask questions or make comments about SQLite or to
-report bugs against SQLite is to visit the 
-<a href="https://sqlite.org/forum">SQLite Forum</a> at <a href="https://sqlite.org/forum/">https://sqlite.org/forum/</a>.
-Anonymous postings are permitted.</p>
-
-<p>If you think you have found a bug that has security implications and
-you do not want to report it on the public forum, you can send a private
-email to drh at sqlite dot org.</p>
-
-<h2 id="public-domain">Public Domain</h2>
-<p>The SQLite source code is in the public domain.  See
-<a href="https://sqlite.org/copyright.html">https://sqlite.org/copyright.html</a> for details. </p>
-
-<p>Because SQLite is in the public domain, we do not normally accept pull
-requests, because if we did take a pull request, the changes in that
-pull request might carry a copyright and the SQLite source code would
-then no longer be fully in the public domain.</p>
-
-<h2 id="obtaining-the-sqlite-source-code">Obtaining The SQLite Source Code</h2>
-<p>Source code tarballs or ZIP archives are available at:</p>
-
-<ul>
-<li><p><a href="https://sqlite.org/src/rchvdwnld/trunk">Latest trunk check-in</a>.</p></li>
-<li><p><a href="https://sqlite.org/src/rchvdwnld/release">Latest release</a></p></li>
-<li><p>For other check-ins, browse the
- <a href="https://sqlite.org/src/timeline?y=ci">project timeline</a> and
- click on the check-in hash of the check-in you want to download.
- On the resulting "info" page, click one of the options to the
- right of the "<strong>Downloads:</strong>" label in the "<strong>Overview</strong>" section
- near the top.</p></li>
-</ul>
-
-<p>To access sources directly using <a href="https://fossil-scm.org/home">Fossil</a>,
-first install Fossil version 2.0 or later.
-Source tarballs and precompiled binaries for Fossil are available at
-<a href="https://fossil-scm.org/home/uv/download.html">https://fossil-scm.org/home/uv/download.html</a>.  Fossil is
-a stand-alone program.  To install, simply download or build the single
-executable file and put that file someplace on your $PATH or %PATH%.
-Then run commands like this:</p>
-
-<pre><code>    mkdir -p ~/sqlite
-    cd ~/sqlite
-    fossil open https://sqlite.org/src
-</code></pre>
-
-<p>The initial "fossil open" command will take two or three minutes.  Afterwards,
-you can do fast, bandwidth-efficient updates to the whatever versions
-of SQLite you like.  Some examples:</p>
-
-<pre><code>    fossil update trunk             ;# latest trunk check-in
-    fossil update release           ;# latest official release
-    fossil update trunk:2024-01-01  ;# First trunk check-in after 2024-01-01
-    fossil update version-3.39.0    ;# Version 3.39.0
-</code></pre>
-
-<p>Or type "fossil ui" to get a web-based user interface.</p>
-
-<h2 id="compiling-for-unix-like-systems">Compiling for Unix-like systems</h2>
-<p>First create a directory in which to place
-the build products.  It is recommended, but not required, that the
-build directory be separate from the source directory.  Cd into the
-build directory and then from the build directory run the configure
-script found at the root of the source tree.  Then run "make".</p>
-
-<p>For example:</p>
-
-<pre><code>    apt install gcc make tcl-dev  ;#  Install the necessary build tools
-    tar xzf sqlite.tar.gz         ;#  Unpack the source tree into "sqlite"
-    mkdir bld                     ;#  Build happens in a sibling directory
-    cd bld                        ;#  Change to the build directory
-    ../sqlite/configure           ;#  Run the configure script
-    make sqlite3                  ;#  The "sqlite3" command-line tool
-    make sqlite3.c                ;#  The "amalgamation" source file
-    make sqldiff                  ;#  The "sqldiff" command-line tool
-    #### Targets below require tcl-dev ####
-    make tclextension-install     ;#  Install the SQLite TCL extension
-    make devtest                  ;#  Run development tests
-    make releasetest              ;#  Run full release tests
-    make sqlite3_analyzer         ;#  Builds the "sqlite3_analyzer" tool
-</code></pre>
-
-<p>See the makefile for additional targets.  For debugging builds, the
-core developers typically run "configure" with options like this:</p>
-
-<pre><code>    ../sqlite/configure --all --debug CFLAGS='-O0 -g'
-</code></pre>
-
-<p>For release builds, the core developers usually do:</p>
-
-<pre><code>    ../sqlite/configure --all
-</code></pre>
-
-<p>Core deliverables (sqlite3.c, sqlite3) can be built without a TCL, but
-many makefile targets require a "tclsh" TCL interpreter version 8.6
-or later.  The "tclextension-install" target and the test targets that follow
-all require TCL development libraries too.  ("apt install tcl-dev").  It is
-helpful, but is not required, to install the SQLite TCL extension (the
-"tclextension-install" target) prior to running tests.  The "releasetest"
-target has additional requirements, such as "valgrind".</p>
-
-<p>On "make" command-lines, one can add "OPTIONS=..." to specify additional
-compile-time options over and above those set by ./configure.  For example,
-to compile with the SQLITE_OMIT_DEPRECATED compile-time option, one could say:</p>
-
-<pre><code>    ./configure --all
-    make OPTIONS=-DSQLITE_OMIT_DEPRECATED sqlite3
-</code></pre>
-
-<p>The configure script uses <a href="https://msteveb.github.io/autosetup/">autosetup</a>.
-If the configure script does not work out for you, there is a generic
-makefile named "Makefile.linux-gcc" in the top directory of the source tree
-that you can copy and edit to suit your needs.  Comments on the generic
-makefile show what changes are needed.</p>
-
-<h2 id="compiling-for-windows-using-msvc">Compiling for Windows Using MSVC</h2>
-<p>On Windows, everything can be compiled with MSVC.
-You will also need a working installation of TCL if you want to run tests,
-though TCL is not required if you just want to build SQLite itself.
-See the <a href="doc/compile-for-windows.md">compile-for-windows.md</a> document for
-additional information about how to install MSVC and TCL and configure your
-build environment.</p>
-
-<p>If you want to run tests, you need to let SQLite know the location of your
-TCL library, using a command like this:</p>
-
-<pre><code>    set TCLDIR=c:\Tcl
-</code></pre>
-
-<p>SQLite itself does not contain any TCL code, but it does use TCL to run
-tests. You may need to install TCL development libraries in order to
-successfully complete some makefile targets. It is helpful, but is not
-required, to install the SQLite TCL extension (the "tclextension-install"
-target) prior to running tests.</p>
-
-<p>The source tree contains a "make.bat" file that allows the same "make"
-commands of Unix to work on Windows.  In the following, you can substitute
-"nmake /f Makefile.msc" in place of "make", if you prefer to avoid this BAT
-file:</p>
-
-<pre><code>    make sqlite3.exe
-    make sqlite3.c
-    make sqldiff.exe
-    #### Targets below require TCL development libraries ####
-    make tclextension-install
-    make devtest
-    make releasetest
-    make sqlite3_analyzer.exe
-</code></pre>
-
-<p>There are many other makefile targets.  See comments in Makefile.msc for
-details.</p>
-
-<p>As with the unix Makefile, the OPTIONS=... argument can be passed on the nmake
-command-line to enable new compile-time options.  For example:</p>
-
-<pre><code>    make OPTIONS=-DSQLITE_OMIT_DEPRECATED sqlite3.exe
-</code></pre>
-
-<h2 id="source-tree-map">Source Tree Map</h2>
-<ul>
-<li><p><strong>src/</strong> - This directory contains the primary source code for the
- SQLite core.  For historical reasons, C-code used for testing is
- also found here.  Source files intended for testing begin with "<code>test</code>".
- The <code>tclsqlite3.c</code> and <code>tclsqlite3.h</code> files are the TCL interface
- for SQLite and are also not part of the core.</p></li>
-<li><p><strong>test/</strong> - This directory and its subdirectories contains code used
- for testing.  Files that end in "<code>.test</code>" are TCL scripts that run
- tests using an augmented TCL interpreter named "testfixture".  Use
- a command like "<code>make testfixture</code>" to build that
- augmented TCL interpreter, then run individual tests using commands like
- "<code>testfixture test/main.test</code>".  This test/ subdirectory also contains
- additional C code modules and scripts for other kinds of testing.</p></li>
-<li><p><strong>tool/</strong> - This directory contains programs and scripts used to
- build some of the machine-generated code that goes into the SQLite
- core, as well as to build and run tests and perform diagnostics.
- The source code to <a href="./doc/lemon.html">the Lemon parser generator</a> is
- found here.  There are also TCL scripts used to build and/or transform
- source code files.  For example, the tool/mksqlite3h.tcl script reads
- the src/sqlite.h.in file and uses it as a template to construct
- the deliverable "sqlite3.h" file that defines the SQLite interface.</p></li>
-<li><p><strong>ext/</strong> - Various extensions to SQLite are found under this
- directory.  For example, the FTS5 subsystem is in "ext/fts5/".
- Some of these extensions (ex: FTS3/4, FTS5, RTREE) might get built
- into the SQLite amalgamation, but not all of them.  The
- "ext/misc/" subdirectory contains an assortment of one-file extensions,
- many of which are omitted from the SQLite core, but which are included
- in the <a href="https://sqlite.org/cli.html">SQLite CLI</a>.</p></li>
-<li><p><strong>doc/</strong> - Some documentation files about SQLite internals are found
- here.  Note, however, that the primary documentation designed for
- application developers and users of SQLite is in a completely separate
- repository.  Note also that the primary API documentation is derived
- from specially constructed comments in the src/sqlite.h.in file.</p></li>
-</ul>
-
-<h3 id="generated-source-code-files">Generated Source Code Files</h3>
-<p>Several of the C-language source files used by SQLite are generated from
-other sources rather than being typed in manually by a programmer.  This
-section will summarize those automatically-generated files.  To create all
-of the automatically-generated files, simply run "make target&#95;source".
-The "target&#95;source" make target will create a subdirectory "tsrc/" and
-fill it with all the source files needed to build SQLite, both
-manually-edited files and automatically-generated files.</p>
-
-<p>The SQLite interface is defined by the <strong>sqlite3.h</strong> header file, which is
-generated from src/sqlite.h.in, ./manifest.uuid, and ./VERSION.  The
-<a href="https://www.tcl.tk">Tcl script</a> at tool/mksqlite3h.tcl does the conversion.
-The manifest.uuid file contains the SHA3 hash of the particular check-in
-and is used to generate the SQLITE_SOURCE_ID macro.  The VERSION file
-contains the current SQLite version number.  The sqlite3.h header is really
-just a copy of src/sqlite.h.in with the source-id and version number inserted
-at just the right spots. Note that comment text in the sqlite3.h file is
-used to generate much of the SQLite API documentation.  The Tcl scripts
-used to generate that documentation are in a separate source repository.</p>
-
-<p>The SQL language parser is <strong>parse.c</strong> which is generated from a grammar in
-the src/parse.y file.  The conversion of "parse.y" into "parse.c" is done
-by the <a href="./doc/lemon.html">lemon</a> LALR(1) parser generator.  The source code
-for lemon is at tool/lemon.c.  Lemon uses the tool/lempar.c file as a
-template for generating its parser.
-Lemon also generates the <strong>parse.h</strong> header file, at the same time it
-generates parse.c.</p>
-
-<p>The <strong>opcodes.h</strong> header file contains macros that define the numbers
-corresponding to opcodes in the "VDBE" virtual machine.  The opcodes.h
-file is generated by scanning the src/vdbe.c source file.  The
-Tcl script at ./mkopcodeh.tcl does this scan and generates opcodes.h.
-A second Tcl script, ./mkopcodec.tcl, then scans opcodes.h to generate
-the <strong>opcodes.c</strong> source file, which contains a reverse mapping from
-opcode-number to opcode-name that is used for EXPLAIN output.</p>
-
-<p>The <strong>keywordhash.h</strong> header file contains the definition of a hash table
-that maps SQL language keywords (ex: "CREATE", "SELECT", "INDEX", etc.) into
-the numeric codes used by the parse.c parser.  The keywordhash.h file is
-generated by a C-language program at tool mkkeywordhash.c.</p>
-
-<p>The <strong>pragma.h</strong> header file contains various definitions used to parse
-and implement the PRAGMA statements.  The header is generated by a
-script <strong>tool/mkpragmatab.tcl</strong>. If you want to add a new PRAGMA, edit
-the <strong>tool/mkpragmatab.tcl</strong> file to insert the information needed by the
-parser for your new PRAGMA, then run the script to regenerate the
-<strong>pragma.h</strong> header file.</p>
-
-<h3 id="the-amalgamation">The Amalgamation</h3>
-<p>All of the individual C source code and header files (both manually-edited
-and automatically-generated) can be combined into a single big source file
-<strong>sqlite3.c</strong> called "the amalgamation".  The amalgamation is the recommended
-way of using SQLite in a larger application.  Combining all individual
-source code files into a single big source code file allows the C compiler
-to perform more cross-procedure analysis and generate better code.  SQLite
-runs about 5% faster when compiled from the amalgamation versus when compiled
-from individual source files.</p>
-
-<p>The amalgamation is generated from the tool/mksqlite3c.tcl Tcl script.
-First, all of the individual source files must be gathered into the tsrc/
-subdirectory (using the equivalent of "make target_source") then the
-tool/mksqlite3c.tcl script is run to copy them all together in just the
-right order while resolving internal "#include" references.</p>
-
-<p>The amalgamation source file is more than 200K lines long.  Some symbolic
-debuggers (most notably MSVC) are unable to deal with files longer than 64K
-lines.  To work around this, a separate Tcl script, tool/split-sqlite3c.tcl,
-can be run on the amalgamation to break it up into a single small C file
-called <strong>sqlite3-all.c</strong> that does #include on about seven other files
-named <strong>sqlite3-1.c</strong>, <strong>sqlite3-2.c</strong>, ..., <strong>sqlite3-7.c</strong>.  In this way,
-all of the source code is contained within a single translation unit so
-that the compiler can do extra cross-procedure optimization, but no
-individual source file exceeds 32K lines in length.</p>
-
-<h2 id="how-it-all-fits-together">How It All Fits Together</h2>
-<p>SQLite is modular in design.
-See the <a href="https://sqlite.org/arch.html">architectural description</a>
-for details. Other documents that are useful in
-helping to understand how SQLite works include the
-<a href="https://sqlite.org/fileformat2.html">file format</a> description,
-the <a href="https://sqlite.org/opcode.html">virtual machine</a> that runs
-prepared statements, the description of
-<a href="https://sqlite.org/atomiccommit.html">how transactions work</a>, and
-the <a href="https://sqlite.org/optoverview.html">overview of the query planner</a>.</p>
-
-<p>Decades of effort have gone into optimizing SQLite, both
-for small size and high performance.  And optimizations tend to result in
-complex code.  So there is a lot of complexity in the current SQLite
-implementation.  It will not be the easiest library in the world to hack.</p>
-
-<h3 id="key-source-code-files">Key source code files</h3>
-<ul>
-<li><p><strong>sqlite.h.in</strong> - This file defines the public interface to the SQLite
- library.  Readers will need to be familiar with this interface before
- trying to understand how the library works internally.  This file is
- really a template that is transformed into the "sqlite3.h" deliverable
- using a script invoked by the makefile.</p></li>
-<li><p><strong>sqliteInt.h</strong> - this header file defines many of the data objects
- used internally by SQLite.  In addition to "sqliteInt.h", some
- subsystems inside of sQLite have their own header files.  These internal
- interfaces are not for use by applications.  They can and do change
- from one release of SQLite to the next.</p></li>
-<li><p><strong>parse.y</strong> - This file describes the LALR(1) grammar that SQLite uses
- to parse SQL statements, and the actions that are taken at each step
- in the parsing process.  The file is processed by the
- <a href="./doc/lemon.html">Lemon Parser Generator</a> to produce the actual C code
- used for parsing.</p></li>
-<li><p><strong>vdbe.c</strong> - This file implements the virtual machine that runs
- prepared statements.  There are various helper files whose names
- begin with "vdbe".  The VDBE has access to the vdbeInt.h header file
- which defines internal data objects.  The rest of SQLite interacts
- with the VDBE through an interface defined by vdbe.h.</p></li>
-<li><p><strong>where.c</strong> - This file (together with its helper files named
- by "where*.c") analyzes the WHERE clause and generates
- virtual machine code to run queries efficiently.  This file is
- sometimes called the "query optimizer".  It has its own private
- header file, whereInt.h, that defines data objects used internally.</p></li>
-<li><p><strong>btree.c</strong> - This file contains the implementation of the B-Tree
- storage engine used by SQLite.  The interface to the rest of the system
- is defined by "btree.h".  The "btreeInt.h" header defines objects
- used internally by btree.c and not published to the rest of the system.</p></li>
-<li><p><strong>pager.c</strong> - This file contains the "pager" implementation, the
- module that implements transactions.  The "pager.h" header file
- defines the interface between pager.c and the rest of the system.</p></li>
-<li><p><strong>os_unix.c</strong> and <strong>os_win.c</strong> - These two files implement the interface
- between SQLite and the underlying operating system using the run-time
- pluggable VFS interface.</p></li>
-<li><p><strong>shell.c.in</strong> - This file is not part of the core SQLite library.  This
- is the file that, when linked against sqlite3.a, generates the
- "sqlite3.exe" command-line shell.  The "shell.c.in" file is transformed
- into "shell.c" as part of the build process.</p></li>
-<li><p><strong>tclsqlite.c</strong> - This file implements the Tcl bindings for SQLite.  It
- is not part of the core SQLite library.  But as most of the tests in this
- repository are written in Tcl, the Tcl language bindings are important.</p></li>
-<li><p><strong>test*.c</strong> - Files in the src/ folder that begin with "test" go into
- building the "testfixture.exe" program.  The testfixture.exe program is
- an enhanced Tcl shell.  The testfixture.exe program runs scripts in the
- test/ folder to validate the core SQLite code.  The testfixture program
- (and some other test programs too) is built and run when you type
- "make test".</p></li>
-<li><p><strong>VERSION</strong>, <strong>manifest</strong>, <strong>manifest.tags</strong>, and <strong>manifest.uuid</strong> -
- These files define the current SQLite version number. The "VERSION" file
- is human generated, but the "manifest", "manifest.tags", and
- "manifest.uuid" files are automatically generated by the
- <a href="https://fossil-scm.org/">Fossil version control system</a>.</p></li>
-</ul>
-
-<p>There are many other source files.  Each has a succinct header comment that
-describes its purpose and role within the larger system.</p>
-
-<p><a name="vauth"></a></p>
-
-<h2 id="verifying-code-authenticity">Verifying Code Authenticity</h2>
-<p>The <code>manifest</code> file at the root directory of the source tree
-contains either a SHA3-256 hash or a SHA1 hash
-for every source file in the repository.
-The name of the version of the entire source tree is just the
-SHA3-256 hash of the <code>manifest</code> file itself, possibly with the
-last line of that file omitted if the last line begins with
-"<code># Remove this line</code>".
-The <code>manifest.uuid</code> file should contain the SHA3-256 hash of the
-<code>manifest</code> file. If all of the above hash comparisons are correct, then
-you can be confident that your source tree is authentic and unadulterated.
-Details on the format for the <code>manifest</code> files are available
-<a href="https://fossil-scm.org/home/doc/trunk/www/fileformat.wiki#manifest">on the Fossil website</a>.</p>
-
-<p>The process of checking source code authenticity is automated by the 
-makefile:</p>
-
-<blockquote>
-<p>  make verify-source</p>
-</blockquote>
-
-<p>Using the makefile to verify source integrity is good for detecting
-accidental changes to the source tree, but malicious changes could be
-hidden by also modifying the makefiles.</p>
-
-<h2 id="contacts">Contacts</h2>
-<p>The main SQLite website is <a href="https://sqlite.org/">https://sqlite.org/</a>
-with geographically distributed backups at
-<a href="https://www2.sqlite.org">https://www2.sqlite.org/</a> and
-<a href="https://www3.sqlite.org">https://www3.sqlite.org/</a>.</p>
-
-<p>Contact the SQLite developers through the
-<a href="https://sqlite.org/forum/">SQLite Forum</a>.  In an emergency, you
-can send private email to the lead developer at drh at sqlite dot org.</p>
-
-</div>
-<script nonce='8bd7db49bdc726eafa2550fc165e12d1e45ea4eb8e025013'>/* builtin.c:637 */
-(function(){
-if(window.NodeList && !NodeList.prototype.forEach){NodeList.prototype.forEach = Array.prototype.forEach;}
-if(!window.fossil) window.fossil={};
-window.fossil.version = "2.28 [73512f45db] 2026-02-28 01:09:41 UTC";
-window.fossil.rootPath = "/src"+'/';
-window.fossil.config = {projectName: "SQLite",
-shortProjectName: "",
-projectCode: "2ab58778c2967968b94284e989e43dc11791f548",
-/* Length of UUID hashes for display purposes. */hashDigits: 10, hashDigitsUrl: 16,
-diffContextLines: 5,
-editStateMarkers: {/*Symbolic markers to denote certain edit states.*/isNew:'[+]', isModified:'[*]', isDeleted:'[-]'},
-confirmerButtonTicks: 3 /*default fossil.confirmer tick count.*/,
-skin:{isDark: false/*true if the current skin has the 'white-foreground' detail*/}
+/*
+** Each token in a source file is represented by an instance of
+** the following structure.  Tokens are collected onto a list.
+*/
+typedef struct Token Token;
+struct Token {
+  const char *zText;      /* The text of the token */
+  int nText;              /* Number of characters in the token's text */
+  int eType;              /* The type of this token */
+  int nLine;              /* The line number on which the token starts */
+  Token *pComment;        /* Most recent block comment before this token */
+  Token *pNext;           /* Next token on the list */
+  Token *pPrev;           /* Previous token on the list */
 };
-window.fossil.user = {name: "guest",isAdmin: false};
-if(fossil.config.skin.isDark) document.body.classList.add('fossil-dark-style');
-window.fossil.page = {name:"doc/trunk/README.md"};
-})();
-</script>
-<script nonce='8bd7db49bdc726eafa2550fc165e12d1e45ea4eb8e025013'>/* doc.c:434 */
-window.addEventListener('load', ()=>window.fossil.pikchr.addSrcView(), false);
-</script>
-</div>
-<footer>
-This page was generated in about
-0.024s by
-Fossil 2.28 [73512f45db] 2026-02-28 01:09:41
-</footer>
-<script nonce="8bd7db49bdc726eafa2550fc165e12d1e45ea4eb8e025013">/* style.c:903 */
-function debugMsg(msg){
-var n = document.getElementById("debugMsg");
-if(n){n.textContent=msg;}
-}
-</script>
-<script nonce='8bd7db49bdc726eafa2550fc165e12d1e45ea4eb8e025013'>
-/* hbmenu.js *************************************************************/
-(function() {
-var hbButton = document.getElementById("hbbtn");
-if (!hbButton) return;
-if (!document.addEventListener) return;
-var panel = document.getElementById("hbdrop");
-if (!panel) return;
-if (!panel.style) return;
-var panelBorder = panel.style.border;
-var panelInitialized = false;
-var panelResetBorderTimerID = 0;
-var animate = panel.style.transition !== null && (typeof(panel.style.transition) == "string");
-var animMS = panel.getAttribute("data-anim-ms");
-if (animMS) {
-animMS = parseInt(animMS);
-if (isNaN(animMS) || animMS == 0)
-animate = false;
-else if (animMS < 0)
-animMS = 400;
-}
-else
-animMS = 400;
-var panelHeight;
-function calculatePanelHeight() {
-panel.style.maxHeight = '';
-var es   = window.getComputedStyle(panel),
-edis = es.display,
-epos = es.position,
-evis = es.visibility;
-panel.style.visibility = 'hidden';
-panel.style.position   = 'absolute';
-panel.style.display    = 'block';
-panelHeight = panel.offsetHeight + 'px';
-panel.style.display    = edis;
-panel.style.position   = epos;
-panel.style.visibility = evis;
-}
-function showPanel() {
-if (panelResetBorderTimerID) {
-clearTimeout(panelResetBorderTimerID);
-panelResetBorderTimerID = 0;
-}
-if (animate) {
-if (!panelInitialized) {
-panelInitialized = true;
-calculatePanelHeight();
-panel.style.transition = 'max-height ' + animMS +
-'ms ease-in-out';
-panel.style.overflowY  = 'hidden';
-panel.style.maxHeight  = '0';
-}
-setTimeout(function() {
-panel.style.maxHeight = panelHeight;
-panel.style.border    = panelBorder;
-}, 40);
-}
-panel.style.display = 'block';
-document.addEventListener('keydown',panelKeydown,true);
-document.addEventListener('click',panelClick,false);
-}
-var panelKeydown = function(event) {
-var key = event.which || event.keyCode;
-if (key == 27) {
-event.stopPropagation();
-panelToggle(true);
-}
+
+/*
+** During tokenization, information about the state of the input
+** stream is held in an instance of the following structure
+*/
+typedef struct InStream InStream;
+struct InStream {
+  const char *z;          /* Complete text of the input */
+  int i;                  /* Next character to read from the input */
+  int nLine;              /* The line number for character z[i] */
 };
-var panelClick = function(event) {
-if (!panel.contains(event.target)) {
-panelToggle(true);
-}
+
+/*
+** Each declaration in the C or C++ source files is parsed out and stored as
+** an instance of the following structure.
+**
+** A "forward declaration" is a declaration that an object exists that
+** doesn't tell about the objects structure.  A typical forward declaration
+** is:
+**
+**          struct Xyzzy;
+**
+** Not every object has a forward declaration.  If it does, thought, the
+** forward declaration will be contained in the zFwd field for C and
+** the zFwdCpp for C++.  The zDecl field contains the complete 
+** declaration text.  
+*/
+typedef struct Decl Decl;
+struct Decl {
+  char *zName;       /* Name of the object being declared.  The appearance
+                     ** of this name is a source file triggers the declaration
+                     ** to be added to the header for that file. */
+  char *zFile;       /* File from which extracted.  */
+  char *zIf;         /* Surround the declaration with this #if */
+  char *zFwd;        /* A forward declaration.  NULL if there is none. */
+  char *zFwdCpp;     /* Use this forward declaration for C++. */
+  char *zDecl;       /* A full declaration of this object */
+  char *zExtra;      /* Extra declaration text inserted into class objects */
+  int extraType;     /* Last public:, protected: or private: in zExtraDecl */
+  struct Include *pInclude;   /* #includes that come before this declaration */
+  int flags;         /* See the "Properties" below */
+  Token *pComment;   /* A block comment associated with this declaration */
+  Token tokenCode;   /* Implementation of functions and procedures */
+  Decl *pSameName;   /* Next declaration with the same "zName" */
+  Decl *pSameHash;   /* Next declaration with same hash but different zName */
+  Decl *pNext;       /* Next declaration with a different name */
 };
-function panelShowing() {
-if (animate) {
-return panel.style.maxHeight == panelHeight;
-}
-else {
-return panel.style.display == 'block';
-}
-}
-function hasChildren(element) {
-var childElement = element.firstChild;
-while (childElement) {
-if (childElement.nodeType == 1)
-return true;
-childElement = childElement.nextSibling;
-}
-return false;
-}
-window.addEventListener('resize',function(event) {
-panelInitialized = false;
-},false);
-hbButton.addEventListener('click',function(event) {
-event.stopPropagation();
-event.preventDefault();
-panelToggle(false);
-},false);
-function panelToggle(suppressAnimation) {
-if (panelShowing()) {
-document.removeEventListener('keydown',panelKeydown,true);
-document.removeEventListener('click',panelClick,false);
-if (animate) {
-if (suppressAnimation) {
-var transition = panel.style.transition;
-panel.style.transition = '';
-panel.style.maxHeight = '0';
-panel.style.border = 'none';
-setTimeout(function() {
-panel.style.transition = transition;
-}, 40);
-}
-else {
-panel.style.maxHeight = '0';
-panelResetBorderTimerID = setTimeout(function() {
-panel.style.border = 'none';
-panelResetBorderTimerID = 0;
-}, animMS);
-}
-}
-else {
-panel.style.display = 'none';
-}
-}
-else {
-if (!hasChildren(panel)) {
-var xhr = new XMLHttpRequest();
-xhr.onload = function() {
-var doc = xhr.responseXML;
-if (doc) {
-var sm = doc.querySelector("ul#sitemap");
-if (sm && xhr.status == 200) {
-panel.innerHTML = sm.outerHTML;
-showPanel();
-}
-}
-}
-var url = hbButton.href + (hbButton.href.includes("?")?"&popup":"?popup")
-xhr.open("GET", url);
-xhr.responseType = "document";
-xhr.send();
-}
-else {
-showPanel();
-}
-}
-}
-})();
-/* fossil.bootstrap.js *************************************************************/
-"use strict";
-(function () {
-if(typeof window.CustomEvent === "function") return false;
-window.CustomEvent = function(event, params) {
-if(!params) params = {bubbles: false, cancelable: false, detail: null};
-const evt = document.createEvent('CustomEvent');
-evt.initCustomEvent( event, !!params.bubbles, !!params.cancelable, params.detail );
-return evt;
+
+/*
+** Properties associated with declarations.
+**
+** DP_Forward and DP_Declared are used during the generation of a single
+** header file in order to prevent duplicate declarations and definitions.
+** DP_Forward is set after the object has been given a forward declaration
+** and DP_Declared is set after the object gets a full declarations.
+** (Example:  A forward declaration is "typedef struct Abc Abc;" and the
+** full declaration is "struct Abc { int a; float b; };".)
+**
+** The DP_Export and DP_Local flags are more permanent.  They mark objects
+** that have EXPORT scope and LOCAL scope respectively.  If both of these
+** marks are missing, then the object has library scope.  The meanings of
+** the scopes are as follows:
+**
+**    LOCAL scope         The object is only usable within the file in
+**                        which it is declared.
+**
+**    library scope       The object is visible and usable within other
+**                        files in the same project.  By if the project is
+**                        a library, then the object is not visible to users
+**                        of the library.  (i.e. the object does not appear
+**                        in the output when using the -H option.)
+**
+**    EXPORT scope        The object is visible and usable everywhere.
+**
+** The DP_Flag is a temporary use flag that is used during processing to
+** prevent an infinite loop.  It's use is localized.  
+**
+** The DP_Cplusplus, DP_ExternCReqd and DP_ExternReqd flags are permanent
+** and are used to specify what type of declaration the object requires.
+*/
+#define DP_Forward      0x001   /* Has a forward declaration in this file */
+#define DP_Declared     0x002   /* Has a full declaration in this file */
+#define DP_Export       0x004   /* Export this declaration */
+#define DP_Local        0x008   /* Declare in its home file only */
+#define DP_Flag         0x010   /* Use to mark a subset of a Decl list
+                                ** for special processing */
+#define DP_Cplusplus    0x020   /* Has C++ linkage and cannot appear in a
+                                ** C header file */
+#define DP_ExternCReqd  0x040   /* Prepend 'extern "C"' in a C++ header.
+                                ** Prepend nothing in a C header */
+#define DP_ExternReqd   0x080   /* Prepend 'extern "C"' in a C++ header if
+                                ** DP_Cplusplus is not also set. If DP_Cplusplus
+                                ** is set or this is a C header then
+                                ** prepend 'extern' */
+
+/*
+** Convenience macros for dealing with declaration properties
+*/
+#define DeclHasProperty(D,P)    (((D)->flags&(P))==(P))
+#define DeclHasAnyProperty(D,P) (((D)->flags&(P))!=0)
+#define DeclSetProperty(D,P)    (D)->flags |= (P)
+#define DeclClearProperty(D,P)  (D)->flags &= ~(P)
+
+/*
+** These are state properties of the parser.  Each of the values is
+** distinct from the DP_ values above so that both can be used in
+** the same "flags" field.
+**
+** Be careful not to confuse PS_Export with DP_Export or
+** PS_Local with DP_Local.  Their names are similar, but the meanings
+** of these flags are very different.
+*/
+#define PS_Extern        0x000800    /* "extern" has been seen */
+#define PS_Export        0x001000    /* If between "#if EXPORT_INTERFACE" 
+                                     ** and "#endif" */
+#define PS_Export2       0x002000    /* If "EXPORT" seen */
+#define PS_Typedef       0x004000    /* If "typedef" has been seen */
+#define PS_Static        0x008000    /* If "static" has been seen */
+#define PS_Interface     0x010000    /* If within #if INTERFACE..#endif */
+#define PS_Method        0x020000    /* If "::" token has been seen */
+#define PS_Local         0x040000    /* If within #if LOCAL_INTERFACE..#endif */
+#define PS_Local2        0x080000    /* If "LOCAL" seen. */
+#define PS_Public        0x100000    /* If "PUBLIC" seen. */
+#define PS_Protected     0x200000    /* If "PROTECTED" seen. */
+#define PS_Private       0x400000    /* If "PRIVATE" seen. */
+#define PS_PPP           0x700000    /* If any of PUBLIC, PRIVATE, PROTECTED */
+
+/*
+** The following set of flags are ORed into the "flags" field of
+** a Decl in order to identify what type of object is being
+** declared.
+*/
+#define TY_Class         0x00100000
+#define TY_Subroutine    0x00200000
+#define TY_Macro         0x00400000
+#define TY_Typedef       0x00800000
+#define TY_Variable      0x01000000
+#define TY_Structure     0x02000000
+#define TY_Union         0x04000000
+#define TY_Enumeration   0x08000000
+#define TY_Defunct       0x10000000  /* Used to erase a declaration */
+
+/*
+** Each nested #if (or #ifdef or #ifndef) is stored in a stack of 
+** instances of the following structure.
+*/
+typedef struct Ifmacro Ifmacro;
+struct Ifmacro {
+  int nLine;         /* Line number where this macro occurs */
+  char *zCondition;  /* Text of the condition for this macro */
+  Ifmacro *pNext;    /* Next down in the stack */
+  int flags;         /* Can hold PS_Export, PS_Interface or PS_Local flags */
 };
-})();
-(function(global){
-const F = global.fossil;
-const timestring = function f(){
-if(!f.rx1){
-f.rx1 = /\.\d+Z$/;
+
+/*
+** When parsing a file, we need to keep track of what other files have
+** be #include-ed.  For each #include found, we create an instance of
+** the following structure.
+*/
+typedef struct Include Include;
+struct Include {
+  char *zFile;       /* The name of file include.  Includes "" or <> */
+  char *zIf;         /* If not NULL, #include should be enclosed in #if */
+  char *zLabel;      /* A unique label used to test if this #include has
+                      * appeared already in a file or not */
+  Include *pNext;    /* Previous include file, or NULL if this is the first */
+};
+
+/*
+** Identifiers found in a source file that might be used later to provoke
+** the copying of a declaration into the corresponding header file are
+** stored in a hash table as instances of the following structure.
+*/
+typedef struct Ident Ident;
+struct Ident {
+  char *zName;        /* The text of this identifier */
+  Ident *pCollide;    /* Next identifier with the same hash */
+  Ident *pNext;       /* Next identifier in a list of them all */
+};
+
+/*
+** A complete table of identifiers is stored in an instance of
+** the next structure.
+*/
+#define IDENT_HASH_SIZE 2237
+typedef struct IdentTable IdentTable;
+struct IdentTable {
+  Ident *pList;                     /* List of all identifiers in this table */
+  Ident *apTable[IDENT_HASH_SIZE];  /* The hash table */
+};
+
+/*
+** The following structure holds all information for a single
+** source file named on the command line of this program.
+*/
+typedef struct InFile InFile;
+struct InFile {
+  char *zSrc;              /* Name of input file */
+  char *zHdr;              /* Name of the generated .h file for this input.
+                           ** Will be NULL if input is to be scanned only */
+  int flags;               /* One or more DP_, PS_ and/or TY_ flags */
+  InFile *pNext;           /* Next input file in the list of them all */
+  IdentTable idTable;      /* All identifiers in this input file */
+};
+
+/* 
+** An unbounded string is able to grow without limit.  We use these
+** to construct large in-memory strings from lots of smaller components.
+*/
+typedef struct String String;
+struct String {
+  int nAlloc;      /* Number of bytes allocated */
+  int nUsed;       /* Number of bytes used (not counting null terminator) */
+  char *zText;     /* Text of the string */
+};
+
+/*
+** The following structure contains a lot of state information used
+** while generating a .h file.  We put the information in this structure
+** and pass around a pointer to this structure, rather than pass around
+** all of the information separately.  This helps reduce the number of
+** arguments to generator functions.
+*/
+typedef struct GenState GenState;
+struct GenState {
+  String *pStr;          /* Write output to this string */
+  IdentTable *pTable;    /* A table holding the zLabel of every #include that
+                          * has already been generated.  Used to avoid
+                          * generating duplicate #includes. */
+  const char *zIf;       /* If not NULL, then we are within a #if with
+                          * this argument. */
+  int nErr;              /* Number of errors */
+  const char *zFilename; /* Name of the source file being scanned */
+  int flags;             /* Various flags (DP_ and PS_ flags above) */
+};
+
+/*
+** The following text line appears at the top of every file generated
+** by this program.  By recognizing this line, the program can be sure
+** never to read a file that it generated itself.
+*/
+const char zTopLine[] = 
+  "/* \aThis file was automatically generated.  Do not edit! */\n";
+#define nTopLine (sizeof(zTopLine)-1)
+
+/*
+** The name of the file currently being parsed.
+*/
+static char *zFilename;
+
+/*
+** The stack of #if macros for the file currently being parsed.
+*/
+static Ifmacro *ifStack = 0;
+
+/*
+** A list of all files that have been #included so far in a file being
+** parsed.
+*/
+static Include *includeList = 0;
+
+/*
+** The last block comment seen.
+*/
+static Token *blockComment = 0;
+
+/*
+** The following flag is set if the -doc flag appears on the
+** command line.
+*/
+static int doc_flag = 0;
+
+/*
+** If the following flag is set, then makeheaders will attempt to
+** generate prototypes for static functions and procedures.
+*/
+static int proto_static = 0;
+
+/*
+** A list of all declarations.  The list is held together using the
+** pNext field of the Decl structure.
+*/
+static Decl *pDeclFirst;    /* First on the list */
+static Decl *pDeclLast;     /* Last on the list */
+
+/*
+** A hash table of all declarations
+*/
+#define DECL_HASH_SIZE 3371
+static Decl *apTable[DECL_HASH_SIZE];
+
+/*
+** The TEST macro must be defined to something.  Make sure this is the
+** case.
+*/
+#ifndef TEST
+# define TEST 0
+#endif
+
+#ifdef NOT_USED
+/*
+** We do our own assertion macro so that we can have more control
+** over debugging.
+*/
+#define Assert(X)    if(!(X)){ CantHappen(__LINE__); }
+#define CANT_HAPPEN  CantHappen(__LINE__)
+static void CantHappen(int iLine){
+  fprintf(stderr,"Assertion failed on line %d\n",iLine);
+  *(char*)1 = 0;  /* Force a core-dump */
 }
-const d = new Date();
-return d.toISOString().replace(f.rx1,'').split('T').join(' ');
-};
-const localTimeString = function ff(d){
-if(!ff.pad){
-ff.pad = (x)=>(''+x).length>1 ? x : '0'+x;
+#endif
+
+/*
+** Memory allocation functions that are guaranteed never to return NULL.
+*/
+static void *SafeMalloc(int nByte){
+  void *p = malloc( nByte );
+  if( p==0 ){
+    fprintf(stderr,"Out of memory.  Can't allocate %d bytes.\n",nByte);
+    exit(1);
+  }
+  return p;
 }
-d || (d = new Date());
-return [
-d.getFullYear(),'-',ff.pad(d.getMonth()+1),
-'-',ff.pad(d.getDate()),
-' ',ff.pad(d.getHours()),':',ff.pad(d.getMinutes()),
-':',ff.pad(d.getSeconds())
-].join('');
-};
-F.message = function f(msg){
-const args = Array.prototype.slice.call(arguments,0);
-const tgt = f.targetElement;
-if(args.length) args.unshift(
-localTimeString()+':'
-);
-if(tgt){
-tgt.classList.remove('error');
-tgt.innerText = args.join(' ');
+static void SafeFree(void *pOld){
+  if( pOld ){
+    free(pOld);
+  }
 }
-else{
-if(args.length){
-args.unshift('Fossil status:');
-console.debug.apply(console,args);
+static void *SafeRealloc(void *pOld, int nByte){
+  void *p;
+  if( pOld==0 ){
+    p = SafeMalloc(nByte);
+  }else{
+    p = realloc(pOld, nByte);
+    if( p==0 ){
+      fprintf(stderr,
+        "Out of memory.  Can't enlarge an allocation to %d bytes\n",nByte);
+      exit(1);
+    }
+  }
+  return p;
 }
+static char *StrDup(const char *zSrc, int nByte){
+  char *zDest;
+  if( nByte<=0 ){
+    nByte = strlen(zSrc);
+  }
+  zDest = SafeMalloc( nByte + 1 );
+  strncpy(zDest,zSrc,nByte);
+  zDest[nByte] = 0;
+  return zDest;
 }
-return this;
-};
-F.message.targetElement =
-document.querySelector('#fossil-status-bar');
-if(F.message.targetElement){
-F.message.targetElement.addEventListener(
-'dblclick', ()=>F.message(), false
-);
+
+/*
+** Return TRUE if the character X can be part of an identifier
+*/
+#define ISALNUM(X)  ((X)=='_' || isalnum(X))
+
+/*
+** Routines for dealing with unbounded strings.
+*/
+static void StringInit(String *pStr){
+  pStr->nAlloc = 0;
+  pStr->nUsed = 0;
+  pStr->zText = 0;
 }
-F.error = function f(msg){
-const args = Array.prototype.slice.call(arguments,0);
-const tgt = F.message.targetElement;
-args.unshift(timestring(),'UTC:');
-if(tgt){
-tgt.classList.add('error');
-tgt.innerText = args.join(' ');
+static void StringReset(String *pStr){
+  SafeFree(pStr->zText);
+  StringInit(pStr);
 }
-else{
-args.unshift('Fossil error:');
-console.error.apply(console,args);
+static void StringAppend(String *pStr, const char *zText, int nByte){
+  if( nByte<=0 ){
+    nByte = strlen(zText);
+  }
+  if( pStr->nUsed + nByte >= pStr->nAlloc ){
+    if( pStr->nAlloc==0 ){
+      pStr->nAlloc = nByte + 100;
+      pStr->zText = SafeMalloc( pStr->nAlloc );
+    }else{
+      pStr->nAlloc = pStr->nAlloc*2 + nByte;
+      pStr->zText = SafeRealloc(pStr->zText, pStr->nAlloc);
+    }
+  }
+  strncpy(&pStr->zText[pStr->nUsed],zText,nByte);
+  pStr->nUsed += nByte;
+  pStr->zText[pStr->nUsed] = 0;
 }
-return this;
-};
-F.encodeUrlArgs = function(obj,tgtArray,fakeEncode){
-if(!obj) return '';
-const a = (tgtArray instanceof Array) ? tgtArray : [],
-enc = fakeEncode ? (x)=>x : encodeURIComponent;
-let k, i = 0;
-for( k in obj ){
-if(i++) a.push('&');
-a.push(enc(k),'=',enc(obj[k]));
+#define StringGet(S) ((S)->zText?(S)->zText:"")
+
+/*
+** Compute a hash on a string.  The number returned is a non-negative
+** value between 0 and 2**31 - 1
+*/
+static int Hash(const char *z, int n){
+  int h = 0;
+  if( n<=0 ){
+    n = strlen(z);
+  }
+  while( n-- ){
+    h = h ^ (h<<5) ^ *z++;
+  }
+  return h & 0x7fffffff;
 }
-return a===tgtArray ? a : a.join('');
-};
-F.repoUrl = function(path,urlParams){
-if(!urlParams) return this.rootPath+path;
-const url=[this.rootPath,path];
-url.push('?');
-if('string'===typeof urlParams) url.push(urlParams);
-else if(urlParams && 'object'===typeof urlParams){
-this.encodeUrlArgs(urlParams, url);
+
+/*
+** Given an identifier name, try to find a declaration for that
+** identifier in the hash table.  If found, return a pointer to
+** the Decl structure.  If not found, return 0.
+*/
+static Decl *FindDecl(const char *zName, int len){
+  int h;
+  Decl *p;
+
+  if( len<=0 ){
+    len = strlen(zName);
+  }
+  h = Hash(zName,len) % DECL_HASH_SIZE;
+  p = apTable[h];
+  while( p && (strncmp(p->zName,zName,len)!=0 || p->zName[len]!=0) ){
+    p = p->pSameHash;
+  }
+  return p;
 }
-return url.join('');
-};
-F.isObject = function(v){
-return v &&
-(v instanceof Object) &&
-('[object Object]' === Object.prototype.toString.apply(v) );
-};
-F.mergeLastWins = function(){
-var k, o, i;
-const n = arguments.length, rc={};
-for(i = 0; i < n; ++i){
-if(!F.isObject(o = arguments[i])) continue;
-for( k in o ){
-if(o.hasOwnProperty(k)) rc[k] = o[k];
+
+/*
+** Install the given declaration both in the hash table and on
+** the list of all declarations.
+*/
+static void InstallDecl(Decl *pDecl){
+  int h;
+  Decl *pOther;
+
+  h = Hash(pDecl->zName,0) % DECL_HASH_SIZE;
+  pOther = apTable[h];
+  while( pOther && strcmp(pDecl->zName,pOther->zName)!=0 ){
+    pOther = pOther->pSameHash;
+  }
+  if( pOther ){
+    pDecl->pSameName = pOther->pSameName;
+    pOther->pSameName = pDecl;
+  }else{
+    pDecl->pSameName = 0;
+    pDecl->pSameHash = apTable[h];
+    apTable[h] = pDecl;
+  }
+  pDecl->pNext = 0;
+  if( pDeclFirst==0 ){
+    pDeclFirst = pDeclLast = pDecl;
+  }else{
+    pDeclLast->pNext = pDecl;
+    pDeclLast = pDecl;
+  }
 }
+
+/*
+** Look at the current ifStack.  If anything declared at the current
+** position must be surrounded with
+**
+**      #if   STUFF
+**      #endif
+**
+** Then this routine computes STUFF and returns a pointer to it.  Memory
+** to hold the value returned is obtained from malloc().
+*/
+static char *GetIfString(void){
+  Ifmacro *pIf;
+  char *zResult = 0;
+  int hasIf = 0;
+  String str;
+
+  for(pIf = ifStack; pIf; pIf=pIf->pNext){
+    if( pIf->zCondition==0 || *pIf->zCondition==0 ) continue;
+    if( !hasIf ){
+      hasIf = 1;
+      StringInit(&str);
+    }else{
+      StringAppend(&str," && ",4);
+    }
+    StringAppend(&str,pIf->zCondition,0);
+  }
+  if( hasIf ){
+    zResult = StrDup(StringGet(&str),0);
+    StringReset(&str);
+  }else{
+    zResult = 0;
+  }
+  return zResult;
 }
-return rc;
-};
-F.hashDigits = function(hash,forUrl){
-const n = ('number'===typeof forUrl)
-? forUrl : F.config[forUrl ? 'hashDigitsUrl' : 'hashDigits'];
-return ('string'==typeof hash ? hash.substr(
-0, n
-) : hash);
-};
-F.onPageLoad = function(callback){
-window.addEventListener('load', callback, false);
-return this;
-};
-F.onDOMContentLoaded = function(callback){
-window.addEventListener('DOMContentLoaded', callback, false);
-return this;
-};
-F.shortenFilename = function(name){
-const a = name.split('/');
-if(a.length<=2) return name;
-while(a.length>2) a.shift();
-return '.../'+a.join('/');
-};
-F.page.addEventListener = function f(eventName, callback){
-if(!f.proxy){
-f.proxy = document.createElement('span');
-}
-f.proxy.addEventListener(eventName, callback, false);
-return this;
-};
-F.page.dispatchEvent = function(eventName, eventDetail){
-if(this.addEventListener.proxy){
-try{
-this.addEventListener.proxy.dispatchEvent(
-new CustomEvent(eventName,{detail: eventDetail})
-);
-}catch(e){
-console.error(eventName,"event listener threw:",e);
-}
-}
-return this;
-};
-F.page.setPageTitle = function(title){
-const t = document.querySelector('title');
-if(t) t.innerText = title;
-return this;
-};
-F.debounce = function f(func, waitMs, immediate) {
-var timeoutId;
-if(!waitMs) waitMs = f.$defaultDelay;
-return function() {
-const context = this, args = Array.prototype.slice.call(arguments);
-const later = function() {
-timeoutId = undefined;
-if(!immediate) func.apply(context, args);
-};
-const callNow = immediate && !timeoutId;
-clearTimeout(timeoutId);
-timeoutId = setTimeout(later, waitMs);
-if(callNow) func.apply(context, args);
-};
-};
-F.debounce.$defaultDelay = 500;
-})(window);
-/* fossil.dom.js *************************************************************/
-"use strict";
-(function(F){
-const argsToArray = (a)=>Array.prototype.slice.call(a,0);
-const isArray = (v)=>v instanceof Array;
-const dom = {
-create: function(elemType){
-return document.createElement(elemType);
-},
-createElemFactory: function(eType){
-return function(){
-return document.createElement(eType);
-};
-},
-remove: function(e){
-if(e?.forEach){
-e.forEach(
-(x)=>x?.parentNode?.removeChild(x)
-);
-}else{
-e?.parentNode?.removeChild(e);
-}
-return e;
-},
-clearElement: function f(e){
-if(!f.each){
-f.each = function(e){
-if(e.forEach){
-e.forEach((x)=>f(x));
-return e;
-}
-while(e.firstChild) e.removeChild(e.firstChild);
-};
-}
-argsToArray(arguments).forEach(f.each);
-return arguments[0];
-},
-};
-dom.splitClassList = function f(str){
-if(!f.rx){
-f.rx = /(\s+|\s*,\s*)/;
-}
-return str ? str.split(f.rx) : [str];
-};
-dom.div = dom.createElemFactory('div');
-dom.p = dom.createElemFactory('p');
-dom.code = dom.createElemFactory('code');
-dom.pre = dom.createElemFactory('pre');
-dom.header = dom.createElemFactory('header');
-dom.footer = dom.createElemFactory('footer');
-dom.section = dom.createElemFactory('section');
-dom.span = dom.createElemFactory('span');
-dom.strong = dom.createElemFactory('strong');
-dom.em = dom.createElemFactory('em');
-dom.ins = dom.createElemFactory('ins');
-dom.del = dom.createElemFactory('del');
-dom.label = function(forElem, text){
-const rc = document.createElement('label');
-if(forElem){
-if(forElem instanceof HTMLElement){
-forElem = this.attr(forElem, 'id');
-}
-if(forElem){
-dom.attr(rc, 'for', forElem);
-}
-}
-if(text) this.append(rc, text);
-return rc;
-};
-dom.img = function(src){
-const e = this.create('img');
-if(src) e.setAttribute('src',src);
-return e;
-};
-dom.a = function(href,label){
-const e = this.create('a');
-if(href) e.setAttribute('href',href);
-if(label) e.appendChild(dom.text(true===label ? href : label));
-return e;
-};
-dom.hr = dom.createElemFactory('hr');
-dom.br = dom.createElemFactory('br');
-dom.text = function(){
-return document.createTextNode(argsToArray(arguments).join(''));
-};
-dom.button = function(label,callback){
-const b = this.create('button');
-if(label) b.appendChild(this.text(label));
-if('function' === typeof callback){
-b.addEventListener('click', callback, false);
-}
-return b;
-};
-dom.textarea = function(){
-const rc = this.create('textarea');
-let rows, cols, readonly;
-if(1===arguments.length){
-if('boolean'===typeof arguments[0]){
-readonly = !!arguments[0];
-}else{
-rows = arguments[0];
-}
-}else if(arguments.length){
-rows = arguments[0];
-cols = arguments[1];
-readonly = arguments[2];
-}
-if(rows) rc.setAttribute('rows',rows);
-if(cols) rc.setAttribute('cols', cols);
-if(readonly) rc.setAttribute('readonly', true);
-return rc;
-};
-dom.select = dom.createElemFactory('select');
-dom.option = function(value,label){
-const a = arguments;
-var sel;
-if(1==a.length){
-if(a[0] instanceof HTMLElement){
-sel = a[0];
-}else{
-value = a[0];
-}
-}else if(2==a.length){
-if(a[0] instanceof HTMLElement){
-sel = a[0];
-value = a[1];
-}else{
-value = a[0];
-label = a[1];
-}
-}
-else if(3===a.length){
-sel = a[0];
-value = a[1];
-label = a[2];
-}
-const o = this.create('option');
-if(undefined !== value){
-o.value = value;
-this.append(o, this.text(label || value));
-}else if(undefined !== label){
-this.append(o, label);
-}
-if(sel) this.append(sel, o);
-return o;
-};
-dom.h = function(level){
-return this.create('h'+level);
-};
-dom.ul = dom.createElemFactory('ul');
-dom.li = function(parent){
-const li = this.create('li');
-if(parent) parent.appendChild(li);
-return li;
-};
-dom.createElemFactoryWithOptionalParent = function(childType){
-return function(parent){
-const e = this.create(childType);
-if(parent) parent.appendChild(e);
-return e;
-};
-};
-dom.table = dom.createElemFactory('table');
-dom.thead = dom.createElemFactoryWithOptionalParent('thead');
-dom.tbody = dom.createElemFactoryWithOptionalParent('tbody');
-dom.tfoot = dom.createElemFactoryWithOptionalParent('tfoot');
-dom.tr = dom.createElemFactoryWithOptionalParent('tr');
-dom.td = dom.createElemFactoryWithOptionalParent('td');
-dom.th = dom.createElemFactoryWithOptionalParent('th');
-dom.fieldset = function(legendText){
-const fs = this.create('fieldset');
-if(legendText){
-this.append(
-fs,
-(legendText instanceof HTMLElement)
-? legendText
-: this.append(this.legend(legendText))
-);
-}
-return fs;
-};
-dom.legend = function(legendText){
-const rc = this.create('legend');
-if(legendText) this.append(rc, legendText);
-return rc;
-};
-dom.append = function f(parent){
-const a = argsToArray(arguments);
-a.shift();
-for(let i in a) {
-var e = a[i];
-if(isArray(e) || e.forEach){
-e.forEach((x)=>f.call(this, parent,x));
-continue;
-}
-if('string'===typeof e
-|| 'number'===typeof e
-|| 'boolean'===typeof e
-|| e instanceof Error) e = this.text(e);
-parent.appendChild(e);
-}
-return parent;
-};
-dom.input = function(type){
-return this.attr(this.create('input'), 'type', type);
-};
-dom.checkbox = function(value, checked){
-const rc = this.input('checkbox');
-if(1===arguments.length && 'boolean'===typeof value){
-checked = !!value;
-value = undefined;
-}
-if(undefined !== value) rc.value = value;
-if(!!checked) rc.checked = true;
-return rc;
-};
-dom.radio = function(){
-const rc = this.input('radio');
-let name, value, checked;
-if(1===arguments.length && 'boolean'===typeof name){
-checked = arguments[0];
-name = value = undefined;
-}else if(2===arguments.length){
-name = arguments[0];
-if('boolean'===typeof arguments[1]){
-checked = arguments[1];
-}else{
-value = arguments[1];
-checked = undefined;
-}
-}else if(arguments.length){
-name = arguments[0];
-value = arguments[1];
-checked = arguments[2];
-}
-if(name) this.attr(rc, 'name', name);
-if(undefined!==value) rc.value = value;
-if(!!checked) rc.checked = true;
-return rc;
-};
-const domAddRemoveClass = function f(action,e){
-if(!f.rxSPlus){
-f.rxSPlus = /\s+/;
-f.applyAction = function(e,a,v){
-if(!e || !v
-) return;
-else if(e.forEach){
-e.forEach((E)=>E.classList[a](v));
-}else{
-e.classList[a](v);
-}
-};
-}
-var i = 2, n = arguments.length;
-for( ; i < n; ++i ){
-let c = arguments[i];
-if(!c) continue;
-else if(isArray(c) ||
-('string'===typeof c
-&& c.indexOf(' ')>=0
-&& (c = c.split(f.rxSPlus)))
-|| c.forEach
+
+/*
+** Create a new declaration and put it in the hash table.  Also
+** return a pointer to it so that we can fill in the zFwd and zDecl
+** fields, and so forth.
+*/
+static Decl *CreateDecl(
+  const char *zName,       /* Name of the object being declared. */
+  int nName                /* Length of the name */
 ){
-c.forEach((k)=>k ? f.applyAction(e, action, k) : false);
-}else if(c){
-f.applyAction(e, action, c);
+  Decl *pDecl;
+
+  pDecl = SafeMalloc( sizeof(Decl) + nName + 1);
+  memset(pDecl,0,sizeof(Decl));
+  pDecl->zName = (char*)&pDecl[1];
+  sprintf(pDecl->zName,"%.*s",nName,zName);
+  pDecl->zFile = zFilename;
+  pDecl->pInclude = includeList;
+  pDecl->zIf = GetIfString();
+  InstallDecl(pDecl);
+  return pDecl;
 }
+
+/*
+** Insert a new identifier into an table of identifiers.  Return TRUE if
+** a new identifier was inserted and return FALSE if the identifier was
+** already in the table.
+*/
+static int IdentTableInsert(
+  IdentTable *pTable,       /* The table into which we will insert */
+  const char *zId,          /* Name of the identifiers */
+  int nId                   /* Length of the identifier name */
+){
+  int h;
+  Ident *pId;
+
+  if( nId<=0 ){
+    nId = strlen(zId);
+  }
+  h = Hash(zId,nId) % IDENT_HASH_SIZE;
+  for(pId = pTable->apTable[h]; pId; pId=pId->pCollide){
+    if( strncmp(zId,pId->zName,nId)==0 && pId->zName[nId]==0 ){
+      /* printf("Already in table: %.*s\n",nId,zId); */
+      return 0;
+    }
+  }
+  pId = SafeMalloc( sizeof(Ident) + nId + 1 );
+  pId->zName = (char*)&pId[1];
+  sprintf(pId->zName,"%.*s",nId,zId);
+  pId->pNext = pTable->pList;
+  pTable->pList = pId;
+  pId->pCollide = pTable->apTable[h];
+  pTable->apTable[h] = pId;
+  /* printf("Add to table: %.*s\n",nId,zId); */
+  return 1;
 }
-return e;
-};
-dom.addClass = function(e,c){
-const a = argsToArray(arguments);
-a.unshift('add');
-return domAddRemoveClass.apply(this, a);
-};
-dom.removeClass = function(e,c){
-const a = argsToArray(arguments);
-a.unshift('remove');
-return domAddRemoveClass.apply(this, a);
-};
-dom.toggleClass = function f(e,c){
-if(e.forEach){
-e.forEach((x)=>x.classList.toggle(c));
-}else{
-e.classList.toggle(c);
+
+/*
+** Check to see if the given value is in the given IdentTable.  Return
+** true if it is and false if it is not.
+*/
+static int IdentTableTest(
+  IdentTable *pTable,       /* The table in which to search */
+  const char *zId,          /* Name of the identifiers */
+  int nId                   /* Length of the identifier name */
+){
+  int h;
+  Ident *pId;
+
+  if( nId<=0 ){
+    nId = strlen(zId);
+  }
+  h = Hash(zId,nId) % IDENT_HASH_SIZE;
+  for(pId = pTable->apTable[h]; pId; pId=pId->pCollide){
+    if( strncmp(zId,pId->zName,nId)==0 && pId->zName[nId]==0 ){
+      return 1;
+    }
+  }
+  return 0;
 }
-return e;
-};
-dom.hasClass = function(e,c){
-return (e && e.classList) ? e.classList.contains(c) : false;
-};
-dom.moveTo = function(dest,e){
-const n = arguments.length;
-var i = 1;
-const self = this;
-for( ; i < n; ++i ){
-e = arguments[i];
-this.append(dest, e);
+
+/*
+** Remove every identifier from the given table.   Reset the table to
+** its initial state.
+*/
+static void IdentTableReset(IdentTable *pTable){
+  Ident *pId, *pNext;
+
+  for(pId = pTable->pList; pId; pId = pNext){
+    pNext = pId->pNext;
+    SafeFree(pId);
+  }
+  memset(pTable,0,sizeof(IdentTable));
 }
-return dest;
-};
-dom.moveChildrenTo = function f(dest,e){
-if(!f.mv){
-f.mv = function(d,v){
-if(d instanceof Array){
-d.push(v);
-if(v.parentNode) v.parentNode.removeChild(v);
+
+#ifdef DEBUG
+/*
+** Print the name of every identifier in the given table, one per line
+*/
+static void IdentTablePrint(IdentTable *pTable, FILE *pOut){
+  Ident *pId;
+
+  for(pId = pTable->pList; pId; pId = pId->pNext){
+    fprintf(pOut,"%s\n",pId->zName);
+  }
 }
-else d.appendChild(v);
-};
+#endif
+
+/*
+** Read an entire file into memory.  Return a pointer to the memory.
+**
+** The memory is obtained from SafeMalloc and must be freed by the
+** calling function.
+**
+** If the read fails for any reason, 0 is returned.
+*/
+static char *ReadFile(const char *zFilename){
+  struct stat sStat;
+  FILE *pIn;
+  char *zBuf;
+  int n;
+
+  if( stat(zFilename,&sStat)!=0 
+#ifndef WIN32
+    || !S_ISREG(sStat.st_mode)
+#endif
+  ){
+    return 0;
+  }
+  pIn = fopen(zFilename,"r");
+  if( pIn==0 ){
+    return 0;
+  }
+  zBuf = SafeMalloc( sStat.st_size + 1 );
+  n = fread(zBuf,1,sStat.st_size,pIn);
+  zBuf[n] = 0;
+  fclose(pIn);
+  return zBuf;
 }
-const n = arguments.length;
-var i = 1;
-for( ; i < n; ++i ){
-e = arguments[i];
-if(!e){
-console.warn("Achtung: dom.moveChildrenTo() passed a falsy value at argument",i,"of",
-arguments,arguments[i]);
-continue;
+
+/*
+** Write the contents of a string into a file.  Return the number of
+** errors
+*/
+static int WriteFile(const char *zFilename, const char *zOutput){
+  FILE *pOut;
+  pOut = fopen(zFilename,"w");
+  if( pOut==0 ){
+    return 1;
+  }
+  fwrite(zOutput,1,strlen(zOutput),pOut);
+  fclose(pOut);
+  return 0;
 }
-if(e.forEach){
-e.forEach((x)=>f.mv(dest, x));
-}else{
-while(e.firstChild){
-f.mv(dest, e.firstChild);
+
+/*
+** Major token types
+*/
+#define TT_Space           1   /* Contiguous white space */
+#define TT_Id              2   /* An identifier */
+#define TT_Preprocessor    3   /* Any C preprocessor directive */
+#define TT_Comment         4   /* Either C or C++ style comment */
+#define TT_Number          5   /* Any numeric constant */
+#define TT_String          6   /* String or character constants. ".." or '.' */
+#define TT_Braces          7   /* All text between { and a matching } */
+#define TT_EOF             8   /* End of file */
+#define TT_Error           9   /* An error condition */
+#define TT_BlockComment    10  /* A C-Style comment at the left margin that
+                                * spans multple lines */
+#define TT_Other           0   /* None of the above */
+
+/*
+** Get a single low-level token from the input file.  Update the
+** file pointer so that it points to the first character beyond the
+** token.
+**
+** A "low-level token" is any token except TT_Braces.  A TT_Braces token
+** consists of many smaller tokens and is assembled by a routine that
+** calls this one.
+**
+** The function returns the number of errors.  An error is an
+** unterminated string or character literal or an unterminated
+** comment.
+**
+** Profiling shows that this routine consumes about half the
+** CPU time on a typical run of makeheaders.
+*/
+static int GetToken(InStream *pIn, Token *pToken){
+  int i;
+  const char *z;
+  int cStart;
+  int c;
+  int startLine;   /* Line on which a structure begins */
+  int nlisc = 0;   /* True if there is a new-line in a ".." or '..' */
+  int nErr = 0;    /* Number of errors seen */
+
+  z = pIn->z;
+  i = pIn->i;
+  pToken->nLine = pIn->nLine;
+  pToken->zText = &z[i];
+  switch( z[i] ){
+    case 0:
+      pToken->eType = TT_EOF;
+      pToken->nText = 0;
+      break;
+
+    case '#':
+      if( i==0 || z[i-1]=='\n' || (i>1 && z[i-1]=='\r' && z[i-2]=='\n')){
+        /* We found a preprocessor statement */
+        pToken->eType = TT_Preprocessor;
+        i++;
+        while( z[i]!=0 && z[i]!='\n' ){
+          if( z[i]=='\\' ){
+            i++;
+            if( z[i]=='\n' ) pIn->nLine++;
+          }
+          i++;
+        }
+        pToken->nText = i - pIn->i;
+      }else{
+        /* Just an operator */
+        pToken->eType = TT_Other;
+        pToken->nText = 1;
+      }
+      break;
+
+    case ' ':
+    case '\t':
+    case '\r':
+    case '\f':
+    case '\n':
+      while( isspace(z[i]) ){
+        if( z[i]=='\n' ) pIn->nLine++;
+        i++;
+      }
+      pToken->eType = TT_Space;
+      pToken->nText = i - pIn->i;
+      break;
+
+    case '\\':
+      pToken->nText = 2;
+      pToken->eType = TT_Other;
+      if( z[i+1]=='\n' ){
+        pIn->nLine++;
+        pToken->eType = TT_Space;
+      }else if( z[i+1]==0 ){
+        pToken->nText = 1;
+      }
+      break;
+
+    case '\'':
+    case '\"':
+      cStart = z[i];
+      startLine = pIn->nLine;
+      do{
+        i++;
+        c = z[i];
+        if( c=='\n' ){
+          if( !nlisc ){
+            fprintf(stderr,
+              "%s:%d: (warning) Newline in string or character literal.\n",
+              zFilename, pIn->nLine);
+            nlisc = 1;
+          }
+          pIn->nLine++;
+        }
+        if( c=='\\' ){
+          i++;
+          c = z[i];
+          if( c=='\n' ){
+            pIn->nLine++;
+          }
+        }else if( c==cStart ){
+          i++;
+          c = 0;
+        }else if( c==0 ){
+          fprintf(stderr, "%s:%d: Unterminated string or character literal.\n",
+             zFilename, startLine);
+          nErr++;
+        }
+      }while( c );
+      pToken->eType = TT_String;
+      pToken->nText = i - pIn->i;
+      break;
+
+    case '/':
+      if( z[i+1]=='/' ){
+        /* C++ style comment */
+        while( z[i] && z[i]!='\n' ){ i++; }
+        pToken->eType = TT_Comment;
+        pToken->nText = i - pIn->i;
+      }else if( z[i+1]=='*' ){
+        /* C style comment */
+        int isBlockComment = i==0 || z[i-1]=='\n';
+        i += 2;
+        startLine = pIn->nLine;
+        while( z[i] && (z[i]!='*' || z[i+1]!='/') ){
+          if( z[i]=='\n' ){
+            pIn->nLine++;
+            if( isBlockComment ){
+              if( z[i+1]=='*' || z[i+2]=='*' ){
+                 isBlockComment = 2;
+              }else{
+                 isBlockComment = 0;
+              }
+            }
+          }
+          i++;
+        }
+        if( z[i] ){ 
+          i += 2; 
+        }else{
+          isBlockComment = 0;
+          fprintf(stderr,"%s:%d: Unterminated comment\n",
+            zFilename, startLine);
+          nErr++;
+        }
+        pToken->eType = isBlockComment==2 ? TT_BlockComment : TT_Comment;
+        pToken->nText = i - pIn->i;
+      }else{
+        /* A divide operator */
+        pToken->eType = TT_Other;
+        pToken->nText = 1 + (z[i+1]=='+');
+      }
+      break;
+
+    case '0': 
+      if( z[i+1]=='x' || z[i+1]=='X' ){
+        /* A hex constant */
+        i += 2;
+        while( isxdigit(z[i]) ){ i++; }
+      }else{
+        /* An octal constant */
+        while( isdigit(z[i]) ){ i++; }
+      }
+      pToken->eType = TT_Number;
+      pToken->nText = i - pIn->i;
+      break;
+
+    case '1': case '2': case '3': case '4':
+    case '5': case '6': case '7': case '8': case '9':
+      while( isdigit(z[i]) ){ i++; }
+      if( (c=z[i])=='.' ){
+         i++;
+         while( isdigit(z[i]) ){ i++; }
+         c = z[i];
+         if( c=='e' || c=='E' ){
+           i++;
+           if( ((c=z[i])=='+' || c=='-') && isdigit(z[i+1]) ){ i++; }
+           while( isdigit(z[i]) ){ i++; }
+           c = z[i];
+         }
+         if( c=='f' || c=='F' || c=='l' || c=='L' ){ i++; }
+      }else if( c=='e' || c=='E' ){
+         i++;
+         if( ((c=z[i])=='+' || c=='-') && isdigit(z[i+1]) ){ i++; }
+         while( isdigit(z[i]) ){ i++; }
+      }else if( c=='L' || c=='l' ){
+         i++;
+         c = z[i];
+         if( c=='u' || c=='U' ){ i++; }
+      }else if( c=='u' || c=='U' ){
+         i++;
+         c = z[i];
+         if( c=='l' || c=='L' ){ i++; }
+      }
+      pToken->eType = TT_Number;
+      pToken->nText = i - pIn->i;
+      break;
+
+    case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g':
+    case 'h': case 'i': case 'j': case 'k': case 'l': case 'm': case 'n':
+    case 'o': case 'p': case 'q': case 'r': case 's': case 't': case 'u':
+    case 'v': case 'w': case 'x': case 'y': case 'z': case 'A': case 'B':
+    case 'C': case 'D': case 'E': case 'F': case 'G': case 'H': case 'I':
+    case 'J': case 'K': case 'L': case 'M': case 'N': case 'O': case 'P':
+    case 'Q': case 'R': case 'S': case 'T': case 'U': case 'V': case 'W':
+    case 'X': case 'Y': case 'Z': case '_':
+      while( isalnum(z[i]) || z[i]=='_' ){ i++; };
+      pToken->eType = TT_Id;
+      pToken->nText = i - pIn->i;
+      break;
+
+    case ':': 
+      pToken->eType = TT_Other;
+      pToken->nText = 1 + (z[i+1]==':');
+      break;
+
+    case '=':
+    case '<':
+    case '>':
+    case '+':
+    case '-':
+    case '*':
+    case '%':
+    case '^':
+    case '&':
+    case '|': 
+      pToken->eType = TT_Other;
+      pToken->nText = 1 + (z[i+1]=='=');
+      break;
+
+    default:
+      pToken->eType = TT_Other;
+      pToken->nText = 1;
+      break;
+  }
+  pIn->i += pToken->nText;
+  return nErr;
 }
+
+/*
+** This routine recovers the next token from the input file which is
+** not a space or a comment or any text between an "#if 0" and "#endif".
+**
+** This routine returns the number of errors encountered.  An error
+** is an unterminated token or unmatched "#if 0".
+**
+** Profiling shows that this routine uses about a quarter of the
+** CPU time in a typical run.
+*/
+static int GetNonspaceToken(InStream *pIn, Token *pToken){
+  int nIf = 0;
+  int inZero = 0;
+  const char *z;
+  int value;
+  int startLine;
+  int nErr = 0;
+
+  startLine = pIn->nLine;
+  while( 1 ){
+    nErr += GetToken(pIn,pToken);
+    /* printf("%04d: Type=%d nIf=%d [%.*s]\n",
+       pToken->nLine,pToken->eType,nIf,pToken->nText,
+       pToken->eType!=TT_Space ? pToken->zText : "<space>"); */
+    pToken->pComment = blockComment;
+    switch( pToken->eType ){
+      case TT_Comment:
+      case TT_Space:
+        break;
+
+      case TT_BlockComment:
+        if( doc_flag ){
+          blockComment = SafeMalloc( sizeof(Token) );
+          *blockComment = *pToken;
+        }
+        break;
+
+      case TT_EOF:
+        if( nIf ){
+          fprintf(stderr,"%s:%d: Unterminated \"#if\"\n",
+             zFilename, startLine);
+          nErr++;
+        }
+        return nErr;
+
+      case TT_Preprocessor:
+        z = &pToken->zText[1];
+        while( *z==' ' || *z=='\t' ) z++;
+        if( sscanf(z,"if %d",&value)==1 && value==0 ){
+          nIf++;
+          inZero = 1;
+        }else if( inZero ){
+          if( strncmp(z,"if",2)==0 ){
+            nIf++;
+          }else if( strncmp(z,"endif",5)==0 ){
+            nIf--;
+            if( nIf==0 ) inZero = 0;
+          }
+        }else{
+          return nErr;
+        }
+        break;
+
+      default:
+        if( !inZero ){
+          return nErr;
+        }
+        break;
+    }
+  }
+  /* NOT REACHED */
 }
+
+/* 
+** This routine looks for identifiers (strings of contiguous alphanumeric
+** characters) within a preprocessor directive and adds every such string
+** found to the given identifier table
+*/
+static void FindIdentifiersInMacro(Token *pToken, IdentTable *pTable){
+  Token sToken;
+  InStream sIn;
+  int go = 1;
+
+  sIn.z = pToken->zText;
+  sIn.i = 1;
+  sIn.nLine = 1;
+  while( go && sIn.i < pToken->nText ){
+    GetToken(&sIn,&sToken);
+    switch( sToken.eType ){
+      case TT_Id:
+        IdentTableInsert(pTable,sToken.zText,sToken.nText);
+        break;
+
+      case TT_EOF:
+        go = 0;
+        break;
+
+      default:
+        break;
+    }
+  }
 }
-return dest;
-};
-dom.replaceNode = function f(old,nu){
-var i = 1, n = arguments.length;
-++f.counter;
-try {
-for( ; i < n; ++i ){
-const e = arguments[i];
-if(e.forEach){
-e.forEach((x)=>f.call(this,old,e));
-continue;
+
+/*
+** This routine gets the next token.  Everything contained within
+** {...} is collapsed into a single TT_Braces token.  Whitespace is
+** omitted.
+**
+** If pTable is not NULL, then insert every identifier seen into the
+** IdentTable.  This includes any identifiers seen inside of {...}.
+**
+** The number of errors encountered is returned.  An error is an
+** unterminated token.
+*/
+static int GetBigToken(InStream *pIn, Token *pToken, IdentTable *pTable){
+  const char *z, *zStart;
+  int iStart;
+  int nBrace;
+  int c;
+  int nLine;
+  int nErr;
+
+  nErr = GetNonspaceToken(pIn,pToken);
+  switch( pToken->eType ){
+    case TT_Id:
+      if( pTable!=0 ){
+        IdentTableInsert(pTable,pToken->zText,pToken->nText);
+      }
+      return nErr;
+
+    case TT_Preprocessor:
+      if( pTable!=0 ){
+        FindIdentifiersInMacro(pToken,pTable);
+      }
+      return nErr;
+
+    case TT_Other:
+      if( pToken->zText[0]=='{' ) break;
+      return nErr;
+
+    default:
+      return nErr;
+  }
+
+  z = pIn->z;
+  iStart = pIn->i;
+  zStart = pToken->zText;
+  nLine = pToken->nLine;
+  nBrace = 1;
+  while( nBrace ){
+    nErr += GetNonspaceToken(pIn,pToken);
+    /* printf("%04d: nBrace=%d [%.*s]\n",pToken->nLine,nBrace,
+       pToken->nText,pToken->zText); */
+    switch( pToken->eType ){
+      case TT_EOF:
+        fprintf(stderr,"%s:%d: Unterminated \"{\"\n",
+           zFilename, nLine);
+        nErr++;
+        pToken->eType = TT_Error;
+        return nErr;
+
+      case TT_Id:
+        if( pTable ){
+          IdentTableInsert(pTable,pToken->zText,pToken->nText);
+        }
+        break;
+  
+      case TT_Preprocessor:
+        if( pTable!=0 ){
+          FindIdentifiersInMacro(pToken,pTable);
+        }
+        break;
+
+      case TT_Other:
+        if( (c = pToken->zText[0])=='{' ){
+          nBrace++;
+        }else if( c=='}' ){
+          nBrace--;
+        }
+        break;
+
+      default:
+        break;
+    }
+  }
+  pToken->eType = TT_Braces;
+  pToken->nText = 1 + pIn->i - iStart;
+  pToken->zText = zStart;
+  pToken->nLine = nLine;
+  return nErr;
 }
-old.parentNode.insertBefore(e, old);
+
+/*
+** This routine frees up a list of Tokens.  The pComment tokens are
+** not cleared by this.  So we leak a little memory when using the -doc
+** option.  So what.
+*/
+static void FreeTokenList(Token *pList){
+  Token *pNext;
+  while( pList ){
+    pNext = pList->pNext;
+    SafeFree(pList);
+    pList = pNext;
+  }
 }
+
+/*
+** Tokenize an entire file.  Return a pointer to the list of tokens.
+**
+** Space for each token is obtained from a separate malloc() call.  The
+** calling function is responsible for freeing this space.
+**
+** If pTable is not NULL, then fill the table with all identifiers seen in
+** the input file.
+*/
+static Token *TokenizeFile(const char *zFile, IdentTable *pTable){
+  InStream sIn;
+  Token *pFirst = 0, *pLast = 0, *pNew;
+  int nErr = 0;
+
+  sIn.z = zFile;
+  sIn.i = 0;
+  sIn.nLine = 1;
+  blockComment = 0;
+
+  while( sIn.z[sIn.i]!=0 ){
+    pNew = SafeMalloc( sizeof(Token) );
+    nErr += GetBigToken(&sIn,pNew,pTable);
+    debug3(TOKENIZER, "Token on line %d: [%.*s]\n",
+       pNew->nLine, pNew->nText<50 ? pNew->nText : 50, pNew->zText);
+    if( pFirst==0 ){
+      pFirst = pLast = pNew;
+      pNew->pPrev = 0;
+    }else{
+      pLast->pNext = pNew;
+      pNew->pPrev = pLast;
+      pLast = pNew;
+    }
+    if( pNew->eType==TT_EOF ) break;
+  }
+  if( pLast ) pLast->pNext = 0;
+  blockComment = 0;
+  if( nErr ){
+    FreeTokenList(pFirst);
+    pFirst = 0;
+  }
+
+  return pFirst;
 }
-finally{
---f.counter;
+
+#if TEST==1
+/*
+** Use the following routine to test or debug the tokenizer.
+*/
+void main(int argc, char **argv){
+  char *zFile;
+  Token *pList, *p;
+  IdentTable sTable;
+
+  if( argc!=2 ){
+    fprintf(stderr,"Usage: %s filename\n",*argv);
+    exit(1);
+  }
+  memset(&sTable,0,sizeof(sTable));
+  zFile = ReadFile(argv[1]);
+  if( zFile==0 ){
+    fprintf(stderr,"Can't read file \"%s\"\n",argv[1]);
+    exit(1);
+  }
+  pList = TokenizeFile(zFile,&sTable);
+  for(p=pList; p; p=p->pNext){
+    int j;
+    switch( p->eType ){ 
+      case TT_Space:
+        printf("%4d: Space\n",p->nLine);
+        break;
+      case TT_Id:
+        printf("%4d: Id           %.*s\n",p->nLine,p->nText,p->zText);
+        break;
+      case TT_Preprocessor:
+        printf("%4d: Preprocessor %.*s\n",p->nLine,p->nText,p->zText);
+        break;
+      case TT_Comment:
+        printf("%4d: Comment\n",p->nLine);
+        break;
+      case TT_BlockComment:
+        printf("%4d: Block Comment\n",p->nLine);
+        break;
+      case TT_Number:
+        printf("%4d: Number       %.*s\n",p->nLine,p->nText,p->zText);
+        break;
+      case TT_String:
+        printf("%4d: String       %.*s\n",p->nLine,p->nText,p->zText);
+        break;
+      case TT_Other:
+        printf("%4d: Other        %.*s\n",p->nLine,p->nText,p->zText);
+        break;
+      case TT_Braces:
+        for(j=0; j<p->nText && j<30 && p->zText[j]!='\n'; j++){}
+        printf("%4d: Braces       %.*s...}\n",p->nLine,j,p->zText);
+        break;
+      case TT_EOF:
+        printf("%4d: End of file\n",p->nLine);
+        break;
+      default:
+        printf("%4d: type %d\n",p->nLine,p->eType);
+        break;
+    }
+  }
+  FreeTokenList(pList);
+  SafeFree(zFile);
+  IdentTablePrint(&sTable,stdout);
 }
-if(!f.counter){
-old.parentNode.removeChild(old);
+#endif
+
+#ifdef DEBUG
+/*
+** For debugging purposes, write out a list of tokens.
+*/
+static void PrintTokens(Token *pFirst, Token *pLast){
+  int needSpace = 0;
+  int c;
+
+  pLast = pLast->pNext;
+  while( pFirst!=pLast ){
+    switch( pFirst->eType ){
+      case TT_Preprocessor:
+        printf("\n%.*s\n",pFirst->nText,pFirst->zText);
+        needSpace = 0;
+        break;
+
+      case TT_Id:
+      case TT_Number:
+        printf("%s%.*s", needSpace ? " " : "", pFirst->nText, pFirst->zText);
+        needSpace = 1;
+        break;
+
+      default:
+        c = pFirst->zText[0];
+        printf("%s%.*s", 
+          (needSpace && (c=='*' || c=='{')) ? " " : "",
+          pFirst->nText, pFirst->zText);
+        needSpace = pFirst->zText[0]==',';
+        break;
+    }
+    pFirst = pFirst->pNext;
+  }
 }
-};
-dom.replaceNode.counter = 0;
-dom.attr = function f(e){
-if(2===arguments.length) return e.getAttribute(arguments[1]);
-const a = argsToArray(arguments);
-if(e.forEach){
-e.forEach(function(x){
-a[0] = x;
-f.apply(f,a);
-});
-return e;
+#endif
+
+/*
+** Convert a sequence of tokens into a string and return a pointer
+** to that string.  Space to hold the string is obtained from malloc()
+** and must be freed by the calling function.
+**
+** Certain keywords (EXPORT, PRIVATE, PUBLIC, PROTECTED) are always
+** skipped.
+**
+** If pSkip!=0 then skip over nSkip tokens beginning with pSkip.
+**
+** If zTerm!=0 then append the text to the end.
+*/
+static char *TokensToString(
+  Token *pFirst,    /* First token in the string */
+  Token *pLast,     /* Last token in the string */
+  char *zTerm,      /* Terminate the string with this text if not NULL */
+  Token *pSkip,     /* Skip this token if not NULL */
+  int nSkip         /* Skip a total of this many tokens */
+){
+  char *zReturn;
+  String str;
+  int needSpace = 0;
+  int c;
+  int iSkip = 0;
+  int skipOne = 0;
+
+  StringInit(&str);
+  pLast = pLast->pNext;
+  while( pFirst!=pLast ){
+    if( pFirst==pSkip ){ iSkip = nSkip; }
+    if( iSkip>0 ){ 
+      iSkip--;
+      pFirst=pFirst->pNext; 
+      continue;
+    }
+    switch( pFirst->eType ){
+      case TT_Preprocessor:
+        StringAppend(&str,"\n",1);
+        StringAppend(&str,pFirst->zText,pFirst->nText);
+        StringAppend(&str,"\n",1);
+        needSpace = 0;
+        break;
+
+      case TT_Id: 
+        switch( pFirst->zText[0] ){
+          case 'E':        
+            if( pFirst->nText==6 && strncmp(pFirst->zText,"EXPORT",6)==0 ){
+              skipOne = 1;
+            }
+            break;
+          case 'P':
+            switch( pFirst->nText ){
+              case 6:  skipOne = !strncmp(pFirst->zText,"PUBLIC", 6);    break;
+              case 7:  skipOne = !strncmp(pFirst->zText,"PRIVATE",7);    break;
+              case 9:  skipOne = !strncmp(pFirst->zText,"PROTECTED",9);  break;
+              default: break;
+            }
+            break;
+          default:
+            break;
+        }
+        if( skipOne ){
+          pFirst = pFirst->pNext;
+          continue;
+        }
+        /* Fall thru to the next case */
+      case TT_Number:
+        if( needSpace ){
+          StringAppend(&str," ",1);
+        }
+        StringAppend(&str,pFirst->zText,pFirst->nText);
+        needSpace = 1;
+        break;
+
+      default:
+        c = pFirst->zText[0];
+        if( needSpace && (c=='*' || c=='{') ){
+          StringAppend(&str," ",1);
+        }
+        StringAppend(&str,pFirst->zText,pFirst->nText);
+        /* needSpace = pFirst->zText[0]==','; */
+        needSpace = 0;
+        break;
+    }
+    pFirst = pFirst->pNext;
+  }
+  if( zTerm && *zTerm ){
+    StringAppend(&str,zTerm,strlen(zTerm));
+  }
+  zReturn = StrDup(StringGet(&str),0);
+  StringReset(&str);
+  return zReturn;
 }
-a.shift();
-while(a.length){
-const key = a.shift(), val = a.shift();
-if(null===val || undefined===val){
-e.removeAttribute(key);
-}else{
-e.setAttribute(key,val);
+
+/*
+** This routine is called when we see one of the keywords "struct",
+** "enum", "union" or "class".  This might be the beginning of a
+** type declaration.  This routine will process the declaration and
+** remove the declaration tokens from the input stream.
+**
+** If this is a type declaration that is immediately followed by a
+** semicolon (in other words it isn't also a variable definition)
+** then set *pReset to ';'.  Otherwise leave *pReset at 0.  The
+** *pReset flag causes the parser to skip ahead to the next token
+** that begins with the value placed in the *pReset flag, if that
+** value is different from 0.
+*/
+static int ProcessTypeDecl(Token *pList, int flags, int *pReset){
+  Token *pName, *pEnd;
+  Decl *pDecl;
+  String str;
+  int need_to_collapse = 1;
+  int type = 0;
+
+  *pReset = 0;
+  if( pList==0 || pList->pNext==0 || pList->pNext->eType!=TT_Id ){
+    return 0;
+  }
+  pName = pList->pNext;
+
+  /* Catch the case of "struct Foo;" and skip it. */
+  if( pName->pNext && pName->pNext->zText[0]==';' ){
+    *pReset = ';';
+    return 0;
+  }
+
+  for(pEnd=pName->pNext; pEnd && pEnd->eType!=TT_Braces; pEnd=pEnd->pNext){
+    switch( pEnd->zText[0] ){
+      case '(':
+      case '*':
+      case '[':
+      case '=':
+      case ';':
+        return 0;
+    }
+  }
+  if( pEnd==0 ){
+    return 0;
+  }
+
+  /*
+  ** At this point, we know we have a type declaration that is bounded
+  ** by pList and pEnd and has the name pName.
+  */
+
+  /*
+  ** If the braces are followed immedately by a semicolon, then we are
+  ** dealing a type declaration only.  There is not variable definition
+  ** following the type declaration.  So reset...
+  */
+  if( pEnd->pNext==0 || pEnd->pNext->zText[0]==';' ){
+    *pReset = ';';
+    need_to_collapse = 0;
+  }else{
+    need_to_collapse = 1;
+  }
+
+  if( proto_static==0 && (flags & (PS_Local|PS_Export|PS_Interface))==0 ){
+    /* Ignore these objects unless they are explicitly declared as interface,
+    ** or unless the "-local" command line option was specified. */
+    *pReset = ';';
+    return 0;
+  }
+
+#ifdef DEBUG
+  if( debugMask & PARSER ){
+    printf("**** Found type: %.*s %.*s...\n",
+      pList->nText, pList->zText, pName->nText, pName->zText);
+    PrintTokens(pList,pEnd);
+    printf(";\n");
+  }
+#endif
+
+  /*
+  ** Create a new Decl object for this definition.  Actually, if this
+  ** is a C++ class definition, then the Decl object might already exist,
+  ** so check first for that case before creating a new one.
+  */
+  switch( *pList->zText ){
+    case 'c':  type = TY_Class;        break;
+    case 's':  type = TY_Structure;    break;
+    case 'e':  type = TY_Enumeration;  break;
+    case 'u':  type = TY_Union;        break;
+    default:   /* Can't Happen */      break;
+  }
+  if( type!=TY_Class ){
+    pDecl = 0;
+  }else{
+    pDecl = FindDecl(pName->zText, pName->nText);
+    if( pDecl && (pDecl->flags & type)!=type ) pDecl = 0;
+  }
+  if( pDecl==0 ){
+    pDecl = CreateDecl(pName->zText,pName->nText);
+  }
+  if( (flags & PS_Static) || !(flags & (PS_Interface|PS_Export)) ){
+    DeclSetProperty(pDecl,DP_Local);
+  }
+  DeclSetProperty(pDecl,type);
+
+  /* The object has a full declaration only if it is contained within
+  ** "#if INTERFACE...#endif" or "#if EXPORT_INTERFACE...#endif" or
+  ** "#if LOCAL_INTERFACE...#endif".  Otherwise, we only give it a
+  ** forward declaration.
+  */
+  if( flags & (PS_Local | PS_Export | PS_Interface)  ){
+    pDecl->zDecl = TokensToString(pList,pEnd,";\n",0,0);
+  }else{
+    pDecl->zDecl = 0;
+  }
+  pDecl->pComment = pList->pComment;
+  StringInit(&str);
+  StringAppend(&str,"typedef ",0);
+  StringAppend(&str,pList->zText,pList->nText);
+  StringAppend(&str," ",0);
+  StringAppend(&str,pName->zText,pName->nText);
+  StringAppend(&str," ",0);
+  StringAppend(&str,pName->zText,pName->nText);
+  StringAppend(&str,";\n",2);
+  pDecl->zFwd = StrDup(StringGet(&str),0);
+  StringReset(&str);
+  StringInit(&str);
+  StringAppend(&str,pList->zText,pList->nText);
+  StringAppend(&str," ",0);
+  StringAppend(&str,pName->zText,pName->nText);
+  StringAppend(&str,";\n",2);
+  pDecl->zFwdCpp = StrDup(StringGet(&str),0);
+  StringReset(&str);
+  if( flags & PS_Export ){
+    DeclSetProperty(pDecl,DP_Export);
+  }else if( flags & PS_Local ){
+    DeclSetProperty(pDecl,DP_Local);
+  }
+
+  /* Here's something weird.  ANSI-C doesn't allow a forward declaration
+  ** of an enumeration.  So we have to build the typedef into the
+  ** definition.
+  */
+  if( pDecl->zDecl && DeclHasProperty(pDecl, TY_Enumeration) ){
+    StringInit(&str);
+    StringAppend(&str,pDecl->zDecl,0);
+    StringAppend(&str,pDecl->zFwd,0);
+    SafeFree(pDecl->zDecl);
+    SafeFree(pDecl->zFwd);
+    pDecl->zFwd = 0;
+    pDecl->zDecl = StrDup(StringGet(&str),0);
+    StringReset(&str);
+  }
+
+  if( pName->pNext->zText[0]==':' ){
+    DeclSetProperty(pDecl,DP_Cplusplus);
+  }
+  if( pName->nText==5 && strncmp(pName->zText,"class",5)==0 ){
+    DeclSetProperty(pDecl,DP_Cplusplus);
+  }
+
+  /*
+  ** Remove all but pList and pName from the input stream.
+  */
+  if( need_to_collapse ){
+    while( pEnd!=pName ){
+      Token *pPrev = pEnd->pPrev;
+      pPrev->pNext = pEnd->pNext;
+      pEnd->pNext->pPrev = pPrev;
+      SafeFree(pEnd);
+      pEnd = pPrev;
+    }
+  }
+  return 0;
 }
+
+/*
+** Given a list of tokens that declare something (a function, procedure,
+** variable or typedef) find the token which contains the name of the
+** thing being declared.
+**
+** Algorithm:
+**
+**   The name is:
+**
+**     1.  The first identifier that is followed by a "[", or
+**
+**     2.  The first identifier that is followed by a "(" where the
+**         "(" is followed by another identifier, or
+**
+**     3.  The first identifier followed by "::", or
+**
+**     4.  If none of the above, then the last identifier.
+**
+**   In all of the above, certain reserved words (like "char") are
+**   not considered identifiers.
+*/
+static Token *FindDeclName(Token *pFirst, Token *pLast){
+  Token *pName = 0;
+  Token *p;
+  int c;
+
+  if( pFirst==0 || pLast==0 ){
+    return 0;
+  }
+  pLast = pLast->pNext;
+  for(p=pFirst; p && p!=pLast; p=p->pNext){
+    if( p->eType==TT_Id ){
+      static IdentTable sReserved;
+      static int isInit = 0;
+      static char *aWords[] = { "char", "class", 
+       "const", "double", "enum", "extern", "EXPORT", "ET_PROC", 
+       "float", "int", "long",
+       "PRIVATE", "PROTECTED", "PUBLIC",
+       "register", "static", "struct", "sizeof", "signed", "typedef", 
+       "union", "volatile", "virtual", "void", };
+  
+      if( !isInit ){
+        int i;
+        for(i=0; i<sizeof(aWords)/sizeof(aWords[0]); i++){
+          IdentTableInsert(&sReserved,aWords[i],0);
+        }
+        isInit = 1;
+      }
+      if( !IdentTableTest(&sReserved,p->zText,p->nText) ){
+        pName = p;
+      }
+    }else if( p==pFirst ){
+      continue;
+    }else if( (c=p->zText[0])=='[' && pName ){
+      break;
+    }else if( c=='(' && p->pNext && p->pNext->eType==TT_Id && pName ){
+      break;
+    }else if( c==':' && p->zText[1]==':' && pName ){
+      break;
+    }
+  }
+  return pName;
 }
-return e;
-};
-const enableDisable = function f(enable){
-var i = 1, n = arguments.length;
-for( ; i < n; ++i ){
-let e = arguments[i];
-if(e.forEach){
-e.forEach((x)=>f(enable,x));
-}else{
-e.disabled = !enable;
+
+/*
+** This routine is called when we see a method for a class that begins
+** with the PUBLIC, PRIVATE, or PROTECTED keywords.  Such methods are
+** added to their class definitions.
+*/
+static int ProcessMethodDef(Token *pFirst, Token *pLast, int flags){
+  Token *pCode;
+  Token *pClass;
+  char *zDecl;
+  Decl *pDecl;
+  String str;
+  int type;
+
+  pCode = pLast;
+  pLast = pLast->pPrev;
+  while( pFirst->zText[0]=='P' ){
+    int rc = 1;
+    switch( pFirst->nText ){
+      case 6:  rc = strncmp(pFirst->zText,"PUBLIC",6); break;
+      case 7:  rc = strncmp(pFirst->zText,"PRIVATE",7); break;
+      case 9:  rc = strncmp(pFirst->zText,"PROTECTED",9); break;
+      default:  break;
+    }
+    if( rc ) break;
+    pFirst = pFirst->pNext;
+  }
+  pClass = FindDeclName(pFirst,pLast);
+  if( pClass==0 ){
+    fprintf(stderr,"%s:%d: Unable to find the class name for this method\n",
+       zFilename, pFirst->nLine);
+    return 1;
+  }
+  pDecl = FindDecl(pClass->zText, pClass->nText);
+  if( pDecl==0 || (pDecl->flags & TY_Class)!=TY_Class ){
+    pDecl = CreateDecl(pClass->zText, pClass->nText);
+    DeclSetProperty(pDecl, TY_Class);
+  }
+  StringInit(&str);
+  if( pDecl->zExtra ){
+    StringAppend(&str, pDecl->zExtra, 0);
+    SafeFree(pDecl->zExtra);
+    pDecl->zExtra = 0;
+  }
+  type = flags & PS_PPP;
+  if( pDecl->extraType!=type ){
+    if( type & PS_Public ){
+      StringAppend(&str, "public:\n", 0);
+      pDecl->extraType = PS_Public;
+    }else if( type & PS_Protected ){
+      StringAppend(&str, "protected:\n", 0);
+      pDecl->extraType = PS_Protected;
+    }else if( type & PS_Private ){
+      StringAppend(&str, "private:\n", 0);
+      pDecl->extraType = PS_Private;
+    }
+  }
+  StringAppend(&str, "  ", 0);
+  zDecl = TokensToString(pFirst, pLast, ";\n", pClass, 2);
+  StringAppend(&str, zDecl, 0);
+  SafeFree(zDecl);
+  pDecl->zExtra = StrDup(StringGet(&str), 0);
+  StringReset(&str);
+  return 0;
 }
+
+/*
+** This routine is called when we see a function or procedure definition.
+** We make an entry in the declaration table that is a prototype for this
+** function or procedure.
+*/
+static int ProcessProcedureDef(Token *pFirst, Token *pLast, int flags){
+  Token *pName;
+  Decl *pDecl;
+  Token *pCode;
+
+  if( pFirst==0 || pLast==0 ){
+    return 0;
+  }
+  if( flags & PS_Method ){
+    if( flags & PS_PPP ){
+      return ProcessMethodDef(pFirst, pLast, flags);
+    }else{
+      return 0;
+    }
+  }
+  if( (flags & PS_Static)!=0 && !proto_static ){
+    return 0;
+  }
+  pCode = pLast;
+  while( pLast && pLast!=pFirst && pLast->zText[0]!=')' ){
+    pLast = pLast->pPrev;
+  }
+  if( pLast==0 || pLast==pFirst || pFirst->pNext==pLast ){
+    fprintf(stderr,"%s:%d: Unrecognized syntax.\n", 
+      zFilename, pFirst->nLine);
+    return 1;
+  }
+  if( flags & (PS_Interface|PS_Export|PS_Local) ){
+    fprintf(stderr,"%s:%d: Missing \"inline\" on function or procedure.\n",
+      zFilename, pFirst->nLine);
+    return 1;
+  }
+  pName = FindDeclName(pFirst,pLast);
+  if( pName==0 ){
+    fprintf(stderr,"%s:%d: Malformed function or procedure definition.\n",
+      zFilename, pFirst->nLine);
+    return 1;
+  }
+
+  /*
+  ** At this point we've isolated a procedure declaration between pFirst
+  ** and pLast with the name pName.
+  */
+#ifdef DEBUG
+  if( debugMask & PARSER ){
+    printf("**** Found routine: %.*s on line %d...\n", pName->nText,
+       pName->zText, pFirst->nLine);
+    PrintTokens(pFirst,pLast);
+    printf(";\n");
+  }
+#endif
+  pDecl = CreateDecl(pName->zText,pName->nText);
+  pDecl->pComment = pFirst->pComment;
+  if( pCode && pCode->eType==TT_Braces ){
+    pDecl->tokenCode = *pCode;
+  }
+  DeclSetProperty(pDecl,TY_Subroutine);
+  pDecl->zDecl = TokensToString(pFirst,pLast,";\n",0,0);
+  if( (flags & (PS_Static|PS_Local2))!=0 ){
+    DeclSetProperty(pDecl,DP_Local);
+  }else if( (flags & (PS_Export2))!=0 ){
+    DeclSetProperty(pDecl,DP_Export);
+  }
+
+  if( flags & DP_Cplusplus ){
+    DeclSetProperty(pDecl,DP_Cplusplus);
+  }else{
+    DeclSetProperty(pDecl,DP_ExternCReqd);
+  }
+
+  return 0;
 }
-return arguments[1];
-};
-dom.enable = function(e){
-const args = argsToArray(arguments);
-args.unshift(true);
-return enableDisable.apply(this,args);
-};
-dom.disable = function(e){
-const args = argsToArray(arguments);
-args.unshift(false);
-return enableDisable.apply(this,args);
-};
-dom.selectOne = function(x,origin){
-var src = origin || document,
-e = src.querySelector(x);
-if(!e){
-e = new Error("Cannot find DOM element: "+x);
-console.error(e, src);
-throw e;
+
+/*
+** This routine is called whenever we see the "inline" keyword.  We
+** need to seek-out the inline function or procedure and make a
+** declaration out of the entire definition.
+*/
+static int ProcessInlineProc(Token *pFirst, int flags, int *pReset){
+  Token *pName;
+  Token *pEnd;
+  Decl *pDecl;
+
+  for(pEnd=pFirst; pEnd; pEnd = pEnd->pNext){
+    if( pEnd->zText[0]=='{' || pEnd->zText[0]==';' ){
+      *pReset = pEnd->zText[0];
+      break;
+    }
+  }
+  if( pEnd==0 ){
+    *pReset = ';';
+    fprintf(stderr,"%s:%d: incomplete inline procedure definition\n",
+      zFilename, pFirst->nLine);
+    return 1;
+  }
+  pName = FindDeclName(pFirst,pEnd);
+  if( pName==0 ){
+    fprintf(stderr,"%s:%d: malformed inline procedure definition\n",
+      zFilename, pFirst->nLine);
+    return 1;
+  }
+
+#ifdef DEBUG
+  if( debugMask & PARSER ){
+    printf("**** Found inline routine: %.*s on line %d...\n", 
+       pName->nText, pName->zText, pFirst->nLine);
+    PrintTokens(pFirst,pEnd);
+    printf("\n");
+  }
+#endif
+  pDecl = CreateDecl(pName->zText,pName->nText);
+  pDecl->pComment = pFirst->pComment;
+  DeclSetProperty(pDecl,TY_Subroutine);
+  pDecl->zDecl = TokensToString(pFirst,pEnd,";\n",0,0);
+  if( (flags & (PS_Static|PS_Local|PS_Local2)) ){
+    DeclSetProperty(pDecl,DP_Local);
+  }else if( flags & (PS_Export|PS_Export2) ){
+    DeclSetProperty(pDecl,DP_Export);
+  }
+
+  if( flags & DP_Cplusplus ){
+    DeclSetProperty(pDecl,DP_Cplusplus);
+  }else{
+    DeclSetProperty(pDecl,DP_ExternCReqd);
+  }
+
+  return 0;
 }
-return e;
-};
-dom.flashOnce = function f(e,howLongMs,afterFlashCallback){
-if(e.dataset.isBlinking){
-return;
+
+/*
+** Determine if the tokens between pFirst and pEnd form a variable
+** definition or a function prototype.  Return TRUE if we are dealing
+** with a variable defintion and FALSE for a prototype.
+**
+** pEnd is the token that ends the object.  It can be either a ';' or
+** a '='.  If it is '=', then assume we have a variable definition.
+**
+** If pEnd is ';', then the determination is more difficult.  We have
+** to search for an occurance of an ID followed immediately by '('.
+** If found, we have a prototype.  Otherwise we are dealing with a
+** variable definition.
+*/
+static int isVariableDef(Token *pFirst, Token *pEnd){
+  if( pEnd && pEnd->zText[0]=='=' && 
+    (pEnd->pPrev->nText!=8 || strncmp(pEnd->pPrev->zText,"operator",8)!=0)
+  ){
+    return 1;
+  }
+  while( pFirst && pFirst!=pEnd && pFirst->pNext && pFirst->pNext!=pEnd ){
+    if( pFirst->eType==TT_Id && pFirst->pNext->zText[0]=='(' ){
+      return 0;
+    }
+    pFirst = pFirst->pNext;
+  }
+  return 1;
 }
-if(2===arguments.length && 'function' ===typeof howLongMs){
-afterFlashCallback = howLongMs;
-howLongMs = f.defaultTimeMs;
+
+
+/*
+** This routine is called whenever we encounter a ";" or "=".  The stuff
+** between pFirst and pLast constitutes either a typedef or a global
+** variable definition.  Do the right thing.
+*/
+static int ProcessDecl(Token *pFirst, Token *pEnd, int flags){
+  Token *pName;
+  Decl *pDecl;
+  int isLocal = 0;
+  int isVar;
+  int nErr = 0;
+
+  if( pFirst==0 || pEnd==0 ){
+    return 0;
+  }
+  if( flags & PS_Typedef ){
+    if( (flags & (PS_Export2|PS_Local2))!=0 ){
+      fprintf(stderr,"%s:%d: \"EXPORT\" or \"LOCAL\" ignored before typedef.\n",
+        zFilename, pFirst->nLine);
+      nErr++;
+    }
+    if( (flags & (PS_Interface|PS_Export|PS_Local|DP_Cplusplus))==0 ){
+      /* It is illegal to duplicate a typedef in C (but OK in C++).
+      ** So don't record typedefs that aren't within a C++ file or
+      ** within #if INTERFACE..#endif */
+      return nErr;
+    }
+    if( (flags & (PS_Interface|PS_Export|PS_Local))==0 && proto_static==0 ){
+      /* Ignore typedefs that are not with "#if INTERFACE..#endif" unless
+      ** the "-local" command line option is used. */
+      return nErr;
+    }
+    if( (flags & (PS_Interface|PS_Export))==0 ){
+      /* typedefs are always local, unless within #if INTERFACE..#endif */
+      isLocal = 1;
+    }
+  }else if( flags & (PS_Static|PS_Local2) ){
+    if( proto_static==0 && (flags & PS_Local2)==0 ){
+      /* Don't record static variables unless the "-local" command line
+      ** option was specified or the "LOCAL" keyword is used. */
+      return nErr;
+    }
+    while( pFirst!=0 && pFirst->pNext!=pEnd &&
+       ((pFirst->nText==6 && strncmp(pFirst->zText,"static",6)==0)
+        || (pFirst->nText==5 && strncmp(pFirst->zText,"LOCAL",6)==0))
+    ){
+      /* Lose the initial "static" or local from local variables. 
+      ** We'll prepend "extern" later. */
+      pFirst = pFirst->pNext;
+      isLocal = 1;
+    }
+    if( pFirst==0 || !isLocal ){
+      return nErr;
+    }
+  }else if( flags & PS_Method ){
+    /* Methods are declared by their class.  Don't declare separately. */
+    return nErr;
+  }
+  isVar =  (flags & (PS_Typedef|PS_Method))==0 && isVariableDef(pFirst,pEnd);
+  if( isVar && (flags & (PS_Interface|PS_Export|PS_Local))!=0 
+  && (flags & PS_Extern)==0 ){
+    fprintf(stderr,"%s:%d: Can't define a variable in this context\n",
+      zFilename, pFirst->nLine);
+    nErr++;
+  }
+  pName = FindDeclName(pFirst,pEnd->pPrev);
+  if( pName==0 ){
+    fprintf(stderr,"%s:%d: Can't find a name for the object declared here.\n",
+      zFilename, pFirst->nLine);
+    return nErr+1;
+  }
+
+#ifdef DEBUG
+  if( debugMask & PARSER ){
+    if( flags & PS_Typedef ){
+      printf("**** Found typedef %.*s at line %d...\n",
+        pName->nText, pName->zText, pName->nLine);
+    }else if( isVar ){
+      printf("**** Found variable %.*s at line %d...\n",
+        pName->nText, pName->zText, pName->nLine);
+    }else{
+      printf("**** Found prototype %.*s at line %d...\n",
+        pName->nText, pName->zText, pName->nLine);
+    }
+    PrintTokens(pFirst,pEnd->pPrev);
+    printf(";\n");
+  }
+#endif
+
+  pDecl = CreateDecl(pName->zText,pName->nText);
+  if( (flags & PS_Typedef) ){
+    DeclSetProperty(pDecl, TY_Typedef);
+  }else if( isVar ){
+    DeclSetProperty(pDecl,DP_ExternReqd | TY_Variable);
+    if( !(flags & DP_Cplusplus) ){
+      DeclSetProperty(pDecl,DP_ExternCReqd);
+    }
+  }else{
+    DeclSetProperty(pDecl, TY_Subroutine);
+    if( !(flags & DP_Cplusplus) ){
+      DeclSetProperty(pDecl,DP_ExternCReqd);
+    }
+  }
+  pDecl->pComment = pFirst->pComment;
+  pDecl->zDecl = TokensToString(pFirst,pEnd->pPrev,";\n",0,0);
+  if( isLocal || (flags & (PS_Local|PS_Local2))!=0 ){
+    DeclSetProperty(pDecl,DP_Local);
+  }else if( flags & (PS_Export|PS_Export2) ){
+    DeclSetProperty(pDecl,DP_Export);
+  }
+  if( flags & DP_Cplusplus ){
+    DeclSetProperty(pDecl,DP_Cplusplus);
+  }
+  return nErr;
 }
-if(!howLongMs || 'number'!==typeof howLongMs){
-howLongMs = f.defaultTimeMs;
+
+/*
+** Push an if condition onto the if stack
+*/
+static void PushIfMacro(
+  const char *zPrefix,      /* A prefix, like "define" or "!" */
+  const char *zText,        /* The condition */
+  int nText,                /* Number of characters in zText */
+  int nLine,                /* Line number where this macro occurs */
+  int flags                 /* Either 0, PS_Interface, PS_Export or PS_Local */
+){
+  Ifmacro *pIf;
+  int nByte;
+
+  nByte = sizeof(Ifmacro);
+  if( zText ){
+    if( zPrefix ){
+      nByte += strlen(zPrefix) + 2;
+    }
+    nByte += nText + 1;
+  }
+  pIf = SafeMalloc( nByte );
+  if( zText ){
+    pIf->zCondition = (char*)&pIf[1];
+    if( zPrefix ){
+      sprintf(pIf->zCondition,"%s(%.*s)",zPrefix,nText,zText);
+    }else{
+      sprintf(pIf->zCondition,"%.*s",nText,zText);
+    }
+  }else{
+    pIf->zCondition = 0;
+  }
+  pIf->nLine = nLine;
+  pIf->flags = flags;
+  pIf->pNext = ifStack;
+  ifStack = pIf;
 }
-e.dataset.isBlinking = true;
-const transition = e.style.transition;
-e.style.transition = "opacity "+howLongMs+"ms ease-in-out";
-const opacity = e.style.opacity;
-e.style.opacity = 0;
-setTimeout(function(){
-e.style.transition = transition;
-e.style.opacity = opacity;
-delete e.dataset.isBlinking;
-if(afterFlashCallback) afterFlashCallback();
-}, howLongMs);
-return e;
-};
-dom.flashOnce.defaultTimeMs = 400;
-dom.flashOnce.eventHandler = (event)=>dom.flashOnce(event.target)
-dom.flashNTimes = function(e,n,howLongMs,afterFlashCallback){
-const args = argsToArray(arguments);
-args.splice(1,1);
-if(arguments.length===3 && 'function'===typeof howLongMs){
-afterFlashCallback = howLongMs;
-howLongMs = args[1] = this.flashOnce.defaultTimeMs;
-}else if(arguments.length<3){
-args[1] = this.flashOnce.defaultTimeMs;
+
+/*
+** This routine is called to handle all preprocessor directives.
+**
+** This routine will recompute the value of *pPresetFlags to be the
+** logical or of all flags on all nested #ifs.  The #ifs that set flags
+** are as follows:
+**
+**        conditional                   flag set
+**        ------------------------      --------------------
+**        #if INTERFACE                 PS_Interface
+**        #if EXPORT_INTERFACE          PS_Export
+**        #if LOCAL_INTERFACE           PS_Local
+**
+** For example, if after processing the preprocessor token given
+** by pToken there is an "#if INTERFACE" on the preprocessor
+** stack, then *pPresetFlags will be set to PS_Interface.
+*/
+static int ParsePreprocessor(Token *pToken, int flags, int *pPresetFlags){
+  const char *zCmd;
+  int nCmd;
+  const char *zArg;
+  int nArg;
+  int nErr = 0;
+  Ifmacro *pIf;
+
+  zCmd = &pToken->zText[1];
+  while( isspace(*zCmd) && *zCmd!='\n' ){
+    zCmd++;
+  }
+  if( !isalpha(*zCmd) ){
+    return 0;
+  }
+  nCmd = 1;
+  while( isalpha(zCmd[nCmd]) ){
+    nCmd++;
+  }
+
+  if( nCmd==5 && strncmp(zCmd,"endif",5)==0 ){
+    /*
+    ** Pop the if stack 
+    */
+    pIf = ifStack;
+    if( pIf==0 ){
+      fprintf(stderr,"%s:%d: extra '#endif'.\n",zFilename,pToken->nLine);
+      return 1;
+    }
+    ifStack = pIf->pNext;
+    SafeFree(pIf);
+  }else if( nCmd==6 && strncmp(zCmd,"define",6)==0 ){
+    /*
+    ** Record a #define if we are in PS_Interface or PS_Export 
+    */
+    Decl *pDecl;
+    if( !(flags & (PS_Local|PS_Interface|PS_Export)) ){ return 0; }
+    zArg = &zCmd[6];
+    while( *zArg && isspace(*zArg) && *zArg!='\n' ){
+      zArg++;
+    }
+    if( *zArg==0 || *zArg=='\n' ){ return 0; }
+    for(nArg=0; ISALNUM(zArg[nArg]); nArg++){}
+    if( nArg==0 ){ return 0; }
+    pDecl = CreateDecl(zArg,nArg);
+    pDecl->pComment = pToken->pComment;
+    DeclSetProperty(pDecl,TY_Macro);
+    pDecl->zDecl = SafeMalloc( pToken->nText + 2 );
+    sprintf(pDecl->zDecl,"%.*s\n",pToken->nText,pToken->zText);
+    if( flags & PS_Export ){
+      DeclSetProperty(pDecl,DP_Export);
+    }else if( flags & PS_Local ){
+      DeclSetProperty(pDecl,DP_Local);
+    }
+  }else if( nCmd==7 && strncmp(zCmd,"include",7)==0 ){
+    /*
+    ** Record an #include if we are in PS_Interface or PS_Export 
+    */
+    Include *pInclude;
+    char *zIf;
+
+    if( !(flags & (PS_Interface|PS_Export)) ){ return 0; }
+    zArg = &zCmd[7];
+    while( *zArg && isspace(*zArg) ){ zArg++; }
+    for(nArg=0; !isspace(zArg[nArg]); nArg++){}
+    if( (zArg[0]=='"' && zArg[nArg-1]!='"')
+      ||(zArg[0]=='<' && zArg[nArg-1]!='>')
+    ){
+      fprintf(stderr,"%s:%d: malformed #include statement.\n",
+        zFilename,pToken->nLine);
+      return 1;
+    }
+    zIf = GetIfString();
+    if( zIf ){
+      pInclude = SafeMalloc( sizeof(Include) + nArg*2 + strlen(zIf) + 10 );
+      pInclude->zFile = (char*)&pInclude[1];
+      pInclude->zLabel = &pInclude->zFile[nArg+1];
+      sprintf(pInclude->zFile,"%.*s",nArg,zArg);
+      sprintf(pInclude->zLabel,"%.*s:%s",nArg,zArg,zIf);
+      pInclude->zIf = &pInclude->zLabel[nArg+1];
+      SafeFree(zIf);
+    }else{
+      pInclude = SafeMalloc( sizeof(Include) + nArg + 1 );
+      pInclude->zFile = (char*)&pInclude[1];
+      sprintf(pInclude->zFile,"%.*s",nArg,zArg);
+      pInclude->zIf = 0;
+      pInclude->zLabel = pInclude->zFile;
+    }
+    pInclude->pNext = includeList;
+    includeList = pInclude;
+  }else if( nCmd==2 && strncmp(zCmd,"if",2)==0 ){
+    /*
+    ** Push an #if.  Watch for the special cases of INTERFACE
+    ** and EXPORT_INTERFACE and LOCAL_INTERFACE
+    */
+    zArg = &zCmd[2];
+    while( *zArg && isspace(*zArg) && *zArg!='\n' ){
+      zArg++;
+    }
+    if( *zArg==0 || *zArg=='\n' ){ return 0; }
+    nArg = pToken->nText + (int)(pToken->zText - zArg);
+    if( nArg==9 && strncmp(zArg,"INTERFACE",9)==0 ){
+      PushIfMacro(0,0,0,pToken->nLine,PS_Interface);
+    }else if( nArg==16 && strncmp(zArg,"EXPORT_INTERFACE",16)==0 ){
+      PushIfMacro(0,0,0,pToken->nLine,PS_Export);
+    }else if( nArg==15 && strncmp(zArg,"LOCAL_INTERFACE",15)==0 ){
+      PushIfMacro(0,0,0,pToken->nLine,PS_Local);
+    }else{
+      PushIfMacro(0,zArg,nArg,pToken->nLine,0);
+    }
+  }else if( nCmd==5 && strncmp(zCmd,"ifdef",5)==0 ){
+    /* 
+    ** Push an #ifdef.
+    */
+    zArg = &zCmd[5];
+    while( *zArg && isspace(*zArg) && *zArg!='\n' ){
+      zArg++;
+    }
+    if( *zArg==0 || *zArg=='\n' ){ return 0; }
+    nArg = pToken->nText + (int)(pToken->zText - zArg);
+    PushIfMacro("defined",zArg,nArg,pToken->nLine,0);
+  }else if( nCmd==6 && strncmp(zCmd,"ifndef",6)==0 ){
+    /*
+    ** Push an #ifndef.
+    */
+    zArg = &zCmd[6];
+    while( *zArg && isspace(*zArg) && *zArg!='\n' ){
+      zArg++;
+    }
+    if( *zArg==0 || *zArg=='\n' ){ return 0; }
+    nArg = pToken->nText + (int)(pToken->zText - zArg);
+    PushIfMacro("!defined",zArg,nArg,pToken->nLine,0);
+  }else if( nCmd==4 && strncmp(zCmd,"else",4)==0 ){
+    /*
+    ** Invert the #if on the top of the stack 
+    */
+    if( ifStack==0 ){
+      fprintf(stderr,"%s:%d: '#else' without an '#if'\n",zFilename,
+         pToken->nLine);
+      return 1;
+    }
+    pIf = ifStack;
+    if( pIf->zCondition ){
+      ifStack = ifStack->pNext;
+      PushIfMacro("!",pIf->zCondition,strlen(pIf->zCondition),pIf->nLine,0);
+      SafeFree(pIf);
+    }else{
+      pIf->flags = 0;
+    }
+  }else{
+    /*
+    ** This directive can be safely ignored 
+    */
+    return 0;
+  }
+
+  /* 
+  ** Recompute the preset flags 
+  */
+  *pPresetFlags = 0;
+  for(pIf = ifStack; pIf; pIf=pIf->pNext){
+    *pPresetFlags |= pIf->flags;
+  }
+    
+  return nErr;
 }
-n = +n;
-const self = this;
-const cb = args[2] = function f(){
-if(--n){
-setTimeout(()=>self.flashOnce(e, howLongMs, f),
-howLongMs+(howLongMs*0.1));
-}else if(afterFlashCallback){
-afterFlashCallback();
+
+/*
+** Parse an entire file.  Return the number of errors.
+**
+** pList is a list of tokens in the file.  Whitespace tokens have been
+** eliminated, and text with {...} has been collapsed into a
+** single TT_Brace token.
+** 
+** initFlags are a set of parse flags that should always be set for this
+** file.  For .c files this is normally 0.  For .h files it is PS_Interface.
+*/
+static int ParseFile(Token *pList, int initFlags){
+  int nErr = 0;
+  Token *pStart = 0;
+  int flags = initFlags;
+  int presetFlags = initFlags;
+  int resetFlag = 0;
+
+  includeList = 0;
+  while( pList ){
+    switch( pList->eType ){
+    case TT_EOF:
+      goto end_of_loop;
+
+    case TT_Preprocessor:
+      nErr += ParsePreprocessor(pList,flags,&presetFlags);
+      pStart = 0;
+      presetFlags |= initFlags;
+      flags = presetFlags;
+      break;
+
+    case TT_Other:
+      switch( pList->zText[0] ){
+      case ';':
+        nErr += ProcessDecl(pStart,pList,flags);
+        pStart = 0;
+        flags = presetFlags;
+        break;
+
+      case '=':
+        if( pList->pPrev->nText==8 
+            && strncmp(pList->pPrev->zText,"operator",8)==0 ){
+          break;
+        }
+        nErr += ProcessDecl(pStart,pList,flags);
+        pStart = 0;
+        while( pList && pList->zText[0]!=';' ){
+          pList = pList->pNext;
+        }
+        if( pList==0 ) goto end_of_loop;
+        flags = presetFlags;
+        break;
+
+      case ':':
+        if( pList->zText[1]==':' ){
+          flags |= PS_Method;
+        }
+        break;
+
+      default:
+        break;
+      }
+      break;
+
+    case TT_Braces:
+      nErr += ProcessProcedureDef(pStart,pList,flags);
+      pStart = 0;
+      flags = presetFlags;
+      break;
+
+    case TT_Id:
+       if( pStart==0 ){
+          pStart = pList;
+          flags = presetFlags;
+       }
+       resetFlag = 0;
+       switch( pList->zText[0] ){
+       case 'c':
+         if( pList->nText==5 && strncmp(pList->zText,"class",5)==0 ){
+           nErr += ProcessTypeDecl(pList,flags,&resetFlag);
+         }
+         break;
+
+       case 'E':
+         if( pList->nText==6 && strncmp(pList->zText,"EXPORT",6)==0 ){
+           flags |= PS_Export2;
+           /* pStart = 0; */
+         }
+         break;
+
+       case 'e':
+         if( pList->nText==4 && strncmp(pList->zText,"enum",4)==0 ){
+           if( pList->pNext && pList->pNext->eType==TT_Braces ){
+             pList = pList->pNext;
+           }else{
+             nErr += ProcessTypeDecl(pList,flags,&resetFlag);
+           }
+         }else if( pList->nText==6 && strncmp(pList->zText,"extern",6)==0 ){
+           pList = pList->pNext;
+           if( pList && pList->nText==3 && strncmp(pList->zText,"\"C\"",3)==0 ){
+             pList = pList->pNext;
+             flags &= ~DP_Cplusplus;
+           }else{
+             flags |= PS_Extern;
+           }
+           pStart = pList;
+         }
+         break;
+
+       case 'i':
+         if( pList->nText==6 && strncmp(pList->zText,"inline",6)==0 ){
+           nErr += ProcessInlineProc(pList,flags,&resetFlag);
+         }
+         break;
+
+       case 'L':
+         if( pList->nText==5 && strncmp(pList->zText,"LOCAL",5)==0 ){
+           flags |= PS_Local2;
+           pStart = pList;
+         }
+         break;
+
+       case 'P':
+         if( pList->nText==6 && strncmp(pList->zText, "PUBLIC",6)==0 ){
+           flags |= PS_Public;
+           pStart = pList;
+         }else if( pList->nText==7 && strncmp(pList->zText, "PRIVATE",7)==0 ){
+           flags |= PS_Private;
+           pStart = pList;
+         }else if( pList->nText==9 && strncmp(pList->zText,"PROTECTED",9)==0 ){
+           flags |= PS_Protected;
+           pStart = pList;
+         }
+         break;
+
+       case 's':
+         if( pList->nText==6 && strncmp(pList->zText,"struct",6)==0 ){
+           if( pList->pNext && pList->pNext->eType==TT_Braces ){
+             pList = pList->pNext;
+           }else{
+             nErr += ProcessTypeDecl(pList,flags,&resetFlag);
+           }
+         }else if( pList->nText==6 && strncmp(pList->zText,"static",6)==0 ){
+           flags |= PS_Static;
+         }
+         break;
+
+       case 't':
+         if( pList->nText==7 && strncmp(pList->zText,"typedef",7)==0 ){
+           flags |= PS_Typedef;
+         }
+         break;
+
+       case 'u':
+         if( pList->nText==5 && strncmp(pList->zText,"union",5)==0 ){
+           if( pList->pNext && pList->pNext->eType==TT_Braces ){
+             pList = pList->pNext;
+           }else{
+             nErr += ProcessTypeDecl(pList,flags,&resetFlag);
+           }
+         }
+         break;
+
+       default:
+         break;
+       }
+       if( resetFlag!=0 ){
+         while( pList && pList->zText[0]!=resetFlag ){
+           pList = pList->pNext;
+         }
+         if( pList==0 ) goto end_of_loop;
+         pStart = 0;
+         flags = presetFlags;
+       }
+       break;
+
+    case TT_String:
+    case TT_Number:
+       break;
+
+    default:
+       pStart = pList;
+       flags = presetFlags;
+       break;
+    }
+    pList = pList->pNext;
+  }
+  end_of_loop:
+
+  /* Verify that all #ifs have a matching "#endif" */
+  while( ifStack ){
+    Ifmacro *pIf = ifStack;
+    ifStack = pIf->pNext;
+    fprintf(stderr,"%s:%d: This '#if' has no '#endif'\n",zFilename,
+      pIf->nLine);
+    SafeFree(pIf);
+  }
+
+  return nErr;
 }
-};
-this.flashOnce.apply(this, args);
-return this;
-};
-dom.addClassBriefly = function f(e, className, howLongMs, afterCallback){
-if(arguments.length<4 && 'function'===typeof howLongMs){
-afterCallback = howLongMs;
-howLongMs = f.defaultTimeMs;
-}else if(arguments.length<3 || !+howLongMs){
-howLongMs = f.defaultTimeMs;
+
+/*
+** If the given Decl object has a non-null zExtra field, then the text
+** of that zExtra field needs to be inserted in the middle of the
+** zDecl field before the last "}" in the zDecl.  This routine does that.
+** If the zExtra is NULL, this routine is a no-op.
+**
+** zExtra holds extra method declarations for classes.  The declarations
+** have to be inserted into the class definition.
+*/
+static void InsertExtraDecl(Decl *pDecl){
+  int i;
+  String str;
+
+  if( pDecl==0 || pDecl->zExtra==0 || pDecl->zDecl==0 ) return;
+  i = strlen(pDecl->zDecl) - 1;
+  while( i>0 && pDecl->zDecl[i]!='}' ){ i--; }
+  StringInit(&str);
+  StringAppend(&str, pDecl->zDecl, i);
+  StringAppend(&str, pDecl->zExtra, 0);
+  StringAppend(&str, &pDecl->zDecl[i], 0);
+  SafeFree(pDecl->zDecl);
+  SafeFree(pDecl->zExtra);
+  pDecl->zDecl = StrDup(StringGet(&str), 0);
+  StringReset(&str);
+  pDecl->zExtra = 0;
 }
-this.addClass(e, className);
-setTimeout(function(){
-dom.removeClass(e, className);
-if(afterCallback) afterCallback();
-}, howLongMs);
-return this;
-};
-dom.addClassBriefly.defaultTimeMs = 1000;
-dom.copyTextToClipboard = function(text){
-if( window.clipboardData && window.clipboardData.setData ){
-window.clipboardData.setData('Text',text);
-return true;
-}else{
-const x = document.createElement("textarea");
-x.style.position = 'fixed';
-x.value = text;
-document.body.appendChild(x);
-x.select();
-var rc;
-try{
-document.execCommand('copy');
-rc = true;
-}catch(err){
-rc = false;
-}finally{
-document.body.removeChild(x);
+
+/*
+** Reset the DP_Forward and DP_Declared flags on all Decl structures.
+** Set both flags for anything that is tagged as local and isn't 
+** in the file zFilename so that it won't be printing in other files.
+*/
+static void ResetDeclFlags(char *zFilename){
+  Decl *pDecl;
+
+  for(pDecl = pDeclFirst; pDecl; pDecl = pDecl->pNext){
+    DeclClearProperty(pDecl,DP_Forward|DP_Declared);
+    if( DeclHasProperty(pDecl,DP_Local) && pDecl->zFile!=zFilename ){
+      DeclSetProperty(pDecl,DP_Forward|DP_Declared);
+    }
+  }
 }
-return rc;
+
+/*
+** Forward declaration of the ScanText() function.
+*/
+static void ScanText(const char*, GenState *pState);
+
+/*
+** The output in pStr is currently within an #if CONTEXT where context
+** is equal to *pzIf.  (*pzIf might be NULL to indicate that we are
+** not within any #if at the moment.)  We are getting ready to output
+** some text that needs to be within the context of "#if NEW" where
+** NEW is zIf.  Make an appropriate change to the context.
+*/
+static void ChangeIfContext(
+  const char *zIf,       /* The desired #if context */
+  GenState *pState       /* Current state of the code generator */
+){
+  if( zIf==0 ){
+    if( pState->zIf==0 ) return;
+    StringAppend(pState->pStr,"#endif\n",0);
+    pState->zIf = 0;
+  }else{
+    if( pState->zIf ){
+      if( strcmp(zIf,pState->zIf)==0 ) return;
+      StringAppend(pState->pStr,"#endif\n",0);
+      pState->zIf = 0;
+    }
+    ScanText(zIf, pState);
+    if( pState->zIf!=0 ){
+      StringAppend(pState->pStr,"#endif\n",0);
+    }
+    StringAppend(pState->pStr,"#if ",0);
+    StringAppend(pState->pStr,zIf,0);
+    StringAppend(pState->pStr,"\n",0);
+    pState->zIf = zIf;
+  }
 }
-};
-dom.copyStyle = function f(e, style){
-if(e.forEach){
-e.forEach((x)=>f(x, style));
-return e;
+
+/*
+** Add to the string pStr a #include of every file on the list of
+** include files pInclude.  The table pTable contains all files that
+** have already been #included at least once.  Don't add any
+** duplicates.  Update pTable with every new #include that is added.
+*/
+static void AddIncludes(
+  Include *pInclude,       /* Write every #include on this list */
+  GenState *pState         /* Current state of the code generator */
+){
+  if( pInclude ){
+    if( pInclude->pNext ){
+      AddIncludes(pInclude->pNext,pState);
+    }
+    if( IdentTableInsert(pState->pTable,pInclude->zLabel,0) ){
+      ChangeIfContext(pInclude->zIf,pState);
+      StringAppend(pState->pStr,"#include ",0);
+      StringAppend(pState->pStr,pInclude->zFile,0);
+      StringAppend(pState->pStr,"\n",1);
+    }
+  }
 }
-if(style){
-let k;
-for(k in style){
-if(style.hasOwnProperty(k)) e.style[k] = style[k];
+
+/*
+** Add to the string pStr a declaration for the object described
+** in pDecl.
+**
+** If pDecl has already been declared in this file, detect that
+** fact and abort early.  Do not duplicate a declaration.
+**
+** If the needFullDecl flag is false and this object has a forward
+** declaration, then supply the forward declaration only.  A later
+** call to CompleteForwardDeclarations() will finish the declaration
+** for us.  But if needFullDecl is true, we must supply the full
+** declaration now.  Some objects do not have a forward declaration.
+** For those objects, we must print the full declaration now.
+**
+** Because it is illegal to duplicate a typedef in C, care is taken
+** to insure that typedefs for the same identifier are only issued once.
+*/
+static void DeclareObject(
+  Decl *pDecl,        /* The thing to be declared */
+  GenState *pState,   /* Current state of the code generator */
+  int needFullDecl    /* Must have the full declaration.  A forward
+                       * declaration isn't enough */
+){
+  Decl *p;               /* The object to be declared */
+  int flag;
+  int isCpp;             /* True if generating C++ */
+  int doneTypedef = 0;   /* True if a typedef has been done for this object */
+
+  /* printf("BEGIN %s of %s\n",needFullDecl?"FULL":"PROTOTYPE",pDecl->zName);*/
+  /* 
+  ** For any object that has a forward declaration, go ahead and do the
+  ** forward declaration first.
+  */
+  isCpp = (pState->flags & DP_Cplusplus) != 0;
+  for(p=pDecl; p; p=p->pSameName){
+    if( p->zFwd ){
+      if( !DeclHasProperty(p,DP_Forward) ){
+        DeclSetProperty(p,DP_Forward);
+        if( strncmp(p->zFwd,"typedef",7)==0 ){
+          if( doneTypedef ) continue;
+          doneTypedef = 1;
+        }
+        ChangeIfContext(p->zIf,pState);
+        StringAppend(pState->pStr,isCpp ? p->zFwdCpp : p->zFwd,0);
+      }
+    }
+  }
+
+  /*
+  ** Early out if everything is already suitably declared.
+  **
+  ** This is a very important step because it prevents us from
+  ** executing the code the follows in a recursive call to this
+  ** function with the same value for pDecl.
+  */
+  flag = needFullDecl ? DP_Declared|DP_Forward : DP_Forward;
+  for(p=pDecl; p; p=p->pSameName){
+    if( !DeclHasProperty(p,flag) ) break;
+  }
+  if( p==0 ){
+    return;
+  }
+
+  /*
+  ** Make sure we have all necessary #includes
+  */
+  for(p=pDecl; p; p=p->pSameName){
+    AddIncludes(p->pInclude,pState);
+  }
+
+  /*
+  ** Go ahead an mark everything as being declared, to prevent an
+  ** infinite loop thru the ScanText() function.  At the same time,
+  ** we decide which objects need a full declaration and mark them
+  ** with the DP_Flag bit.  We are only able to use DP_Flag in this
+  ** way because we know we'll never execute this far into this
+  ** function on a recursive call with the same pDecl.  Hence, recursive
+  ** calls to this function (through ScanText()) can never change the
+  ** value of DP_Flag out from under us.
+  */
+  for(p=pDecl; p; p=p->pSameName){
+    if( !DeclHasProperty(p,DP_Declared) 
+     && (p->zFwd==0 || needFullDecl) 
+     && p->zDecl!=0
+    ){
+      DeclSetProperty(p,DP_Forward|DP_Declared|DP_Flag);
+    }else{
+      DeclClearProperty(p,DP_Flag);
+    }
+  }
+
+  /*
+  ** Call ScanText() recusively (this routine is called from ScanText())
+  ** to include declarations required to come before these declarations.
+  */
+  for(p=pDecl; p; p=p->pSameName){
+    if( DeclHasProperty(p,DP_Flag) ){
+      if( p->zDecl[0]=='#' ){
+        ScanText(&p->zDecl[1],pState);
+      }else{
+        InsertExtraDecl(p);
+        ScanText(p->zDecl,pState);
+      }
+    }
+  }
+
+  /*
+  ** Output the declarations.  Do this in two passes.  First
+  ** output everything that isn't a typedef.  Then go back and
+  ** get the typedefs by the same name.
+  */
+  for(p=pDecl; p; p=p->pSameName){
+    if( DeclHasProperty(p,DP_Flag) && !DeclHasProperty(p,TY_Typedef) ){
+      if( DeclHasAnyProperty(p,TY_Enumeration) ){
+        if( doneTypedef ) continue;
+        doneTypedef = 1;
+      }
+      ChangeIfContext(p->zIf,pState);
+      if( !isCpp && DeclHasAnyProperty(p,DP_ExternReqd) ){
+        StringAppend(pState->pStr,"extern ",0);
+      }else if( isCpp && DeclHasProperty(p,DP_Cplusplus|DP_ExternReqd) ){
+        StringAppend(pState->pStr,"extern ",0);
+      }else if( isCpp && DeclHasAnyProperty(p,DP_ExternCReqd|DP_ExternReqd) ){
+        StringAppend(pState->pStr,"extern \"C\" ",0);
+      }
+      InsertExtraDecl(p);
+      StringAppend(pState->pStr,p->zDecl,0);
+      if( !isCpp && DeclHasProperty(p,DP_Cplusplus) ){
+        fprintf(stderr,
+          "%s: C code ought not reference the C++ object \"%s\"\n",
+          pState->zFilename, p->zName);
+        pState->nErr++;
+      }
+      DeclClearProperty(p,DP_Flag);
+    }
+  }
+  for(p=pDecl; p && !doneTypedef; p=p->pSameName){
+    if( DeclHasProperty(p,DP_Flag) ){
+      /* This has to be a typedef */
+      doneTypedef = 1;
+      ChangeIfContext(p->zIf,pState);
+      InsertExtraDecl(p);
+      StringAppend(pState->pStr,p->zDecl,0);
+    }
+  }
 }
+
+/*
+** This routine scans the input text given, and appends to the
+** string in pState->pStr the text of any declarations that must
+** occur before the text in zText.
+**
+** If an identifier in zText is immediately followed by '*', then
+** only forward declarations are needed for that identifier.  If the
+** identifier name is not followed immediately by '*', we must supply
+** a full declaration.
+*/
+static void ScanText(
+  const char *zText,    /* The input text to be scanned */
+  GenState *pState      /* Current state of the code generator */
+){
+  int nextValid = 0;    /* True is sNext contains valid data */
+  InStream sIn;         /* The input text */
+  Token sToken;         /* The current token being examined */
+  Token sNext;          /* The next non-space token */
+
+  /* printf("BEGIN SCAN TEXT on %s\n", zText); */
+
+  sIn.z = zText;
+  sIn.i = 0;
+  sIn.nLine = 1;
+  while( sIn.z[sIn.i]!=0 ){
+    if( nextValid ){
+      sToken = sNext;
+      nextValid = 0;
+    }else{
+      GetNonspaceToken(&sIn,&sToken);
+    }
+    if( sToken.eType==TT_Id ){
+      int needFullDecl;   /* True if we need to provide the full declaration,
+                          ** not just the forward declaration */
+      Decl *pDecl;        /* The declaration having the name in sToken */
+
+      /*
+      ** See if there is a declaration in the database with the name given
+      ** by sToken.
+      */
+      pDecl = FindDecl(sToken.zText,sToken.nText);
+      if( pDecl==0 ) continue;
+
+      /* 
+      ** If we get this far, we've found an identifier that has a 
+      ** declaration in the database.  Now see if we the full declaration
+      ** or just a forward declaration.
+      */
+      GetNonspaceToken(&sIn,&sNext);
+      if( sNext.zText[0]=='*' ){
+        needFullDecl = 0;
+      }else{
+        needFullDecl = 1;
+        nextValid = sNext.eType==TT_Id;
+      }
+
+      /*
+      ** Generate the needed declaration.
+      */
+      DeclareObject(pDecl,pState,needFullDecl);
+    }else if( sToken.eType==TT_Preprocessor ){
+      sIn.i -= sToken.nText - 1;
+    }
+  }
+  /* printf("END SCANTEXT\n"); */
 }
-return e;
-};
-dom.effectiveHeight = function f(e){
-if(!e) return 0;
-if(!f.measure){
-f.measure = function callee(e, depth){
-if(!e) return;
-const m = e.getBoundingClientRect();
-if(0===depth){
-callee.top = m.top;
-callee.bottom = m.bottom;
-}else{
-callee.top = m.top ? Math.min(callee.top, m.top) : callee.top;
-callee.bottom = Math.max(callee.bottom, m.bottom);
+
+/*
+** Provide a full declaration to any object which so far has had only
+** a foward declaration.
+*/
+static void CompleteForwardDeclarations(GenState *pState){
+  Decl *pDecl;
+  int progress;
+
+  do{
+    progress = 0;
+    for(pDecl=pDeclFirst; pDecl; pDecl=pDecl->pNext){
+      if( DeclHasProperty(pDecl,DP_Forward) 
+       && !DeclHasProperty(pDecl,DP_Declared) 
+      ){
+        DeclareObject(pDecl,pState,1);
+        progress = 1;
+        assert( DeclHasProperty(pDecl,DP_Declared) );
+      }
+    }
+  }while( progress );
 }
-Array.prototype.forEach.call(e.children,(e)=>callee(e,depth+1));
-if(0===depth){
-f.extra += callee.bottom - callee.top;
+
+/*
+** Generate an include file for the given source file.  Return the number
+** of errors encountered.
+**
+** if nolocal_flag is true, then we do not generate declarations for
+** objected marked DP_Local.
+*/
+static int MakeHeader(InFile *pFile, FILE *report, int nolocal_flag){
+  int nErr = 0;
+  GenState sState;
+  String outStr;
+  IdentTable includeTable;
+  Ident *pId;
+  char *zNewVersion;
+  char *zOldVersion;
+
+  if( pFile->zHdr==0 || *pFile->zHdr==0 ) return 0;
+  sState.pStr = &outStr;
+  StringInit(&outStr);
+  StringAppend(&outStr,zTopLine,nTopLine);
+  sState.pTable = &includeTable;
+  memset(&includeTable,0,sizeof(includeTable));
+  sState.zIf = 0;
+  sState.nErr = 0;
+  sState.zFilename = pFile->zSrc;
+  sState.flags = pFile->flags & DP_Cplusplus;
+  ResetDeclFlags(nolocal_flag ? "no" : pFile->zSrc);
+  for(pId = pFile->idTable.pList; pId; pId=pId->pNext){
+    Decl *pDecl = FindDecl(pId->zName,0);
+    if( pDecl ){
+      DeclareObject(pDecl,&sState,1);
+    }
+  }
+  CompleteForwardDeclarations(&sState);
+  ChangeIfContext(0,&sState);
+  nErr += sState.nErr;
+  zOldVersion = ReadFile(pFile->zHdr);
+  zNewVersion = StringGet(&outStr);
+  if( report ) fprintf(report,"%s: ",pFile->zHdr);
+  if( zOldVersion==0 ){
+    if( report ) fprintf(report,"updated\n");
+    if( WriteFile(pFile->zHdr,zNewVersion) ){
+      fprintf(stderr,"%s: Can't write to file\n",pFile->zHdr);
+      nErr++;
+    }
+  }else if( strncmp(zOldVersion,zTopLine,nTopLine)!=0 ){
+    if( report ) fprintf(report,"error!\n");
+    fprintf(stderr,
+       "%s: Can't overwrite this file because it wasn't previously\n"
+       "%*s  generated by 'makeheaders'.\n",
+       pFile->zHdr, (int)strlen(pFile->zHdr), "");
+    nErr++;
+  }else if( strcmp(zOldVersion,zNewVersion)!=0 ){
+    if( report ) fprintf(report,"updated\n");
+    if( WriteFile(pFile->zHdr,zNewVersion) ){
+      fprintf(stderr,"%s: Can't write to file\n",pFile->zHdr);
+      nErr++;
+    }
+  }else if( report ){
+    fprintf(report,"unchanged\n");
+  }
+  SafeFree(zOldVersion); 
+  IdentTableReset(&includeTable);
+  StringReset(&outStr);
+  return nErr;
 }
-return f.extra;
-};
+
+/*
+** Generate a global header file -- a header file that contains all
+** declarations.  If the forExport flag is true, then only those
+** objects that are exported are included in the header file.
+*/
+static int MakeGlobalHeader(int forExport){
+  GenState sState;
+  String outStr;
+  IdentTable includeTable;
+  Decl *pDecl;
+
+  sState.pStr = &outStr;
+  StringInit(&outStr);
+  /* StringAppend(&outStr,zTopLine,nTopLine); */
+  sState.pTable = &includeTable;
+  memset(&includeTable,0,sizeof(includeTable));
+  sState.zIf = 0;
+  sState.nErr = 0;
+  sState.zFilename = "(all)";
+  sState.flags = 0;
+  ResetDeclFlags(0);
+  for(pDecl=pDeclFirst; pDecl; pDecl=pDecl->pNext){
+    if( forExport==0 || DeclHasProperty(pDecl,DP_Export) ){
+      DeclareObject(pDecl,&sState,1);
+    }
+  }
+  ChangeIfContext(0,&sState);
+  printf("%s",StringGet(&outStr));
+  IdentTableReset(&includeTable);
+  StringReset(&outStr);
+  return 0;  
 }
-f.extra = 0;
-f.measure(e,0);
-return f.extra;
-};
-dom.parseHtml = function(){
-let childs, string, tgt;
-if(1===arguments.length){
-string = arguments[0];
-}else if(2==arguments.length){
-tgt = arguments[0];
-string  = arguments[1];
+
+#ifdef DEBUG
+/*
+** Return the number of characters in the given string prior to the
+** first newline.
+*/
+static int ClipTrailingNewline(char *z){
+  int n = strlen(z);
+  while( n>0 && (z[n-1]=='\n' || z[n-1]=='\r') ){ n--; }
+  return n;
 }
-if(string){
-const newNode = new DOMParser().parseFromString(string, 'text/html');
-childs = newNode.documentElement.querySelector('body');
-childs = childs ? Array.prototype.slice.call(childs.childNodes, 0) : [];
-}else{
-childs = [];
+
+/*
+** Dump the entire declaration list for debugging purposes
+*/
+static void DumpDeclList(void){
+  Decl *pDecl;
+
+  for(pDecl = pDeclFirst; pDecl; pDecl=pDecl->pNext){
+    printf("**** %s from file %s ****\n",pDecl->zName,pDecl->zFile);
+    if( pDecl->zIf ){
+      printf("If: [%.*s]\n",ClipTrailingNewline(pDecl->zIf),pDecl->zIf);
+    }
+    if( pDecl->zFwd ){
+      printf("Decl: [%.*s]\n",ClipTrailingNewline(pDecl->zFwd),pDecl->zFwd);
+    }
+    if( pDecl->zDecl ){
+      InsertExtraDecl(pDecl);
+      printf("Def: [%.*s]\n",ClipTrailingNewline(pDecl->zDecl),pDecl->zDecl);
+    }
+    if( pDecl->flags ){
+      static struct {
+        int mask;
+        char *desc;
+      } flagSet[] = {
+        { TY_Class,       "class" },
+        { TY_Enumeration, "enum" },
+        { TY_Structure,   "struct" },
+        { TY_Union,       "union" },
+        { TY_Variable,    "variable" },
+        { TY_Subroutine,  "function" },
+        { TY_Typedef,     "typedef" },
+        { TY_Macro,       "macro" },
+        { DP_Export,      "export" },
+        { DP_Local,       "local" },
+        { DP_Cplusplus,   "C++" },
+      };
+      int i;
+      printf("flags:");
+      for(i=0; i<sizeof(flagSet)/sizeof(flagSet[0]); i++){
+        if( flagSet[i].mask & pDecl->flags ){
+          printf(" %s", flagSet[i].desc);
+        }
+      }
+      printf("\n");
+    }
+    if( pDecl->pInclude ){
+      Include *p;
+      printf("includes:");
+      for(p=pDecl->pInclude; p; p=p->pNext){
+        printf(" %s",p->zFile);
+      }
+      printf("\n");
+    }
+  }
 }
-return tgt ? this.moveTo(tgt, childs) : childs;
-};
-F.connectPagePreviewers = function f(selector,methodNamespace){
-if('string'===typeof selector){
-selector = document.querySelectorAll(selector);
-}else if(!selector.forEach){
-selector = [selector];
+#endif
+
+/*
+** When the "-doc" command-line option is used, this routine is called
+** to print all of the database information to standard output.
+*/
+static void DocumentationDump(void){
+  Decl *pDecl;
+  static struct {
+    int mask;
+    char flag;
+  } flagSet[] = {
+    { TY_Class,       'c' },
+    { TY_Enumeration, 'e' },
+    { TY_Structure,   's' },
+    { TY_Union,       'u' },
+    { TY_Variable,    'v' },
+    { TY_Subroutine,  'f' },
+    { TY_Typedef,     't' },
+    { TY_Macro,       'm' },
+    { DP_Export,      'x' },
+    { DP_Local,       'l' },
+    { DP_Cplusplus,   '+' },
+  };
+
+  for(pDecl = pDeclFirst; pDecl; pDecl=pDecl->pNext){
+    int i;
+    int nLabel = 0;
+    char *zDecl;
+    char zLabel[50];
+    for(i=0; i<sizeof(flagSet)/sizeof(flagSet[0]); i++){
+      if( DeclHasProperty(pDecl,flagSet[i].mask) ){
+        zLabel[nLabel++] = flagSet[i].flag;
+      }
+    }
+    if( nLabel==0 ) continue;
+    zLabel[nLabel] = 0;
+    InsertExtraDecl(pDecl);
+    zDecl = pDecl->zDecl;
+    if( zDecl==0 ) zDecl = pDecl->zFwd;
+    printf("%s %s %s %p %d %d %d %d %d\n",
+       pDecl->zName,
+       zLabel,
+       pDecl->zFile,
+       pDecl->pComment,
+       pDecl->pComment ? pDecl->pComment->nText+1 : 0,
+       pDecl->zIf ? (int)strlen(pDecl->zIf)+1 : 0,
+       zDecl ? (int)strlen(zDecl) : 0,
+       pDecl->pComment ? pDecl->pComment->nLine : 0,
+       pDecl->tokenCode.nText ? pDecl->tokenCode.nText+1 : 0
+    );
+    if( pDecl->pComment ){
+      printf("%.*s\n",pDecl->pComment->nText, pDecl->pComment->zText);
+    }
+    if( pDecl->zIf ){
+      printf("%s\n",pDecl->zIf);
+    }
+    if( zDecl ){
+      printf("%s",zDecl);
+    }
+    if( pDecl->tokenCode.nText ){
+      printf("%.*s\n",pDecl->tokenCode.nText, pDecl->tokenCode.zText);
+    }
+  }
 }
-if(!methodNamespace){
-methodNamespace = F.page;
+
+/*
+** Given the complete text of an input file, this routine prints a
+** documentation record for the header comment at the beginning of the
+** file (if the file has a header comment.)
+*/
+void PrintModuleRecord(const char *zFile, const char *zFilename){
+  int i;
+  static int addr = 5;
+  while( isspace(*zFile) ){ zFile++; }
+  if( *zFile!='/' || zFile[1]!='*' ) return;
+  for(i=2; zFile[i] && (zFile[i-1]!='/' || zFile[i-2]!='*'); i++){}
+  if( zFile[i]==0 ) return;
+  printf("%s M %s %d %d 0 0 0 0\n%.*s\n",
+    zFilename, zFilename, addr, i+1, i, zFile);
+  addr += 4;
 }
-selector.forEach(function(e){
-e.addEventListener(
-'click', function(r){
-const eTo = '#'===e.dataset.fPreviewTo[0]
-? document.querySelector(e.dataset.fPreviewTo)
-: methodNamespace[e.dataset.fPreviewTo],
-eFrom = '#'===e.dataset.fPreviewFrom[0]
-? document.querySelector(e.dataset.fPreviewFrom)
-: methodNamespace[e.dataset.fPreviewFrom],
-asText = +(e.dataset.fPreviewAsText || 0);
-eTo.textContent = "Fetching preview...";
-methodNamespace[e.dataset.fPreviewVia](
-(eFrom instanceof Function ? eFrom.call(methodNamespace) : eFrom.value),
-function(r){
-if(eTo instanceof Function) eTo.call(methodNamespace, r||'');
-else if(!r){
-dom.clearElement(eTo);
-}else if(asText){
-eTo.textContent = r;
-}else{
-dom.parseHtml(dom.clearElement(eTo), r);
+
+
+/*
+** Given an input argument to the program, construct a new InFile
+** object.
+*/
+static InFile *CreateInFile(char *zArg, int *pnErr){
+  int nSrc;
+  char *zSrc;
+  InFile *pFile;
+  int i;
+
+  /* 
+  ** Get the name of the input file to be scanned.  The input file is
+  ** everything before the first ':' or the whole file if no ':' is seen.
+  **
+  ** Except, on windows, ignore any ':' that occurs as the second character
+  ** since it might be part of the drive specifier.  So really, the ":' has
+  ** to be the 3rd or later character in the name.  This precludes 1-character
+  ** file names, which really should not be a problem.
+  */
+  zSrc = zArg;
+  for(nSrc=2; zSrc[nSrc] && zArg[nSrc]!=':'; nSrc++){}
+  pFile = SafeMalloc( sizeof(InFile) );
+  memset(pFile,0,sizeof(InFile));
+  pFile->zSrc = StrDup(zSrc,nSrc);
+
+  /* Figure out if we are dealing with C or C++ code.  Assume any
+  ** file with ".c" or ".h" is C code and all else is C++.
+  */
+  if( nSrc>2 && zSrc[nSrc-2]=='.' && (zSrc[nSrc-1]=='c' || zSrc[nSrc-1]=='h')){
+    pFile->flags &= ~DP_Cplusplus;
+  }else{
+    pFile->flags |= DP_Cplusplus;
+  }
+
+  /*
+  ** If a separate header file is specified, use it
+  */
+  if( zSrc[nSrc]==':' ){
+    int nHdr;
+    char *zHdr;
+    zHdr = &zSrc[nSrc+1];
+    for(nHdr=0; zHdr[nHdr] && zHdr[nHdr]!=':'; nHdr++){}
+    pFile->zHdr = StrDup(zHdr,nHdr);
+  }
+
+  /* Look for any 'c' or 'C' in the suffix of the file name and change
+  ** that character to 'h' or 'H' respectively.  If no 'c' or 'C' is found,
+  ** then assume we are dealing with a header.
+  */
+  else{
+    int foundC = 0;
+    pFile->zHdr = StrDup(zSrc,nSrc);
+    for(i = nSrc-1; i>0 && pFile->zHdr[i]!='.'; i--){
+      if( pFile->zHdr[i]=='c' ){
+        foundC = 1;
+        pFile->zHdr[i] = 'h';
+      }else if( pFile->zHdr[i]=='C' ){
+        foundC = 1;
+        pFile->zHdr[i] = 'H';
+      }
+    }
+    if( !foundC ){
+      SafeFree(pFile->zHdr);
+      pFile->zHdr = 0;
+    }
+  }
+
+  /*
+  ** If pFile->zSrc contains no 'c' or 'C' in its extension, it
+  ** must be a header file.   In that case, we need to set the 
+  ** PS_Interface flag.
+  */
+  pFile->flags |= PS_Interface;
+  for(i=nSrc-1; i>0 && zSrc[i]!='.'; i--){
+    if( zSrc[i]=='c' || zSrc[i]=='C' ){
+      pFile->flags &= ~PS_Interface;
+      break;
+    }
+  }
+
+  /* Done! 
+  */
+  return pFile;
 }
+
+/* MS-Windows and MS-DOS both have the following serious OS bug:  the
+** length of a command line is severely restricted.  But this program
+** occasionally requires long command lines.  Hence the following
+** work around.
+**
+** If the parameters "-f FILENAME" appear anywhere on the command line,
+** then the named file is scanned for additional command line arguments.
+** These arguments are substituted in place of the "FILENAME" argument
+** in the original argument list.
+**
+** This first parameter to this routine is the index of the "-f"
+** parameter in the argv[] array.  The argc and argv are passed by
+** pointer so that they can be changed.
+**
+** Parsing of the parameters in the file is very simple.  Parameters
+** can be separated by any amount of white-space (including newlines
+** and carriage returns.)  There are now quoting characters of any
+** kind.  The length of a token is limited to about 1000 characters.
+*/
+static void AddParameters(int index, int *pArgc, char ***pArgv){
+  int argc = *pArgc;      /* The original argc value */
+  char **argv = *pArgv;   /* The original argv value */
+  int newArgc;            /* Value for argc after inserting new arguments */
+  char **zNew = 0;        /* The new argv after this routine is done */
+  char *zFile;            /* Name of the input file */
+  int nNew = 0;           /* Number of new entries in the argv[] file */
+  int nAlloc = 0;         /* Space allocated for zNew[] */
+  int i;                  /* Loop counter */
+  int n;                  /* Number of characters in a new argument */
+  int c;                  /* Next character of input */
+  int startOfLine = 1;    /* True if we are where '#' can start a comment */
+  FILE *in;               /* The input file */
+  char zBuf[1000];        /* A single argument is accumulated here */
+
+  if( index+1==argc ) return;
+  zFile = argv[index+1];
+  in = fopen(zFile,"r");
+  if( in==0 ){
+    fprintf(stderr,"Can't open input file \"%s\"\n",zFile);
+    exit(1);
+  }
+  c = ' ';
+  while( c!=EOF ){
+    while( c!=EOF && isspace(c) ){
+      if( c=='\n' ){
+        startOfLine = 1;
+      }
+      c = getc(in); 
+      if( startOfLine && c=='#' ){
+        while( c!=EOF && c!='\n' ){
+          c = getc(in);
+        }
+      }
+    }
+    n = 0;
+    while( c!=EOF && !isspace(c) ){
+      if( n<sizeof(zBuf)-1 ){ zBuf[n++] = c; }
+      startOfLine = 0;
+      c = getc(in);
+    }
+    zBuf[n] = 0;
+    if( n>0 ){
+      nNew++;
+      if( nNew + argc > nAlloc ){
+        if( nAlloc==0 ){
+          nAlloc = 100 + argc;
+          zNew = malloc( sizeof(char*) * nAlloc );
+        }else{
+          nAlloc *= 2;
+          zNew = realloc( zNew, sizeof(char*) * nAlloc );  
+        }
+      }
+      if( zNew ){
+        int j = nNew + index;
+        zNew[j] = malloc( n + 1 );
+        if( zNew[j] ){
+          strcpy( zNew[j], zBuf );
+        }
+      }
+    }
+  }
+  newArgc = argc + nNew - 1;
+  for(i=0; i<=index; i++){
+    zNew[i] = argv[i];
+  }
+  for(i=nNew + index + 1; i<newArgc; i++){
+    zNew[i] = argv[i + 1 - nNew];
+  }
+  zNew[newArgc] = 0;
+  *pArgc = newArgc;
+  *pArgv = zNew;
 }
-);
-}, false
-);
-});
-return this;
-};
-return F.dom = dom;
-})(window.fossil);
-/* fossil.pikchr.js *************************************************************/
-(function(F){
-"use strict";
-const D = F.dom, P = F.pikchr = {};
-P.addSrcView = function f(svg){
-if(!f.hasOwnProperty('parentClick')){
-f.parentClick = function(ev){
-if(ev.altKey || ev.metaKey || ev.ctrlKey
-|| this.classList.contains('toggle')){
-this.classList.toggle('source');
-ev.stopPropagation();
-ev.preventDefault();
+
+#ifdef NOT_USED
+/*
+** Return the time that the given file was last modified.  If we can't
+** locate the file (because, for example, it doesn't exist), then
+** return 0.
+*/
+static unsigned int ModTime(const char *zFilename){
+  unsigned int mTime = 0;
+  struct stat sStat;
+  if( stat(zFilename,&sStat)==0 ){
+    mTime = sStat.st_mtime;
+  }
+  return mTime;
 }
-};
-f.clickPikchrShow = function(ev){
-const pId = this.dataset['pikchrid'];
-if(!pId) return;
-const ePikchr = this.parentNode.parentNode.querySelector('#'+pId);
-if(!ePikchr) return;
-ev.stopPropagation();
-window.sessionStorage.setItem('pikchr-xfer', ePikchr.innerText);
-};
-};
-if(!svg) svg = 'svg.pikchr';
-if('string' === typeof svg){
-document.querySelectorAll(svg).forEach((e)=>f.call(this, e));
-return this;
-}else if(svg.forEach){
-svg.forEach((e)=>f.call(this, e));
-return this;
+#endif
+
+/*
+** Print a usage comment for this program.
+*/
+static void Usage(const char *argv0, const char *argvN){
+  fprintf(stderr,"%s: Illegal argument \"%s\"\n",argv0,argvN);
+  fprintf(stderr,"Usage: %s [options] filename...\n"
+    "Options:\n"
+    "  -h          Generate a single .h to standard output.\n"
+    "  -H          Like -h, but only output EXPORT declarations.\n"
+    "  -v          (verbose) Write status information to the screen.\n"
+    "  -doc        Generate no header files.  Instead, output information\n"
+    "              that can be used by an automatic program documentation\n"
+    "              and cross-reference generator.\n"
+    "  -local      Generate prototypes for \"static\" functions and\n"
+    "              procedures.\n"
+    "  -f FILE     Read additional command-line arguments from the file named\n"
+    "              \"FILE\".\n"
+#ifdef DEBUG
+    "  -! MASK     Set the debugging mask to the number \"MASK\".\n"
+#endif
+    "  --          Treat all subsequent comment-line parameters as filenames,\n"
+    "              even if they begin with \"-\".\n",
+    argv0
+  );
 }
-if(svg.dataset.pikchrProcessed){
-return this;
+
+/*
+** The following text contains a few simple #defines that we want
+** to be available to every file.
+*/
+static char zInit[] = 
+  "#define INTERFACE 0\n"
+  "#define EXPORT_INTERFACE 0\n"
+  "#define LOCAL_INTERFACE 0\n"
+  "#define EXPORT\n"
+  "#define LOCAL static\n"
+  "#define PUBLIC\n"
+  "#define PRIVATE\n"
+  "#define PROTECTED\n"
+;
+
+#if TEST==0
+int main(int argc, char **argv){
+  int i;                /* Loop counter */
+  int nErr = 0;         /* Number of errors encountered */
+  Token *pList;         /* List of input tokens for one file */
+  InFile *pFileList = 0;/* List of all input files */
+  InFile *pTail = 0;    /* Last file on the list */
+  InFile *pFile;        /* for looping over the file list */
+  int h_flag = 0;       /* True if -h is present.  Output unified header */
+  int H_flag = 0;       /* True if -H is present.  Output EXPORT header */
+  int v_flag = 0;       /* Verbose */
+  int noMoreFlags;      /* True if -- has been seen. */
+  FILE *report;         /* Send progress reports to this, if not NULL */
+
+  noMoreFlags = 0;
+  for(i=1; i<argc; i++){
+    if( argv[i][0]=='-' && !noMoreFlags ){
+      switch( argv[i][1] ){
+        case 'h':   h_flag = 1;   break;
+        case 'H':   H_flag = 1;   break;
+        case 'v':   v_flag = 1;   break;
+        case 'd':   doc_flag = 1; proto_static = 1; break;
+        case 'l':   proto_static = 1; break;
+        case 'f':   AddParameters(i, &argc, &argv); break;
+        case '-':   noMoreFlags = 1;   break;
+#ifdef DEBUG
+        case '!':   i++;  debugMask = strtol(argv[i],0,0); break;
+#endif
+        default:    Usage(argv[0],argv[i]); return 1;
+      }
+    }else{
+      pFile = CreateInFile(argv[i],&nErr);
+      if( pFile ){
+        if( pFileList ){
+          pTail->pNext = pFile;
+          pTail = pFile;
+        }else{
+          pFileList = pTail = pFile;
+        }
+      }
+    }
+  }
+  if( h_flag && H_flag ){
+    h_flag = 0;
+  }
+  if( v_flag ){
+    report = (h_flag || H_flag) ? stderr : stdout;
+  }else{
+    report = 0;
+  }
+  if( nErr>0 ){
+    return nErr;
+  }
+  for(pFile=pFileList; pFile; pFile=pFile->pNext){
+    char *zFile;
+
+    zFilename = pFile->zSrc;
+    if( zFilename==0 ) continue;
+    zFile = ReadFile(zFilename);
+    if( zFile==0 ){
+      fprintf(stderr,"Can't read input file \"%s\"\n",zFilename);
+      nErr++;
+      continue;
+    }
+    if( strncmp(zFile,zTopLine,nTopLine)==0 ){
+      pFile->zSrc = 0;
+    }else{
+      if( report ) fprintf(report,"Reading %s...\n",zFilename);
+      pList = TokenizeFile(zFile,&pFile->idTable);
+      if( pList ){
+        nErr += ParseFile(pList,pFile->flags);
+        FreeTokenList(pList);
+      }else if( zFile[0]==0 ){
+        fprintf(stderr,"Input file \"%s\" is empty.\n", zFilename);
+        nErr++;
+      }else{
+        fprintf(stderr,"Errors while processing \"%s\"\n", zFilename);
+        nErr++;
+      }
+    }
+    if( !doc_flag ) SafeFree(zFile);
+    if( doc_flag ) PrintModuleRecord(zFile,zFilename);
+  }
+  if( nErr>0 ){
+    return nErr;
+  }
+#ifdef DEBUG
+  if( debugMask & DECL_DUMP ){
+    DumpDeclList();
+    return nErr;
+  }
+#endif
+  if( doc_flag ){
+    DocumentationDump();
+    return nErr;
+  }
+  zFilename = "--internal--";
+  pList = TokenizeFile(zInit,0);
+  if( pList==0 ){
+    return nErr+1;
+  }
+  ParseFile(pList,PS_Interface);
+  FreeTokenList(pList);
+  if( h_flag || H_flag ){
+    nErr += MakeGlobalHeader(H_flag);
+  }else{
+    for(pFile=pFileList; pFile; pFile=pFile->pNext){
+      if( pFile->zSrc==0 ) continue;
+      nErr += MakeHeader(pFile,report,0);
+    }
+  }
+  return nErr;
 }
-svg.dataset.pikchrProcessed = 1;
-const parent = svg.parentNode.parentNode;
-const srcView = parent ? svg.parentNode.nextElementSibling : undefined;
-if(srcView && srcView.classList.contains('pikchr-src')){
-parent.addEventListener('click', f.parentClick, false);
-const eSpan = window.sessionStorage
-? srcView.querySelector('span')
-: undefined;
-if(eSpan){
-const openLink = eSpan.querySelector('a');
-if(openLink){
-openLink.addEventListener('click', f.clickPikchrShow, false);
-eSpan.classList.remove('hidden');
-}
-}
-}
-return this;
-};
-})(window.fossil);
-</script>
-</body>
-</html>
+#endif

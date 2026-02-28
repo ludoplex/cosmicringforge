@@ -1,16 +1,17 @@
 #!/bin/sh
 # ═══════════════════════════════════════════════════════════════════════════
-# template-init.sh - Initialize new project from cosmicringforge template
+# template-init.sh - Initialize project after cloning from GitHub template
 # ═══════════════════════════════════════════════════════════════════════════
 #
-# Usage: ./scripts/template-init.sh <project-name>
+# CosmicRingForge — BDE with Models
+#
+# Usage: ./scripts/template-init.sh [project-name]
 #
 # This script:
-#   1. Verifies Ring 0 tools build
-#   2. Bootstraps schemagen (self-hosting)
-#   3. Verifies vendor libraries
-#   4. Runs regen-and-diff gate
-#   5. Creates project skeleton
+#   1. Removes repo-development files (.forge/, repo-ci.yml, CONTRIBUTING.md)
+#   2. Verifies Ring 0 tools build
+#   3. Runs initial regen to verify everything works
+#   4. Prepares for first commit
 #
 # Requirements: C compiler, sh, make
 # ═══════════════════════════════════════════════════════════════════════════
@@ -19,7 +20,7 @@ set -e
 
 # ── Configuration ──────────────────────────────────────────────────────────
 
-PROJECT="${1:-}"
+PROJECT="${1:-$(basename "$(pwd)")}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
@@ -28,248 +29,166 @@ if [ -t 1 ]; then
     RED='\033[0;31m'
     GREEN='\033[0;32m'
     YELLOW='\033[1;33m'
+    CYAN='\033[0;36m'
     NC='\033[0m'
 else
-    RED='' GREEN='' YELLOW='' NC=''
+    RED='' GREEN='' YELLOW='' CYAN='' NC=''
 fi
 
 # ── Functions ──────────────────────────────────────────────────────────────
 
-log_info()  { printf "${GREEN}[INFO]${NC} %s\n" "$1"; }
-log_warn()  { printf "${YELLOW}[WARN]${NC} %s\n" "$1"; }
+log_info()  { printf "${GREEN}[OK]${NC}    %s\n" "$1"; }
+log_warn()  { printf "${YELLOW}[WARN]${NC}  %s\n" "$1"; }
 log_error() { printf "${RED}[ERROR]${NC} %s\n" "$1"; }
+log_step()  { printf "${CYAN}[STEP]${NC}  %s\n" "$1"; }
 
 check_tool() {
     if command -v "$1" >/dev/null 2>&1; then
-        log_info "Found: $1"
         return 0
     else
-        log_warn "Missing: $1"
         return 1
     fi
 }
 
-# ── Argument Validation ────────────────────────────────────────────────────
-
-if [ -z "$PROJECT" ]; then
-    cat <<'EOF'
-Usage: ./scripts/template-init.sh <project-name>
-
-Initializes a new project from the cosmicringforge template.
-
-Examples:
-    ./scripts/template-init.sh my-embedded-app
-    ./scripts/template-init.sh ../../new-project
-EOF
-    exit 1
-fi
-
 # ── Main Flow ──────────────────────────────────────────────────────────────
 
 echo "═══════════════════════════════════════════════════════════════════════"
-echo " MBSE Stacks Template Initialization"
-echo " Project: $PROJECT"
+echo " CosmicRingForge — BDE with Models"
+echo " Template Initialization"
 echo "═══════════════════════════════════════════════════════════════════════"
 echo
+echo " Project Name: $PROJECT"
+echo
+echo "═══════════════════════════════════════════════════════════════════════"
 
 cd "$ROOT_DIR"
 
-# Step 1: Verify toolchain
-log_info "Step 1: Verifying toolchain..."
-check_tool cc || check_tool gcc || check_tool clang || {
-    log_error "No C compiler found. Install gcc or clang."
-    exit 1
-}
-check_tool make || {
-    log_error "make not found. Install make."
-    exit 1
-}
-check_tool sh || {
-    log_error "sh not found. This shouldn't happen."
-    exit 1
-}
+# Step 1: Clean up repo-development files (not needed by template users)
+log_step "Cleaning up repo-development files..."
 
-# Step 2: Build Ring 0 generators
-log_info "Step 2: Building Ring 0 generators..."
-if [ -d "strict-purist/gen" ]; then
-    make -C strict-purist/gen all 2>/dev/null || {
-        log_warn "Ring 0 generators not yet implemented, skipping"
-    }
-else
-    log_warn "strict-purist/gen/ not found, skipping generator build"
-fi
+CLEANUP_FILES=".forge .forge-cache CONTRIBUTING.md .github/workflows/repo-ci.yml"
+CLEANUP_DIRS="strict-purist foss-visual commercial upstream templates examples"
 
-# Step 3: Verify vendor libraries
-log_info "Step 3: Verifying vendor libraries..."
-VENDOR_DIR="strict-purist/vendor"
-for lib in sqlite lemon nuklear yyjson civetweb; do
-    if [ -d "$VENDOR_DIR/$lib" ]; then
-        if [ -f "$VENDOR_DIR/$lib/Makefile" ]; then
-            make -C "$VENDOR_DIR/$lib" clean all 2>/dev/null && \
-                log_info "  $lib: OK" || \
-                log_warn "  $lib: build failed (may need configuration)"
-        else
-            log_info "  $lib: present (no Makefile)"
-        fi
-    else
-        log_warn "  $lib: not found"
+for item in $CLEANUP_FILES; do
+    if [ -e "$item" ]; then
+        rm -rf "$item"
+        log_info "Removed: $item"
     fi
 done
 
-# Step 4: Check if APE profile available
-log_info "Step 4: Checking APE (Cosmopolitan) support..."
-if [ -d "$VENDOR_DIR/cosmopolitan" ] || command -v cosmocc >/dev/null 2>&1; then
-    log_info "  APE support: available"
-    APE_AVAILABLE=1
-else
-    log_warn "  APE support: not available (cosmocc not found)"
-    APE_AVAILABLE=0
+for item in $CLEANUP_DIRS; do
+    if [ -d "$item" ]; then
+        rm -rf "$item"
+        log_info "Removed: $item/ (legacy)"
+    fi
+done
+
+# Rename repo-ci to just ci if template-ci exists
+if [ -f ".github/workflows/template-ci.yml" ]; then
+    mv .github/workflows/template-ci.yml .github/workflows/ci.yml 2>/dev/null || true
+    rm -f .github/workflows/repo-ci.yml 2>/dev/null || true
+    log_info "Configured CI workflow"
 fi
 
-# Step 5: Create project directory
-log_info "Step 5: Creating project skeleton..."
-if [ -d "$PROJECT" ]; then
-    log_error "Directory $PROJECT already exists"
+echo
+
+# Step 2: Verify toolchain
+log_step "Verifying toolchain (Ring 0 bootstrap)..."
+if check_tool cc || check_tool gcc || check_tool clang; then
+    log_info "C compiler found"
+else
+    log_error "No C compiler found. Install gcc or clang."
     exit 1
 fi
 
-mkdir -p "$PROJECT"/{src,specs,gen,build,tests}
-
-# Copy template files
-if [ -d "templates/project" ]; then
-    cp -r templates/project/* "$PROJECT/"
+if check_tool make; then
+    log_info "make found"
+else
+    log_error "make not found. Install make."
+    exit 1
 fi
 
-# Create minimal Makefile
-cat > "$PROJECT/Makefile" << 'MAKEFILE'
-# ════════════════════════════════════════════════════════════════════════════
-# Project Makefile - Generated by cosmicringforge template
-# ════════════════════════════════════════════════════════════════════════════
+# Step 3: Build Ring 0 tools
+log_step "Building Ring 0 generators..."
+if make tools 2>&1 | head -5; then
+    log_info "Ring 0 tools built successfully"
+else
+    log_error "Failed to build Ring 0 tools"
+    exit 1
+fi
 
-PROJECT ?= $(notdir $(CURDIR))
-PROFILE ?= portable
+# Step 4: Run regen to verify workflow
+log_step "Running regen to verify workflow..."
+if make regen 2>&1 | tail -10; then
+    log_info "Regeneration completed"
+else
+    log_warn "Regeneration had issues (may be expected on fresh clone)"
+fi
 
-CC ?= cc
-CFLAGS ?= -O2 -Wall -Wextra -std=c11
+# Step 5: Build application
+log_step "Building application..."
+if make app 2>&1 | head -5; then
+    log_info "Application built successfully"
+else
+    log_error "Failed to build application"
+    exit 1
+fi
 
-# Paths
-SRC_DIR := src
-GEN_DIR := gen
-BUILD_DIR := build
-SPECS_DIR := specs
+# Step 6: Test run
+log_step "Testing application..."
+if ./build/app 2>&1 | head -5; then
+    log_info "Application runs correctly"
+else
+    log_warn "Application test had issues"
+fi
 
-# Sources
-SRCS := $(wildcard $(SRC_DIR)/*.c) $(wildcard $(GEN_DIR)/*.c)
-OBJS := $(SRCS:%.c=$(BUILD_DIR)/%.o)
+# Step 7: Check Ring 2 tools
+log_step "Checking Ring 2 tools (optional, auto-detected)..."
 
-# ── Main Targets ────────────────────────────────────────────────────────────
+echo "  Ring 2 FOSS tools:"
+check_tool dotnet     && echo "    - StateSmith (.NET): available" || echo "    - StateSmith (.NET): not installed"
+check_tool protoc     && echo "    - protobuf-c: available" || echo "    - protobuf-c: not installed"
+check_tool flatcc     && echo "    - flatcc: available" || echo "    - flatcc: not installed"
+check_tool omc        && echo "    - OpenModelica: available" || echo "    - OpenModelica: not installed"
 
-all: $(BUILD_DIR)/$(PROJECT)
+echo "  Ring 2 Commercial tools:"
+check_tool matlab     && echo "    - MATLAB/Simulink: available" || echo "    - MATLAB/Simulink: not installed"
+check_tool rhapsodycl && echo "    - IBM Rhapsody: available" || echo "    - IBM Rhapsody: not installed"
 
-$(BUILD_DIR)/$(PROJECT): $(OBJS)
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -o $@ $^
+echo
+log_info "Ring 2 tools are optional. Missing tools' outputs must be pre-committed."
 
-$(BUILD_DIR)/%.o: %.c
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $<
+# Step 8: Check cosmocc for APE builds
+log_step "Checking cosmocc (APE builds)..."
+if check_tool cosmocc; then
+    log_info "cosmocc available - APE builds enabled"
+    echo "  Build APE binary: CC=cosmocc make clean all"
+else
+    log_warn "cosmocc not found - using native compiler"
+    echo "  Install from: https://github.com/jart/cosmopolitan"
+fi
 
-# ── Generation ──────────────────────────────────────────────────────────────
-
-gen-schema:
-	@echo "Run: schemagen $(SPECS_DIR)/*.schema -o $(GEN_DIR)/"
-
-gen-sm:
-	@echo "Run: smgen $(SPECS_DIR)/*.sm -o $(GEN_DIR)/"
-
-regen: gen-schema gen-sm
-
-# ── Utilities ───────────────────────────────────────────────────────────────
-
-clean:
-	rm -rf $(BUILD_DIR)
-
-verify:
-	git diff --exit-code $(GEN_DIR)/
-
-.PHONY: all clean regen verify gen-schema gen-sm
-MAKEFILE
-
-# Create example spec
-cat > "$PROJECT/specs/example.schema" << 'SCHEMA'
-# Example Schema - Edit this file
-# Run: make gen-schema
-
-type ExampleConfig {
-    name: string[64] [not_empty]
-    enabled: i32 [default: 1]
-    timeout_ms: i32 [range: 0..60000, default: 5000]
-}
-SCHEMA
-
-# Create example main.c
-cat > "$PROJECT/src/main.c" << 'MAIN'
-/*
- * main.c - Generated by cosmicringforge template
- * Edit this file for your application entry point.
- */
-
-#include <stdio.h>
-
-/* Include generated types when available */
-/* #include "../gen/example_types.h" */
-
-int main(int argc, char *argv[])
-{
-    (void)argc;
-    (void)argv;
-
-    printf("Hello from cosmicringforge template!\n");
-    printf("Edit specs/example.schema and run: make gen-schema\n");
-
-    return 0;
-}
-MAIN
-
-# Create .gitignore
-cat > "$PROJECT/.gitignore" << 'GITIGNORE'
-# Build artifacts
-build/
-*.o
-*.exe
-*.com
-
-# Editor
-*~
-*.swp
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
-GITIGNORE
-
-log_info "Project created at: $PROJECT/"
-
-# Step 6: Summary
+# Summary
 echo
 echo "═══════════════════════════════════════════════════════════════════════"
 echo " Initialization Complete"
 echo "═══════════════════════════════════════════════════════════════════════"
 echo
-echo "Next steps:"
-echo "  1. cd $PROJECT"
-echo "  2. Edit specs/example.schema"
-echo "  3. make gen-schema   (when schemagen is available)"
-echo "  4. make"
+echo " Your project is ready! Next steps:"
 echo
-if [ "$APE_AVAILABLE" = "1" ]; then
-    echo "APE builds available: make PROFILE=ape"
-fi
+echo "   1. Edit specs:     nano specs/domain/example.schema"
+echo "   2. Regenerate:     make regen"
+echo "   3. Verify drift:   make verify"
+echo "   4. Build:          make"
+echo "   5. Run:            make run"
 echo
-echo "Documentation:"
-echo "  - TOOLING.md         - All tools and orchestration"
-echo "  - RING_CLASSIFICATION.md - Ring definitions"
-echo "  - CONVENTIONS.md     - Code conventions"
+echo " Workflow:"
+echo "   Edit spec → make regen → git diff gen/ → make → commit"
 echo
+echo " Documentation:"
+echo "   - README.md              Quick start"
+echo "   - WORKFLOW.md            Full workflow reference"
+echo "   - SPEC_TYPES.md          All spec types"
+echo "   - .claude/CLAUDE.md      LLM context"
+echo
+echo "═══════════════════════════════════════════════════════════════════════"

@@ -558,6 +558,27 @@ CONSTRAINTS
 
 ---
 
-**Document Version**: 1.0.0
-**Last Updated**: 2026-02-27
+## schemagen v2.0.0 Output Modes
+
+schemagen supports multiple output formats for full composability:
+
+| Flag | Output Files | Dependencies |
+|------|--------------|--------------|
+| `--c` | `{name}_types.h`, `{name}_types.c` | None (pure C) |
+| `--json` | `{name}_json.h`, `{name}_json.c` | yyjson |
+| `--sql` | `{name}_sql.h`, `{name}_sql.c` | sqlite3 |
+| `--proto` | `{name}.proto` | protoc (Ring 2) |
+| `--fbs` | `{name}.fbs` | flatcc (Ring 2) |
+| `--all` | All above | All above |
+
+**Example:**
+```bash
+# Generate all formats from a schema
+./build/schemagen --all specs/domain/sensor.schema gen/domain sensor
+```
+
+---
+
+**Document Version**: 2.0.0
+**Last Updated**: 2026-02-28
 **Applies To**: cosmicringforge and all projects using this stack

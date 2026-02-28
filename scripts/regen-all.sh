@@ -46,16 +46,17 @@ echo "════════════════════════�
 
 echo
 echo "── Ring 0: In-tree generators ──────────────────────────────────────────"
+echo "   (C + sh + make — always available)"
 
-# schemagen
+# schemagen (multi-format: C, JSON, SQL, proto, fbs)
 if [ -x "$BUILD_DIR/schemagen" ]; then
-    echo "[schemagen] Processing specs/**/*.schema..."
+    echo "[schemagen] Processing specs/**/*.schema (--all formats)..."
     find "$SPECS_DIR" -name "*.schema" | while read -r spec; do
         layer=$(basename "$(dirname "$spec")")
         mkdir -p "$GEN_DIR/$layer"
         name=$(basename "$spec" .schema)
-        echo "  $spec → gen/$layer/"
-        "$BUILD_DIR/schemagen" "$spec" "$GEN_DIR/$layer" "$name" 2>/dev/null || \
+        echo "  $spec → gen/$layer/ (C, JSON, SQL, proto, fbs)"
+        "$BUILD_DIR/schemagen" --all "$spec" "$GEN_DIR/$layer" "$name" 2>/dev/null || \
             echo "    (failed)"
     done
 else
@@ -106,10 +107,52 @@ else
     echo "[bddgen] Not built yet"
 fi
 
+# ── Ring 1 Generators (Velocity Tools - Auto-Detected) ───────────────────────
+
+echo
+echo "── Ring 1: Velocity tools (auto-detected) ──────────────────────────────────"
+echo "   (Ring 0 + optional C tools)"
+
+# makeheaders (auto-generate .h from .c)
+if [ -x "$BUILD_DIR/makeheaders" ]; then
+    echo "[makeheaders] Scanning src/*.c for exportable functions..."
+    SRCS=$(find "$ROOT_DIR/src" -name "*.c" 2>/dev/null | tr '\n' ' ')
+    if [ -n "$SRCS" ]; then
+        "$BUILD_DIR/makeheaders" $SRCS 2>/dev/null && \
+            echo "  Headers updated" || \
+            echo "  (no changes)"
+    fi
+else
+    echo "[makeheaders] Not built (run: make ring1)"
+fi
+
+# gengetopt (.ggo → CLI parser)
+if command -v gengetopt >/dev/null 2>&1; then
+    echo "[gengetopt] Processing specs/**/*.ggo..."
+    find "$SPECS_DIR" -name "*.ggo" 2>/dev/null | while read -r spec; do
+        layer=$(basename "$(dirname "$spec")")
+        mkdir -p "$GEN_DIR/$layer"
+        name=$(basename "$spec" .ggo)
+        echo "  $spec → gen/$layer/"
+        gengetopt -i "$spec" -F "${name}_cli" --output-dir="$GEN_DIR/$layer" 2>/dev/null || \
+            echo "    (failed)"
+    done
+else
+    echo "[gengetopt] Not installed (apt install gengetopt)"
+fi
+
+# cppcheck (static analysis - reports only, no generation)
+if command -v cppcheck >/dev/null 2>&1; then
+    echo "[cppcheck] Available for static analysis (run: make lint)"
+else
+    echo "[cppcheck] Not installed (apt install cppcheck)"
+fi
+
 # ── Ring 2 Generators (FOSS - Auto-Detected) ─────────────────────────────────
 
 echo
 echo "── Ring 2: FOSS tools (auto-detected) ────────────────────────────────────"
+echo "   (External toolchains — outputs committed to gen/imported/)"
 
 # StateSmith (.NET) - generates zero-dependency C
 if command -v dotnet >/dev/null 2>&1; then

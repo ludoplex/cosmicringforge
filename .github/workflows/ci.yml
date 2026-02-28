@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Ring 0 tools
+        run: make tools
+
+      - name: Run regen
+        run: make regen
+
+      - name: Verify no drift
+        run: make verify
+
+      - name: Build application
+        run: make app
+
+      - name: Run application
+        run: make run
+
+  cosmocc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cosmocc
+        run: |
+          mkdir -p ~/.cosmocc
+          curl -L https://cosmo.zip/pub/cosmocc/cosmocc.zip -o /tmp/cosmocc.zip
+          unzip /tmp/cosmocc.zip -d ~/.cosmocc
+          echo "$HOME/.cosmocc/bin" >> $GITHUB_PATH
+
+      - name: Build APE with cosmocc
+        run: |
+          export CC=cosmocc
+          make clean tools app
+          file build/app

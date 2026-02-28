@@ -4,115 +4,90 @@
 **Behavior Driven Engineering with Models** — BDE with Models.
 
 Framework for the design and development of any application. All paths lead to C.
+All tools compile with cosmocc to APE (Actually Portable Executable).
 
-## Architecture Principle
-Separate **authoring** (how you create models) from **shipping** (what's required to build).
-Ring 2 tools (FOSS or commercial) generate Ring 0 compatible C code that's committed and drift-gated.
+## Required Reading (in order)
+1. **RING_CLASSIFICATION.md** — Tool rings, portability, cosmocc setup
+2. **INTEROP_MATRIX.md** — Format relationships (ground truth)
+3. **LITERATE.md** — Conventions, traceability
 
-**Key Insight:** All Ring 2 tools output C. All C compiles with cosmocc to APE binaries.
-The distinction is licensing/certification, not portability. Tools are auto-detected at regen time.
+## The Enlightened Principle
+```
+Directory Structure = Format Graph = Build Rules = Documentation
+```
+
+The Makefile discovers formats, not lists files. Conventions derive from format relationships.
 
 ## Ring Classification
-| Ring | Bootstrap | Tools |
-|------|-----------|-------|
-| **0** | C + sh + make | schemagen, defgen, smgen, lexgen, bddgen, bin2c, Lemon, SQLite, Nuklear, yyjson, CLIPS, CivetWeb, flatcc, e9patch, kilo, Cosmopolitan |
-| **1** | Ring 0 + C tools | gengetopt, makeheaders, cppcheck, sanitizers (ASan/UBSan/TSan), cosmo-disasm |
-| **2** | External toolchains | StateSmith, protobuf-c, EEZ Studio, LVGL, OpenModelica, Binaryen, WAMR, MATLAB, Rhapsody, Qt Design Studio, RTI Connext DDS |
+| Ring | Bootstrap | Examples |
+|------|-----------|----------|
+| **0** | C + sh + make | schemagen, Lemon, SQLite, Nuklear, yyjson, CLIPS |
+| **1** | Ring 0 + C tools | gengetopt, cppcheck, sanitizers |
+| **2** | External toolchains | StateSmith, protobuf-c, MATLAB, Rhapsody |
 
-## Spec Types (15+)
-| Type | Generator | Purpose |
-|------|-----------|---------|
-| `.schema` | schemagen | Data types, structs, validation |
-| `.def` | defgen | Constants, enums, X-Macros, config |
-| `.impl` | implgen | Platform hints, SIMD, allocation |
-| `.sm` | smgen | Flat state machines |
-| `.hsm` | hsmgen | Hierarchical state machines |
-| `.lex` | lexgen | Lexer tokens, patterns |
-| `.grammar` | Lemon | Parser grammars (LALR) |
-| `.feature` | bddgen | BDD test scenarios (Gherkin) |
-| `.ggo` | gengetopt | CLI option specs |
-| `.proto` | protobuf-c | Wire protocol (Ring 2) |
-| `.fbs` | flatcc | Zero-copy serialization |
-| `.drawio` | StateSmith | Visual state machines (Ring 2) |
-| `.mo` | OpenModelica | Physics simulation (Ring 2) |
-| `.eez` | EEZ Studio | Embedded GUI (Ring 2) |
+**The Rule:** Ring 2 outputs committed, builds succeed with Ring 0 only.
 
-See `SPEC_TYPES.md` and `STACKS_REFERENCE.md` for complete details.
-
-## Build Commands
-```bash
-make regen    # Auto-detect Ring 2 tools, regenerate C code
-make          # Compile with cosmocc to APE binary
-make verify   # Regen + check for drift
-```
+## Format → Output Mapping
+| Source | Generator | Output Pattern |
+|--------|-----------|----------------|
+| `.schema` | schemagen | `{name}_types.c,h` |
+| `.def` | defgen | `{name}_defs.c,h` |
+| `.sm` | smgen | `{name}_sm.c,h` |
+| `.hsm` | hsmgen | `{name}_hsm.c,h` |
+| `.lex` | lexgen | `{name}_lex.c,h` |
+| `.grammar` | Lemon | `{name}_parse.c,h` |
+| `.feature` | bddgen | `{name}_bdd.c` |
+| `.proto` | protoc | `{name}.pb-c.c,h` |
+| `.drawio` | StateSmith | `{name}_sm.c,h` |
 
 ## Directory Structure
 ```
-cosmicringforge/
-├── specs/             # Source of truth (all spec types)
-│   ├── domain/        # .schema, .def, .rules
-│   ├── behavior/      # .sm, .hsm, .msm
-│   ├── interface/     # .api, .ggo, .proto, .fbs
-│   ├── parsing/       # .lex, .grammar
-│   └── testing/       # .feature
-├── model/             # Ring 2 visual sources
-│   ├── statesmith/    # .drawio files
-│   ├── openmodelica/  # .mo files
-│   └── simulink/      # .slx (commercial only)
-├── gen/               # Generated code (committed)
-│   ├── domain/        # From Ring 0 generators
-│   └── imported/      # From Ring 2 generators
-├── tools/             # Ring 0 generators (schemagen, etc.)
-├── vendor/            # Vendored C libraries
-├── src/               # Hand-written code
-├── scripts/           # Automation (regen.sh, verify.sh)
-└── .claude/           # LLM context, BDD specs
+specs/{layer}/*.{format}  →  gen/{layer}/*_{role}.c,h
+model/*                   →  gen/imported/*
 ```
 
-## Naming Conventions
-- Generators: `{name}gen.c` (e.g., `schemagen.c`)
-- Specs: `*.schema`, `*.sm`, `*.ui`
-- Generated: `gen/{tool}/{output}.c` with `GENERATOR_VERSION`
+Layers: `domain`, `behavior`, `interface`, `parsing`, `testing`
+
+## Commands
+```bash
+make formats    # Show discovered formats
+make regen      # Regenerate all (auto-detect tools)
+make verify     # Regen + drift check
+make            # Build
+make run        # Execute
+```
+
+## Universal Workflow
+```
+Edit spec → make regen → make verify → make → commit
+```
+
+Same workflow for ALL formats (native or Ring 2).
 
 ## Key Files
 | Purpose | Path |
 |---------|------|
-| **Master Reference** | `STACKS_REFERENCE.md` |
+| Format Matrix | `INTEROP_MATRIX.md` |
 | Spec Types | `SPEC_TYPES.md` |
-| Tool Inventory | `TOOLING.md` |
-| Ring Classification | `RING_CLASSIFICATION.md` |
-| X-Macro Patterns | `strict-purist/docs/XMACROS.md` |
-| License Tracking | `LICENSES.md` |
-| LLM Context | `AGENTS.md` |
-| Conventions | `CONVENTIONS.md` |
-| BDD Specs | `.claude/features/*.feature` |
-| Build System | `Makefile` |
+| Literate System | `LITERATE.md` |
+| Stacks Reference | `STACKS_REFERENCE.md` |
 
-## Orchestration Scripts
-| Script | Purpose |
-|--------|---------|
-| `scripts/regen-all.sh` | Auto-detect tools, regenerate all code |
-| `scripts/regen-all.sh --verify` | Regen + check for drift |
-| `scripts/verify-tools.sh` | Check which tools are available |
-| `scripts/new-spec.sh` | Create new spec file with boilerplate |
+## Naming Convention
+- Files: `{name}_{role}.c` (role from format: `_types`, `_sm`, `_bdd`, etc.)
+- Functions: `{Type}_{action}()` (init, validate, step, etc.)
+- Generators: `{name}gen.c`
 
-## Regen-and-Diff Gate
-```bash
-./scripts/regen-all.sh --verify  # Regenerate and check for drift
-git diff --exit-code gen/        # Must be clean before commit
+## Generated File Header
+```c
+/* AUTO-GENERATED by {generator} {version} — DO NOT EDIT
+ * @source {spec_file}:{lines}
+ * @generated {timestamp}
+ * Regenerate: make regen
+ */
 ```
 
-## GitHub Template
-```bash
-./scripts/template-init.sh my-project  # Create from template
-./scripts/verify-tools.sh              # Check toolchain
-```
-
-## Quick Reference
-- Cosmopolitan: https://github.com/jart/cosmopolitan
-- Nuklear: https://github.com/Immediate-Mode-UI/Nuklear
-- StateSmith: https://github.com/StateSmith/StateSmith
-- Lemon: https://sqlite.org/lemon.html
-- e9patch: https://github.com/GJDuck/e9patch
-- Binaryen: https://github.com/WebAssembly/binaryen
-- WAMR: https://github.com/bytecodealliance/wasm-micro-runtime
+## When Working on This Repo
+1. Check `make formats` to see what exists
+2. Edit specs in `specs/{layer}/`
+3. Run `make regen` then `make verify`
+4. All generated code in `gen/` is committed (drift-gated)

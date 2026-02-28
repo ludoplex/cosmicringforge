@@ -1,141 +1,163 @@
 # CosmicRingForge
 
-Spec-driven C code generation framework. Define types in `.schema` files, generate C code.
+**Behavior Driven Engineering with Models** — BDE with Models.
+
+Spec-driven C code generation framework for the design and development of any application.
+All paths lead to C. All C compiles with cosmocc to Actually Portable Executables.
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  BDE with Models!                                              _o_     │
+│  Behavior Driven Engineering                                  / | \    │
+│  COSMICRINGFORGE                                               / \     │
+├─────────────────────────────────────────────────────────────────────────┤
+│  WORKFLOW                                                               │
+│    Edit spec  →  make regen  →  git diff gen/  →  make  →  commit      │
+│                                                                         │
+│  RINGS                                                                  │
+│    0: C + sh + make (always available)                                  │
+│    1: Ring 0 + C tools (optional velocity)                              │
+│    2: External toolchains (auto-detected, outputs committed)            │
+└─────────────────────────────────────────────────────────────────────────┘
+```
 
 ## Quick Start
 
-```sh
+```bash
+# Clone and build
 git clone https://github.com/ludoplex/cosmicringforge.git
 cd cosmicringforge
-make example
-```
+make
 
-Output:
-```
-╔══════════════════════════════════════════════════════════════╗
-║           CosmicRingForge - Example Application              ║
-╚══════════════════════════════════════════════════════════════╝
+# Run the example application
+make run
 
-── App Configuration ──
-  Name:            MyApp
-  Port:            3000
-  Max Connections: 100
-  Status:          ✓ Valid
+# Edit a spec, regenerate, verify
+nano specs/domain/example.schema
+make regen
+make verify  # Checks for drift
 ```
 
 ## How It Works
 
-1. Define types in `examples/config.schema`:
+1. **Define types** in `specs/domain/example.schema`:
 ```
-type AppConfig {
-    name: string[64] [not_empty]
-    port: i32 [range: 1..65535, default: 8080]
-    max_connections: i32 [range: 1..10000, default: 100]
+type Example {
+    id: u64 [doc: "Unique identifier"]
+    name: string[64] [doc: "Display name"]
+    value: i32 [doc: "Numeric value"]
+    enabled: i32 [doc: "Boolean flag (0 or 1)"]
 }
 ```
 
-2. Generate C code:
-```sh
-make example  # Runs schemagen → generates config_types.{h,c}
+2. **Generate C code** (Ring 0 tools auto-built, Ring 2 tools auto-detected):
+```bash
+make regen
 ```
 
-3. Use in your code:
+3. **Use in your code**:
 ```c
-#include "config_types.h"
+#include "example_types.h"
 
-AppConfig app;
-AppConfig_init(&app);           // Sets defaults
-strncpy(app.name, "MyApp", 63);
-app.port = 3000;
+Example ex;
+Example_init(&ex);           // Sets defaults
+ex.id = 42;
+snprintf(ex.name, sizeof(ex.name), "Hello from specs!");
 
-if (AppConfig_validate(&app)) {
-    // Valid configuration
+if (Example_validate(&ex)) {
+    // Valid!
 }
 ```
 
----
-
-# MBSE Code Generation Stacks
-
-Three approaches to Model-Based Systems Engineering (MBSE) code generation, organized by toolchain philosophy and bootstrap requirements.
+4. **Verify and commit**:
+```bash
+make verify          # Regen + check for drift
+git add -A && git commit -m "Add field to Example"
+```
 
 ## Architecture Principle
 
-**Separate (A) how you author behavior/models from (B) what's required to build and ship.**
+**Separate *authoring* (how you create models) from *shipping* (what's required to build).**
 
-This is the only way to get both "diagram-to-C productivity" *and* "bootstrap/self-hostable C+sh purity" without the story collapsing under toolchain creep.
-
-## The Three Stacks
-
-| Stack | Target Use Case | Bootstrap Requirements | Certification Support |
-|-------|-----------------|----------------------|----------------------|
-| [Commercial MBSE](./commercial/) | Safety-critical / certification-oriented | Vendor toolchains (MATLAB, Rhapsody, etc.) | Full qualification kits |
-| [FOSS Visual](./foss-visual/) | Best diagram-to-C productivity feel | Mixed (C#, Node, C++) | Community/self-qualified |
-| [Strict Purist](./strict-purist/) | Self-hostable, minimal bootstrap | C + sh only | Manual process |
+Ring 2 tools (FOSS or commercial) output C code that compiles with cosmocc.
+The distinction is licensing/certification, not portability. All tools are auto-detected at regen time.
 
 ## Ring Classification
 
-Tools and dependencies are classified into three rings based on bootstrap requirements:
+| Ring | Bootstrap | Examples |
+|------|-----------|----------|
+| **0** | C + sh + make | schemagen, Lemon, SQLite, Nuklear, yyjson, CLIPS |
+| **1** | Ring 0 + C tools | gengetopt, cppcheck, sanitizers |
+| **2** | External toolchains | StateSmith, protobuf-c, MATLAB, Rhapsody |
 
-### Ring 0: Bootstrap (must build from clean checkout with C+sh only)
-- `sh`, `make`, `cc`
-- In-tree generators (`schemagen.c`, `lexgen.c`, `bin2c.c`)
-- Lemon parser generator (in-tree as `lemon.c` + `lempar.c`)
-- Vendored runtime libs that compile as C (SQLite, CivetWeb, Nuklear, yyjson, etc.)
+**The Rule**: Ring 2 outputs are committed. Builds succeed with just Ring 0.
 
-### Ring 1: Optional C/sh Velocity Tools
-- gengetopt, makeheaders, sanitizers, etc.
+## Spec Types
 
-### Ring 2: Authoring Appliances (may require C++/MATLAB/.NET/Node/etc.)
-- Rhapsody, Simulink/Embedded Coder, StateSmith, OpenModelica
-- protobuf-c generation, EEZ Studio, Flex/Bison, SWIG, GTK, etc.
+| Extension | Generator | Purpose |
+|-----------|-----------|---------|
+| `.schema` | schemagen | Data types, structs, validation |
+| `.def` | defgen | Constants, enums, X-Macros |
+| `.sm` | smgen | Flat state machines |
+| `.hsm` | hsmgen | Hierarchical state machines |
+| `.grammar` | Lemon | Parser grammars (LALR) |
+| `.feature` | bddgen | BDD test scenarios |
+| `.proto` | protobuf-c | Wire protocol (Ring 2) |
+| `.drawio` | StateSmith | Visual state machines (Ring 2) |
 
-**The Rule**: Ring-2 outputs must be checked in and drift-gated.
+See [SPEC_TYPES.md](./SPEC_TYPES.md) for the complete list (15+ spec types).
 
-## Build Profiles
+## Directory Structure
 
-Two build profiles support different deployment scenarios:
-
-### PROFILE=portable
-- Native toolchain, system libs where needed
-- Best for debugging/sanitizers, desktop GUI
-- Standard compilation path
-
-### PROFILE=ape
-- cosmocc toolchain/packaging
-- Single-binary distribution via Actually Portable Executable
-- GUI is "best-effort/limited-surface" unless proven
-- Requires APE loader installation on Linux for smoother execution
-
-## Three Specs Model
-
-All stacks generate from three specification types:
-
-1. **Behavior Spec** - State machines, control flow, reactive logic
-2. **Data/Schema Spec** - Type definitions, serialization, validation
-3. **Interface Spec** - UI layouts, external protocols, API contracts
-
-## Quick Start
-
-```sh
-# Clone the repository
-git clone git@github.com:ludoplex/cosmicringforge.git
-cd cosmicringforge
-
-# Choose a stack and follow its README
-cd strict-purist/  # or commercial/ or foss-visual/
-
-# Run the regen-and-diff gate (required before commits)
-make regen
-git diff --exit-code
 ```
+cosmicringforge/
+├── specs/             # Source of truth (all spec types)
+│   ├── domain/        # .schema, .def, .rules
+│   ├── behavior/      # .sm, .hsm
+│   ├── interface/     # .api, .ggo, .proto
+│   ├── parsing/       # .lex, .grammar
+│   └── testing/       # .feature
+├── model/             # Ring 2 visual sources
+│   ├── statesmith/    # .drawio files
+│   └── simulink/      # .slx (commercial)
+├── gen/               # Generated code (committed, drift-gated)
+├── tools/             # Ring 0 generators (schemagen, etc.)
+├── vendor/            # Vendored C libraries
+├── src/               # Hand-written code
+├── scripts/           # Automation (regen-all.sh)
+└── .claude/           # LLM context
+```
+
+## Commands
+
+```bash
+make              # Build Ring 0 tools + application
+make regen        # Auto-detect tools, regenerate all code
+make verify       # Regen + check for drift (CI gate)
+make test         # Run BDD tests
+make clean        # Remove build artifacts
+make help         # Show all targets
+```
+
+## Use as GitHub Template
+
+1. Click "Use this template" on GitHub
+2. Clone your new repository
+3. Run `./scripts/template-init.sh your-project-name`
+4. Start editing specs in `specs/domain/`
 
 ## Documentation
 
-- [CONTRIBUTING.md](./CONTRIBUTING.md) - Definition of done rules
-- [LICENSES.md](./LICENSES.md) - License tracking for all dependencies
-- [RING_CLASSIFICATION.md](./RING_CLASSIFICATION.md) - Detailed ring assignment rationale
+| Document | Purpose |
+|----------|---------|
+| [WORKFLOW.md](./WORKFLOW.md) | Full workflow reference |
+| [SPEC_TYPES.md](./SPEC_TYPES.md) | All spec types and generators |
+| [RING_CLASSIFICATION.md](./RING_CLASSIFICATION.md) | Tool ring assignments |
+| [STACKS_REFERENCE.md](./STACKS_REFERENCE.md) | Complete vendor tooling |
+| [LICENSES.md](./LICENSES.md) | License tracking |
+| [.claude/CLAUDE.md](./.claude/CLAUDE.md) | LLM context anchor |
 
 ## License
 
-This repository structure and documentation is MIT licensed. Individual tools and vendored dependencies retain their original licenses (see [LICENSES.md](./LICENSES.md)).
+MIT. Individual tools and vendored dependencies retain their original licenses.
+See [LICENSES.md](./LICENSES.md).

@@ -1,0 +1,250 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# repo-ci.yml - CI for developing CosmicRingForge ITSELF
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# This workflow tests the generators, documentation, and template system.
+# For template user CI, see: template-ci.yml
+#
+# Triggers:
+#   - Push to main/develop branches (filtered paths)
+#   - Pull requests to main
+#
+# Jobs:
+#   1. generators - Build and test Ring 0 generators
+#   2. composability - Test schemagen v2.0.0 multi-format output
+#   3. build - Full build pipeline
+#   4. meta-tests - Run .forge/meta-test.sh
+#   5. ape-build - Build with cosmocc
+#   6. docs - Documentation completeness
+#   7. template-init - Test template initialization
+#
+# ══════════════════════════════════════════════════════════════════════════════
+
+name: Repo CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'tools/**'
+      - 'scripts/**'
+      - '.forge/**'
+      - 'specs/**'
+      - 'src/**'
+      - 'Makefile'
+      - '.github/workflows/repo-ci.yml'
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Test Ring 0 Generators ─────────────────────────────────────────────────
+  generators:
+    name: Ring 0 Generators
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build generators
+        run: make tools
+
+      - name: Test schemagen basic
+        run: |
+          ./build/schemagen specs/domain/example.schema /tmp/test example
+          test -f /tmp/test/example_types.c
+          test -f /tmp/test/example_types.h
+
+      - name: Test schemagen --help
+        run: ./build/schemagen --help
+
+      - name: Test lemon
+        run: |
+          test -f tools/lempar.c
+          ./build/lemon -? 2>&1 | head -1
+
+  # ── Test schemagen v2.0.0 Multi-Format Composability ───────────────────────
+  composability:
+    name: schemagen Composability
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build schemagen
+        run: make tools
+
+      - name: Test --c output
+        run: |
+          ./build/schemagen --c specs/domain/example.schema /tmp/c example
+          test -f /tmp/c/example_types.c
+          test -f /tmp/c/example_types.h
+          cc -c -I/tmp/c /tmp/c/example_types.c -o /tmp/c/example.o
+
+      - name: Test --json output
+        run: |
+          ./build/schemagen --json specs/domain/example.schema /tmp/json example
+          test -f /tmp/json/example_json.c
+          test -f /tmp/json/example_json.h
+
+      - name: Test --sql output
+        run: |
+          ./build/schemagen --sql specs/domain/example.schema /tmp/sql example
+          test -f /tmp/sql/example_sql.c
+          test -f /tmp/sql/example_sql.h
+
+      - name: Test --proto output
+        run: |
+          ./build/schemagen --proto specs/domain/example.schema /tmp/proto example
+          test -f /tmp/proto/example.proto
+          grep -q 'syntax = "proto3"' /tmp/proto/example.proto
+          grep -q 'message Example' /tmp/proto/example.proto
+
+      - name: Test --fbs output
+        run: |
+          ./build/schemagen --fbs specs/domain/example.schema /tmp/fbs example
+          test -f /tmp/fbs/example.fbs
+          grep -q 'namespace example' /tmp/fbs/example.fbs
+          grep -q 'table Example' /tmp/fbs/example.fbs
+
+      - name: Test --all output (full composability)
+        run: |
+          ./build/schemagen --all specs/domain/example.schema /tmp/all example
+          count=$(ls /tmp/all/* | wc -l)
+          echo "Generated $count files"
+          test "$count" -ge 8
+
+  # ── Test Full Build Pipeline ───────────────────────────────────────────────
+  build:
+    name: Full Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clean build
+        run: make clean
+
+      - name: Build everything
+        run: make
+
+      - name: Run application
+        run: make run
+
+      - name: Verify regen produces same output (drift check)
+        run: |
+          make regen
+          git diff --exit-code gen/ || (echo "Drift detected!" && exit 1)
+
+  # ── Test Meta Scripts ──────────────────────────────────────────────────────
+  meta-tests:
+    name: Meta Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make scripts executable
+        run: chmod +x .forge/*.sh scripts/*.sh
+
+      - name: Run meta-test suite
+        run: ./.forge/meta-test.sh
+
+      - name: Run format audit (if exists)
+        run: |
+          if [ -x .forge/meta-audit.sh ]; then
+            ./.forge/meta-audit.sh
+          fi
+
+  # ── Test APE Build with cosmocc ────────────────────────────────────────────
+  ape-build:
+    name: APE Build (cosmocc)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cosmocc
+        run: |
+          mkdir -p ~/.cosmocc
+          curl -L https://cosmo.zip/pub/cosmocc/cosmocc.zip -o /tmp/cosmocc.zip
+          unzip -q /tmp/cosmocc.zip -d ~/.cosmocc
+          echo "$HOME/.cosmocc/bin" >> $GITHUB_PATH
+
+      - name: Build tools with cosmocc
+        run: |
+          export CC=cosmocc
+          make clean tools
+          file build/schemagen
+
+      - name: Build app with cosmocc
+        run: |
+          export CC=cosmocc
+          make app
+          file build/app
+
+      - name: Verify APE binary
+        run: |
+          file build/app | grep -iE "portable|MS-DOS|PE32"
+
+  # ── Documentation Checks ───────────────────────────────────────────────────
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check CLAUDE.md size (must be < 200 lines)
+        run: |
+          lines=$(wc -l < .claude/CLAUDE.md)
+          if [ "$lines" -gt 200 ]; then
+            echo "CLAUDE.md is $lines lines (max 200)"
+            exit 1
+          fi
+          echo "CLAUDE.md is $lines lines (OK)"
+
+      - name: Check required docs exist
+        run: |
+          test -f README.md
+          test -f INTEROP_MATRIX.md
+          test -f RING_CLASSIFICATION.md
+          test -f LITERATE.md
+          test -f SPEC_TYPES.md
+          test -f .claude/CLAUDE.md
+          test -f .claude/SSOT.md
+          test -f .claude/CONVENTIONS.md
+
+      - name: Check LLM symlinks
+        run: |
+          test -L AI.md || true
+          test -L LLM.md || true
+          test -L CONTEXT.md || true
+
+  # ── Template Initialization Test ───────────────────────────────────────────
+  template-init:
+    name: Template Initialization
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: template-test
+
+      - name: Make scripts executable
+        run: chmod +x template-test/scripts/*.sh
+
+      - name: Simulate template init (partial)
+        run: |
+          cd template-test
+          # Don't actually delete files, just verify the script logic
+          echo "Template init script exists: $(test -f scripts/template-init.sh && echo yes || echo no)"
+
+          # Verify toolchain detection works
+          command -v cc || command -v gcc || command -v clang
+          command -v make
+
+          # Verify build works
+          make tools
+          make regen
+          make app
+          make run
+
+      - name: Test BDE workflow script (if exists)
+        run: |
+          cd template-test
+          if [ -x scripts/bde-workflow.sh ]; then
+            ./scripts/bde-workflow.sh help || true
+          fi

@@ -3,21 +3,25 @@
 # Behavior Driven Engineering with Models
 # ══════════════════════════════════════════════════════════════════════════════
 #
-# Minimal bootstrap: sh + make + cc
-# All Ring 2 tools auto-detected, all output C, all compile with cosmocc
+# FORMAT-DRIVEN BUILD SYSTEM
 #
-# Targets:
-#   make              Build APE binary
-#   make regen        Regenerate all code (auto-detects Ring 2 tools)
-#   make verify       Regen + drift check
-#   make test         Run BDD tests
-#   make clean        Remove build artifacts
+# This Makefile discovers source formats automatically and builds the dependency
+# graph from the format relationships defined in INTEROP_MATRIX.md.
+#
+# Directory structure encodes format relationships:
+#   specs/domain/     → gen/domain/     (schemas, defs)
+#   specs/behavior/   → gen/behavior/   (state machines)
+#   specs/interface/  → gen/interface/  (APIs, CLIs)
+#   specs/parsing/    → gen/parsing/    (lexers, grammars)
+#   specs/testing/    → gen/testing/    (BDD features)
+#   model/*           → gen/imported/*  (Ring 2 visual tools)
 #
 # ══════════════════════════════════════════════════════════════════════════════
 
 # ── Toolchain ─────────────────────────────────────────────────────────────────
+# For APE builds: make CC=cosmocc (or install cosmocc in PATH)
+# For native builds: make CC=cc
 CC ?= cc
-COSMOCC ?= cosmocc
 CFLAGS := -O2 -Wall -Werror -std=c11 -Wno-stringop-truncation
 
 # ── Directories ───────────────────────────────────────────────────────────────
@@ -29,15 +33,47 @@ SRC_DIR := src
 VENDOR_DIR := vendor
 MODEL_DIR := model
 
-# ── Ring 0 Generators ─────────────────────────────────────────────────────────
-GENERATORS := schemagen lemon
+# ══════════════════════════════════════════════════════════════════════════════
+# FORMAT DISCOVERY (the makefile discovers what to build)
+# ══════════════════════════════════════════════════════════════════════════════
 
-# ── Sources ───────────────────────────────────────────────────────────────────
+# Ring 0: Native specs (always processable)
+SCHEMAS := $(shell find $(SPECS_DIR) -name "*.schema" 2>/dev/null)
+DEFS := $(shell find $(SPECS_DIR) -name "*.def" 2>/dev/null)
+SMS := $(shell find $(SPECS_DIR) -name "*.sm" 2>/dev/null)
+HSMS := $(shell find $(SPECS_DIR) -name "*.hsm" 2>/dev/null)
+LEXERS := $(shell find $(SPECS_DIR) -name "*.lex" 2>/dev/null)
+GRAMMARS := $(shell find $(SPECS_DIR) -name "*.y" -o -name "*.grammar" 2>/dev/null)
+FEATURES := $(shell find $(SPECS_DIR) -name "*.feature" 2>/dev/null)
+RULES := $(shell find $(SPECS_DIR) -name "*.rules" 2>/dev/null)
+APIS := $(shell find $(SPECS_DIR) -name "*.api" 2>/dev/null)
+GGOS := $(shell find $(SPECS_DIR) -name "*.ggo" 2>/dev/null)
+UIS := $(shell find $(SPECS_DIR) -name "*.ui" 2>/dev/null)
+
+# Ring 2: Visual models (processed if tools available)
+DRAWIO := $(shell find $(MODEL_DIR) -name "*.drawio" 2>/dev/null)
+PROTOS := $(shell find $(SPECS_DIR) $(MODEL_DIR) -name "*.proto" 2>/dev/null)
+FBS := $(shell find $(SPECS_DIR) $(MODEL_DIR) -name "*.fbs" 2>/dev/null)
+MODELICA := $(shell find $(MODEL_DIR) -name "*.mo" 2>/dev/null)
+SIMULINK := $(shell find $(MODEL_DIR) -name "*.slx" 2>/dev/null)
+RHAPSODY := $(shell find $(MODEL_DIR) -name "*.emx" 2>/dev/null)
+IDLS := $(shell find $(SPECS_DIR) $(MODEL_DIR) -name "*.idl" 2>/dev/null)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# OUTPUT MAPPING (format → generated files)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Derive outputs from inputs using naming conventions
+schema_to_c = $(patsubst $(SPECS_DIR)/%/%.schema,$(GEN_DIR)/%/%_types.c,$(1))
+sm_to_c = $(patsubst $(SPECS_DIR)/%/%.sm,$(GEN_DIR)/%/%_sm.c,$(1))
+feature_to_c = $(patsubst $(SPECS_DIR)/%/%.feature,$(GEN_DIR)/%/%_bdd.c,$(1))
+
+# Generated sources (for linking)
 GEN_SRCS := $(shell find $(GEN_DIR) -name '*.c' 2>/dev/null)
 SRC_SRCS := $(shell find $(SRC_DIR) -name '*.c' 2>/dev/null)
 VENDOR_SRCS := $(shell find $(VENDOR_DIR) -name '*.c' 2>/dev/null)
 
-.PHONY: all clean regen verify test tools help new-spec app run
+.PHONY: all clean regen verify test tools help app run formats ape ring1 headers lint sanitize tsan
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Primary Targets
@@ -49,24 +85,59 @@ all: tools app
 	@echo "Build complete. Run 'make run' to execute."
 
 help:
-	@echo "┌─────────────────────────────────────────────────────────┐"
-	@echo "│  CosmicRingForge — BDE with Models                      │"
-	@echo "│  Behavior Driven Engineering with Models                │"
-	@echo "├─────────────────────────────────────────────────────────┤"
-	@echo "│  make              Build Ring 0 tools                   │"
-	@echo "│  make regen        Regenerate all (auto-detect Ring 2)  │"
-	@echo "│  make verify       Regen + drift check                  │"
-	@echo "│  make test         Run BDD tests                        │"
-	@echo "│  make clean        Remove build artifacts               │"
-	@echo "├─────────────────────────────────────────────────────────┤"
-	@echo "│  make new-spec LAYER=domain NAME=user TYPE=schema       │"
-	@echo "└─────────────────────────────────────────────────────────┘"
+	@echo "┌─────────────────────────────────────────────────────────────────────┐"
+	@echo "│  CosmicRingForge — BDE with Models                                  │"
+	@echo "│  Behavior Driven Engineering with Models                            │"
+	@echo "├─────────────────────────────────────────────────────────────────────┤"
+	@echo "│  make              Build Ring 0 tools + application                 │"
+	@echo "│  make regen        Regenerate all (auto-detect tools)               │"
+	@echo "│  make verify       Regen + drift check                              │"
+	@echo "│  make test         Run BDD tests                                    │"
+	@echo "│  make clean        Remove build artifacts                           │"
+	@echo "│  make formats      Show discovered formats                          │"
+	@echo "├─────────────────────────────────────────────────────────────────────┤"
+	@echo "│  Workflow: edit spec → make regen → make verify → make → commit     │"
+	@echo "└─────────────────────────────────────────────────────────────────────┘"
+
+formats:
+	@echo "══════════════════════════════════════════════════════════════════════"
+	@echo " DISCOVERED FORMATS"
+	@echo "══════════════════════════════════════════════════════════════════════"
+	@echo ""
+	@echo "── Ring 0: Native Specs ──────────────────────────────────────────────"
+	@echo "  .schema:  $(words $(SCHEMAS)) files"
+	@[ -z "$(SCHEMAS)" ] || echo "            $(SCHEMAS)"
+	@echo "  .def:     $(words $(DEFS)) files"
+	@echo "  .sm:      $(words $(SMS)) files"
+	@echo "  .hsm:     $(words $(HSMS)) files"
+	@echo "  .lex:     $(words $(LEXERS)) files"
+	@echo "  .grammar: $(words $(GRAMMARS)) files"
+	@echo "  .feature: $(words $(FEATURES)) files"
+	@echo "  .rules:   $(words $(RULES)) files"
+	@echo "  .api:     $(words $(APIS)) files"
+	@echo "  .ggo:     $(words $(GGOS)) files"
+	@echo "  .ui:      $(words $(UIS)) files"
+	@echo ""
+	@echo "── Ring 2: Visual Models ─────────────────────────────────────────────"
+	@echo "  .drawio:  $(words $(DRAWIO)) files (StateSmith)"
+	@echo "  .proto:   $(words $(PROTOS)) files (protobuf-c)"
+	@echo "  .fbs:     $(words $(FBS)) files (flatcc)"
+	@echo "  .mo:      $(words $(MODELICA)) files (OpenModelica)"
+	@echo "  .slx:     $(words $(SIMULINK)) files (Simulink)"
+	@echo "  .emx:     $(words $(RHAPSODY)) files (Rhapsody)"
+	@echo "  .idl:     $(words $(IDLS)) files (DDS)"
+	@echo ""
+	@echo "── Generated ─────────────────────────────────────────────────────────"
+	@echo "  gen/*.c:  $(words $(GEN_SRCS)) files"
+	@echo ""
 
 # ══════════════════════════════════════════════════════════════════════════════
-# Ring 0 Tools
+# Ring 0 Tools (always build these first)
 # ══════════════════════════════════════════════════════════════════════════════
 
-tools: $(BUILD_DIR) $(BUILD_DIR)/schemagen $(BUILD_DIR)/lemon
+RING0_TOOLS := $(BUILD_DIR)/schemagen $(BUILD_DIR)/lemon
+
+tools: $(BUILD_DIR) $(RING0_TOOLS)
 	@echo "Ring 0 tools ready"
 
 $(BUILD_DIR):
@@ -78,21 +149,101 @@ $(BUILD_DIR)/schemagen: $(TOOLS_DIR)/schemagen.c | $(BUILD_DIR)
 $(BUILD_DIR)/lemon: $(TOOLS_DIR)/lemon.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $<
 
+# Future Ring 0 tools (uncomment when implemented)
+# $(BUILD_DIR)/defgen: $(TOOLS_DIR)/defgen.c | $(BUILD_DIR)
+# 	$(CC) $(CFLAGS) -o $@ $<
+# $(BUILD_DIR)/smgen: $(TOOLS_DIR)/smgen.c | $(BUILD_DIR)
+# 	$(CC) $(CFLAGS) -o $@ $<
+# $(BUILD_DIR)/bddgen: $(TOOLS_DIR)/bddgen.c | $(BUILD_DIR)
+# 	$(CC) $(CFLAGS) -o $@ $<
+
 # ══════════════════════════════════════════════════════════════════════════════
-# Application
+# Ring 1 Tools (optional velocity tools - portable via cosmocc)
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# Ring 1 tools are built as APE binaries for universal portability.
+# They work on Linux, macOS, Windows, FreeBSD, OpenBSD, NetBSD (AMD64/ARM64).
+#
+# See: RING_CLASSIFICATION.md for complete documentation.
+#
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Ring 1 vendored tools (built from tools/ring1/)
+RING1_TOOLS := $(BUILD_DIR)/makeheaders
+
+# Ring 1 compiler: prefer cosmocc for portability, fallback to CC
+RING1_CC := $(shell command -v cosmocc >/dev/null 2>&1 && echo "cosmocc" || echo "$(CC)")
+RING1_CFLAGS := -O2 -Wall -std=c11 -Wno-unused-variable -Wno-unused-but-set-variable
+
+ring1: $(BUILD_DIR) $(RING1_TOOLS)
+	@echo "Ring 1 tools ready (compiler: $(RING1_CC))"
+	@if [ "$(RING1_CC)" = "cosmocc" ]; then \
+		echo "  APE binaries: portable across Linux/macOS/Windows/BSD"; \
+	else \
+		echo "  Native binaries: install cosmocc for portable APE builds"; \
+	fi
+
+$(BUILD_DIR)/makeheaders: $(TOOLS_DIR)/ring1/makeheaders/makeheaders.c | $(BUILD_DIR)
+	$(RING1_CC) $(RING1_CFLAGS) -o $@ $<
+
+# Ring 1: Generate headers from C source
+headers: $(BUILD_DIR)/makeheaders
+	@echo "Generating headers with makeheaders..."
+	@$(BUILD_DIR)/makeheaders $(SRC_SRCS) $(GEN_SRCS) 2>/dev/null || \
+		echo "  (no exportable functions found)"
+
+# Ring 1: Static analysis
+# Note: cppcheck is not yet available as APE, use system install
+lint:
+	@if command -v cppcheck >/dev/null 2>&1; then \
+		echo "Running cppcheck..."; \
+		cppcheck --enable=warning,style --quiet $(SRC_DIR) $(GEN_DIR) 2>&1; \
+	else \
+		echo "cppcheck not available"; \
+		echo "  Linux/macOS: apt/brew install cppcheck"; \
+		echo "  Or use: make sanitize (compiler-based checks)"; \
+	fi
+
+# Ring 1: Sanitizer builds (compiler built-in, works with cosmocc)
+sanitize: CFLAGS += -fsanitize=address,undefined -g
+sanitize: clean all
+	@echo "Built with AddressSanitizer + UBSan"
+
+tsan: CFLAGS += -fsanitize=thread -g
+tsan: clean all
+	@echo "Built with ThreadSanitizer"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Application (uses generated + handwritten code)
 # ══════════════════════════════════════════════════════════════════════════════
 
 app: $(BUILD_DIR)/app
 	@echo "Application built"
 
+# Dependencies: main.c + all generated domain types
 $(BUILD_DIR)/app: $(SRC_DIR)/main.c $(GEN_DIR)/domain/example_types.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -I$(GEN_DIR)/domain -o $@ $(SRC_DIR)/main.c $(GEN_DIR)/domain/example_types.c
 
 run: app
 	@$(BUILD_DIR)/app
 
+# APE build (Actually Portable Executable via cosmocc)
+ape:
+	@if [ -x "$$(command -v cosmocc 2>/dev/null || echo ~/.cosmocc/bin/cosmocc)" ]; then \
+		$(MAKE) clean; \
+		CC="$$(command -v cosmocc 2>/dev/null || echo ~/.cosmocc/bin/cosmocc)" $(MAKE) all ring1; \
+		echo ""; \
+		echo "APE binaries built (portable across Linux/macOS/Windows/BSD)"; \
+	else \
+		echo "cosmocc not found. Install:"; \
+		echo "  mkdir -p ~/.cosmocc"; \
+		echo "  curl -L https://cosmo.zip/pub/cosmocc/cosmocc.zip -o /tmp/cosmocc.zip"; \
+		echo "  unzip /tmp/cosmocc.zip -d ~/.cosmocc"; \
+		exit 1; \
+	fi
+
 # ══════════════════════════════════════════════════════════════════════════════
-# Regeneration
+# Regeneration (format-driven, auto-detects tools)
 # ══════════════════════════════════════════════════════════════════════════════
 
 regen: tools
@@ -100,6 +251,22 @@ regen: tools
 
 verify: tools
 	@./scripts/regen-all.sh --verify
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Pattern Rules (format → output mapping)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Schema → Types
+$(GEN_DIR)/domain/%_types.c $(GEN_DIR)/domain/%_types.h: $(SPECS_DIR)/domain/%.schema $(BUILD_DIR)/schemagen
+	@mkdir -p $(GEN_DIR)/domain
+	$(BUILD_DIR)/schemagen $< $(GEN_DIR)/domain $*
+
+# Grammar → Parser (Lemon)
+$(GEN_DIR)/parsing/%.c $(GEN_DIR)/parsing/%.h: $(SPECS_DIR)/parsing/%.y $(BUILD_DIR)/lemon
+	@mkdir -p $(GEN_DIR)/parsing
+	$(BUILD_DIR)/lemon $<
+	@mv $(SPECS_DIR)/parsing/$*.c $(GEN_DIR)/parsing/ 2>/dev/null || true
+	@mv $(SPECS_DIR)/parsing/$*.h $(GEN_DIR)/parsing/ 2>/dev/null || true
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Testing
@@ -114,13 +281,6 @@ test: tools
 	fi
 
 # ══════════════════════════════════════════════════════════════════════════════
-# New Spec Helper
-# ══════════════════════════════════════════════════════════════════════════════
-
-new-spec:
-	@./scripts/new-spec.sh $(LAYER) $(NAME) $(TYPE)
-
-# ══════════════════════════════════════════════════════════════════════════════
 # Cleanup
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -131,3 +291,29 @@ clean:
 distclean: clean
 	rm -rf $(GEN_DIR)/*
 	@echo "Generated code removed"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Documentation / Introspection
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Generate dependency graph (requires graphviz)
+depgraph:
+	@echo "digraph G {"
+	@echo "  rankdir=TB;"
+	@for f in $(SCHEMAS); do \
+		name=$$(basename $$f .schema); \
+		echo "  \"$$f\" -> \"gen/domain/$${name}_types.c\";"; \
+	done
+	@for f in $(SMS); do \
+		name=$$(basename $$f .sm); \
+		echo "  \"$$f\" -> \"gen/behavior/$${name}_sm.c\";"; \
+	done
+	@echo "}"
+
+# Show what would be regenerated
+whatif:
+	@echo "Would regenerate from:"
+	@echo "  Schemas:  $(SCHEMAS)"
+	@echo "  SMs:      $(SMS)"
+	@echo "  Features: $(FEATURES)"
+	@echo "  Grammars: $(GRAMMARS)"

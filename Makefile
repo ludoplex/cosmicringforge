@@ -46,7 +46,7 @@ GEN_BINS := $(foreach g,$(GENERATORS),$(BUILD_DIR)/$(g)$(EXE_EXT))
 # ── Common flags ──────────────────────────────────────────────
 INCLUDES := -I$(VENDOR_DIR) -I$(GEN_DIR) -I$(SRC_DIR)
 
-.PHONY: all clean regen regen-check test generators help bootstrap
+.PHONY: all clean regen regen-check test generators help bootstrap example
 
 # ══════════════════════════════════════════════════════════════
 # Primary Targets
@@ -69,6 +69,7 @@ help:
 	@echo ""
 	@echo "Targets:"
 	@echo "  make               Build generators"
+	@echo "  make example       Build and run example"
 	@echo "  make regen         Regenerate all outputs"
 	@echo "  make regen-check   Regen + drift check"
 	@echo "  make test          Run tests"
@@ -131,6 +132,26 @@ regen-check: regen
 	@echo "No drift detected"
 
 # ══════════════════════════════════════════════════════════════
+# Example
+# ══════════════════════════════════════════════════════════════
+
+EXAMPLE_DIR := examples
+EXAMPLE_GEN := $(EXAMPLE_DIR)/gen
+
+example: $(BUILD_DIR)/example$(EXE_EXT)
+	@echo ""
+	@$(BUILD_DIR)/example$(EXE_EXT)
+
+$(BUILD_DIR)/example$(EXE_EXT): $(EXAMPLE_GEN)/config_types.c $(EXAMPLE_DIR)/main.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -I$(EXAMPLE_GEN) -o $@ $(EXAMPLE_DIR)/main.c $(EXAMPLE_GEN)/config_types.c
+
+$(EXAMPLE_GEN)/config_types.c: $(EXAMPLE_DIR)/config.schema $(BUILD_DIR)/schemagen$(EXE_EXT) | $(EXAMPLE_GEN)
+	$(BUILD_DIR)/schemagen$(EXE_EXT) $< $(EXAMPLE_GEN) config
+
+$(EXAMPLE_GEN):
+	mkdir -p $@
+
+# ══════════════════════════════════════════════════════════════
 # Testing
 # ══════════════════════════════════════════════════════════════
 
@@ -151,6 +172,7 @@ test: generators
 
 clean:
 	rm -rf build/
+	rm -rf $(EXAMPLE_GEN)
 	@echo "Build artifacts removed (gen/ preserved)"
 
 distclean: clean

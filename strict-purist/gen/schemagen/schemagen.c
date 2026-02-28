@@ -162,15 +162,15 @@ static int parse_field(const char *line, field_t *f) {
         f->array_size = size;
     }
 
-    const char *constraint = strstr(line, "[range:");
+    const char *constraint = strstr(line, "range:");
     if (constraint) {
-        sscanf(constraint, "[range: %ld..%ld]", &f->range_min, &f->range_max);
+        sscanf(constraint, "range: %ld..%ld", &f->range_min, &f->range_max);
         f->has_range = 1;
     }
 
-    constraint = strstr(line, "[default:");
+    constraint = strstr(line, "default:");
     if (constraint) {
-        sscanf(constraint, "[default: %ld]", &f->default_val);
+        sscanf(constraint, "default: %ld", &f->default_val);
         f->has_default = 1;
     }
 
@@ -317,9 +317,10 @@ static void generate_types_c(FILE *out, const char *header_name) {
         fprintf(out, "    memset(obj, 0, sizeof(*obj));\n");
         for (int j = 0; j < t->field_count; j++) {
             field_t *f = &t->fields[j];
-            if (f->has_default) {
+            if (f->has_default && f->base != TYPE_STRING) {
                 fprintf(out, "    obj->%s = %ld;\n", f->name, f->default_val);
             }
+            /* String defaults handled via default_str if implemented */
         }
         fprintf(out, "}\n\n");
 

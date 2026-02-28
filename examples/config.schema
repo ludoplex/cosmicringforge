@@ -1,0 +1,27 @@
+# CosmicRingForge Example Schema
+# Demonstrates schemagen code generation
+#
+# Run: make example
+
+type AppConfig {
+    name: string[64] [not_empty]
+    version: string[16] [default: "1.0.0"]
+    port: i32 [range: 1..65535, default: 8080]
+    max_connections: i32 [range: 1..10000, default: 100]
+    debug_mode: i32 [default: 0]
+    timeout_ms: i32 [range: 0..60000, default: 5000]
+}
+
+type DatabaseConfig {
+    host: string[256] [default: "localhost"]
+    port: i32 [range: 1..65535, default: 5432]
+    database: string[64] [not_empty]
+    username: string[64]
+    max_pool_size: i32 [range: 1..100, default: 10]
+}
+
+type ServerConfig {
+    app: AppConfig
+    db: DatabaseConfig
+    log_level: i32 [range: 0..4, default: 2]
+}

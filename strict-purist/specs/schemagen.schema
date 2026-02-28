@@ -7,11 +7,10 @@
 
 type SchemaField {
     name: string[64] [not_empty]
-    base_type: u8
+    base: u8
     struct_name: string[64]
     array_size: i32 [default: 0]
     is_pointer: i32 [default: 0]
-    # Constraints
     has_range: i32 [default: 0]
     range_min: i64 [default: 0]
     range_max: i64 [default: 0]

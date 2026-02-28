@@ -18,6 +18,7 @@ void SchemaField_init(SchemaField *obj) {
 bool SchemaField_validate(const SchemaField *obj) {
     if (!obj) return false;
     if (obj->name[0] == '\0') return false;
+    if (obj->has_range < 0 || obj->has_range > 0) return false;
     return true;
 }
 
@@ -47,7 +48,6 @@ bool SchemaParseState_validate(const SchemaParseState *obj) {
 
 void SchemaGenConfig_init(SchemaGenConfig *obj) {
     memset(obj, 0, sizeof(*obj));
-    obj->profile = 0;
     obj->generate_json = 1;
     obj->generate_validators = 1;
 }

@@ -22,9 +22,43 @@
 #define MAX_NAME 64
 
 /* ── Type System ────────────────────────────────────────────────────
- * When bootstrapped, these come from schemagen_types.h.
- * For now, we define them inline (same as bootstrap).
- * The generated types use the same field names, so code works either way.
+ * DOGFOODING: When SCHEMAGEN_SELF_HOST is defined, use generated types.
+ * Otherwise, fall back to bootstrap types (for initial build only).
+ */
+
+#ifdef SCHEMAGEN_SELF_HOST
+/* ═══ SELF-HOSTED MODE ═══
+ * Types come from schemagen_types.h (generated from schemagen.schema)
+ * This is the correct dogfooding path.
+ */
+#include "schemagen_types.h"
+
+typedef enum {
+    TYPE_I8, TYPE_I16, TYPE_I32, TYPE_I64,
+    TYPE_U8, TYPE_U16, TYPE_U32, TYPE_U64,
+    TYPE_F32, TYPE_F64,
+    TYPE_BOOL,
+    TYPE_STRING,
+    TYPE_STRUCT,
+    TYPE_ARRAY,
+    TYPE_POINTER,
+} base_type_t;
+
+/* Map generated types to internal names */
+typedef SchemaField field_t;
+
+/* type_def_t needs fields array which isn't in generated type */
+typedef struct {
+    char name[MAX_NAME];
+    field_t fields[MAX_FIELDS];
+    int field_count;
+    int has_json;
+} type_def_t;
+
+#else
+/* ═══ BOOTSTRAP MODE ═══
+ * Hand-written types for initial bootstrap only.
+ * Once schemagen_types.h exists, build with -DSCHEMAGEN_SELF_HOST
  */
 
 typedef enum {
@@ -57,6 +91,8 @@ typedef struct {
     int field_count;
     int has_json;
 } type_def_t;
+
+#endif /* SCHEMAGEN_SELF_HOST */
 
 static type_def_t types[MAX_TYPES];
 static int type_count = 0;

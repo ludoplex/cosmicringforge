@@ -93,8 +93,13 @@ generators: $(BUILD_DIR) $(GEN_BINS)
 $(BUILD_DIR):
 	mkdir -p $@
 
-$(BUILD_DIR)/schemagen$(EXE_EXT): $(GEN_DIR)/schemagen/schemagen.c | $(BUILD_DIR)
+# Bootstrap schemagen (no self-hosting, for initial build)
+$(BUILD_DIR)/schemagen-bootstrap$(EXE_EXT): $(GEN_DIR)/schemagen/schemagen.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $<
+
+# Self-hosted schemagen (uses its own generated types - DOGFOODING)
+$(BUILD_DIR)/schemagen$(EXE_EXT): $(GEN_DIR)/schemagen/schemagen.c $(GEN_DIR)/schemagen/schemagen_types.h | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -DSCHEMAGEN_SELF_HOST -I$(GEN_DIR)/schemagen -o $@ $< $(GEN_DIR)/schemagen/schemagen_types.c
 
 $(BUILD_DIR)/lexgen$(EXE_EXT): $(GEN_DIR)/lexgen/lexgen.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $<

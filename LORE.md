@@ -87,7 +87,7 @@
 *Nine scripts for Mortal Devs doomed to CI,*
 *One Ring to bootstrap them all, One Ring to bind them,*
 *One Ring to `make regen` and in the diff gate find them,*
-*In the Land of Cosmic where the APE binaries lie.*
+*In the Land of Cosmopolitan where strange APE aeon binaries lie.*
 
 ---
 

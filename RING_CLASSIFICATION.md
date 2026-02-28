@@ -169,3 +169,21 @@ When adding a new tool:
    - Add stamp files (`GENERATOR_VERSION`, `SHA256SUMS`)
    - Commit all generated outputs
 4. Update `LICENSES.md` with license details
+
+<!--
+One Ring to bootstrap them all, One Ring to bind them,
+One Ring to make regen and in the diff gate find them,
+In the Land of Cosmopolitan where strange APE aeon binaries lie.
+
+                    ▄▄▄▄▄▄▄▄▄
+                   █░░░░░░░░░█
+                   █ ◉     ◉ █
+                   █    ▲    █        psst...
+                   █ ╲_____╱ █    ╭────────────╮
+                   █▄▄▄▄▄▄▄▄▄█ ── │ ...I'm    │
+                        ║        │ voldemort! │
+                   ╔════╩════╗   ╰────────────╯
+                   ║  RING   ║        🐍
+                   ║    0    ║
+                   ╚═════════╝
+-->

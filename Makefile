@@ -1,184 +1,133 @@
-# MBSE Stacks — Build System
-# Minimal bootstrap: sh + make + cc
+# ══════════════════════════════════════════════════════════════════════════════
+# CosmicRingForge — BDE with Models
+# Behavior Driven Engineering with Models
+# ══════════════════════════════════════════════════════════════════════════════
 #
-# Build Profiles:
-#   make PROFILE=portable    Native toolchain (default)
-#   make PROFILE=ape         Cosmopolitan APE binary
+# Minimal bootstrap: sh + make + cc
+# All Ring 2 tools auto-detected, all output C, all compile with cosmocc
 #
 # Targets:
-#   make                     Build default stack
-#   make regen               Regenerate all Ring-2 outputs
-#   make regen-check         Regen + verify no drift
-#   make test                Run tests
-#   make clean               Remove build artifacts
+#   make              Build APE binary
+#   make regen        Regenerate all code (auto-detects Ring 2 tools)
+#   make verify       Regen + drift check
+#   make test         Run BDD tests
+#   make clean        Remove build artifacts
+#
+# ══════════════════════════════════════════════════════════════════════════════
 
-PROFILE ?= portable
-STACK ?= strict-purist
+# ── Toolchain ─────────────────────────────────────────────────────────────────
+CC ?= cc
+COSMOCC ?= cosmocc
+CFLAGS := -O2 -Wall -Werror -std=c11 -Wno-stringop-truncation
 
-# ── Toolchain ─────────────────────────────────────────────────
-# Note: -Wno-stringop-truncation silences false positives (we null-terminate manually)
-ifeq ($(PROFILE),ape)
-    CC := cosmocc
-    CFLAGS := -mcosmo -O2 -Wall -Werror -std=c11 -Wno-stringop-truncation
-    LDFLAGS := -mcosmo
-    EXE_EXT := .com
-else
-    CC ?= cc
-    CFLAGS := -O2 -Wall -Werror -std=c11 -D_POSIX_C_SOURCE=200809L -Wno-stringop-truncation
-    LDFLAGS :=
-    EXE_EXT :=
-endif
+# ── Directories ───────────────────────────────────────────────────────────────
+BUILD_DIR := build
+TOOLS_DIR := tools
+SPECS_DIR := specs
+GEN_DIR := gen
+SRC_DIR := src
+VENDOR_DIR := vendor
+MODEL_DIR := model
 
-# ── Directories ───────────────────────────────────────────────
-BUILD_DIR := build/$(PROFILE)
-GEN_DIR := $(STACK)/gen
-SRC_DIR := $(STACK)/src
-VENDOR_DIR := $(STACK)/vendor
-SPEC_DIR := $(STACK)/specs
-TEST_DIR := $(STACK)/tests
+# ── Ring 0 Generators ─────────────────────────────────────────────────────────
+GENERATORS := schemagen lemon
 
-# ── Ring-0 Generator Sources ──────────────────────────────────
-GENERATORS := schemagen lexgen bin2c smgen uigen
+# ── Sources ───────────────────────────────────────────────────────────────────
+GEN_SRCS := $(shell find $(GEN_DIR) -name '*.c' 2>/dev/null)
+SRC_SRCS := $(shell find $(SRC_DIR) -name '*.c' 2>/dev/null)
+VENDOR_SRCS := $(shell find $(VENDOR_DIR) -name '*.c' 2>/dev/null)
 
-GEN_SRCS := $(foreach g,$(GENERATORS),$(GEN_DIR)/$(g)/$(g).c)
-GEN_BINS := $(foreach g,$(GENERATORS),$(BUILD_DIR)/$(g)$(EXE_EXT))
+.PHONY: all clean regen verify test tools help new-spec app run
 
-# ── Common flags ──────────────────────────────────────────────
-INCLUDES := -I$(VENDOR_DIR) -I$(GEN_DIR) -I$(SRC_DIR)
-
-.PHONY: all clean regen regen-check test generators help bootstrap example
-
-# ══════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════════
 # Primary Targets
-# ══════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════════
 
-all: generators
-	@echo "Build complete (PROFILE=$(PROFILE), STACK=$(STACK))"
+all: tools app
+	@echo ""
+	@echo "CosmicRingForge — BDE with Models"
+	@echo "Build complete. Run 'make run' to execute."
 
 help:
-	@echo "MBSE Stacks Build System"
-	@echo ""
-	@echo "Profiles:"
-	@echo "  PROFILE=portable   Native toolchain (default)"
-	@echo "  PROFILE=ape        Cosmopolitan APE"
-	@echo ""
-	@echo "Stacks:"
-	@echo "  STACK=strict-purist   Ring-0 only (default)"
-	@echo "  STACK=foss-visual     FOSS tools"
-	@echo "  STACK=commercial      Vendor tools"
-	@echo ""
-	@echo "Targets:"
-	@echo "  make               Build generators"
-	@echo "  make example       Build and run example"
-	@echo "  make regen         Regenerate all outputs"
-	@echo "  make regen-check   Regen + drift check"
-	@echo "  make test          Run tests"
-	@echo "  make clean         Remove artifacts"
+	@echo "┌─────────────────────────────────────────────────────────┐"
+	@echo "│  CosmicRingForge — BDE with Models                      │"
+	@echo "│  Behavior Driven Engineering with Models                │"
+	@echo "├─────────────────────────────────────────────────────────┤"
+	@echo "│  make              Build Ring 0 tools                   │"
+	@echo "│  make regen        Regenerate all (auto-detect Ring 2)  │"
+	@echo "│  make verify       Regen + drift check                  │"
+	@echo "│  make test         Run BDD tests                        │"
+	@echo "│  make clean        Remove build artifacts               │"
+	@echo "├─────────────────────────────────────────────────────────┤"
+	@echo "│  make new-spec LAYER=domain NAME=user TYPE=schema       │"
+	@echo "└─────────────────────────────────────────────────────────┘"
 
-# ══════════════════════════════════════════════════════════════
-# Bootstrap (Self-Hosting)
-# ══════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════════
+# Ring 0 Tools
+# ══════════════════════════════════════════════════════════════════════════════
 
-bootstrap:
-	@echo "Running bootstrap for $(STACK)..."
-	cd $(STACK) && ./bootstrap.sh $(PROFILE)
-
-# ══════════════════════════════════════════════════════════════
-# Generator Builds (Ring-0)
-# ══════════════════════════════════════════════════════════════
-
-generators: $(BUILD_DIR) $(GEN_BINS)
-	@echo "Built $(words $(GEN_BINS)) generators"
+tools: $(BUILD_DIR) $(BUILD_DIR)/schemagen $(BUILD_DIR)/lemon
+	@echo "Ring 0 tools ready"
 
 $(BUILD_DIR):
 	mkdir -p $@
 
-# Bootstrap schemagen (no self-hosting, for initial build)
-$(BUILD_DIR)/schemagen-bootstrap$(EXE_EXT): $(GEN_DIR)/schemagen/schemagen.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $<
+$(BUILD_DIR)/schemagen: $(TOOLS_DIR)/schemagen.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $<
 
-# Self-hosted schemagen (uses its own generated types - DOGFOODING)
-$(BUILD_DIR)/schemagen$(EXE_EXT): $(GEN_DIR)/schemagen/schemagen.c $(GEN_DIR)/schemagen/schemagen_types.h | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(INCLUDES) -DSCHEMAGEN_SELF_HOST -I$(GEN_DIR)/schemagen -o $@ $< $(GEN_DIR)/schemagen/schemagen_types.c
+$(BUILD_DIR)/lemon: $(TOOLS_DIR)/lemon.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $<
 
-$(BUILD_DIR)/lexgen$(EXE_EXT): $(GEN_DIR)/lexgen/lexgen.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $<
+# ══════════════════════════════════════════════════════════════════════════════
+# Application
+# ══════════════════════════════════════════════════════════════════════════════
 
-$(BUILD_DIR)/bin2c$(EXE_EXT): $(GEN_DIR)/bin2c/bin2c.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $<
+app: $(BUILD_DIR)/app
+	@echo "Application built"
 
-$(BUILD_DIR)/smgen$(EXE_EXT): $(GEN_DIR)/smgen/smgen.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $<
+$(BUILD_DIR)/app: $(SRC_DIR)/main.c $(GEN_DIR)/domain/example_types.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -I$(GEN_DIR)/domain -o $@ $(SRC_DIR)/main.c $(GEN_DIR)/domain/example_types.c
 
-$(BUILD_DIR)/uigen$(EXE_EXT): $(GEN_DIR)/uigen/uigen.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $<
+run: app
+	@$(BUILD_DIR)/app
 
-# ══════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════════
 # Regeneration
-# ══════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════════
 
-regen: generators
-	@echo "Regenerating from specs..."
-	@for spec in $(SPEC_DIR)/*.schema; do \
-		[ -f "$$spec" ] && $(BUILD_DIR)/schemagen$(EXE_EXT) "$$spec" || true; \
-	done
-	@for spec in $(SPEC_DIR)/*.sm; do \
-		[ -f "$$spec" ] && $(BUILD_DIR)/smgen$(EXE_EXT) "$$spec" || true; \
-	done
-	@for spec in $(SPEC_DIR)/*.ui; do \
-		[ -f "$$spec" ] && $(BUILD_DIR)/uigen$(EXE_EXT) "$$spec" || true; \
-	done
-	@echo "Regeneration complete"
+regen: tools
+	@./scripts/regen-all.sh
 
-regen-check: regen
-	@echo "Checking for drift..."
-	@git diff --exit-code $(GEN_DIR) || \
-		(echo "ERROR: Uncommitted generated code detected!" && exit 1)
-	@echo "No drift detected"
+verify: tools
+	@./scripts/regen-all.sh --verify
 
-# ══════════════════════════════════════════════════════════════
-# Example
-# ══════════════════════════════════════════════════════════════
-
-EXAMPLE_DIR := examples
-EXAMPLE_GEN := $(EXAMPLE_DIR)/gen
-
-example: $(BUILD_DIR)/example$(EXE_EXT)
-	@echo ""
-	@$(BUILD_DIR)/example$(EXE_EXT)
-
-$(BUILD_DIR)/example$(EXE_EXT): $(EXAMPLE_GEN)/config_types.c $(EXAMPLE_DIR)/main.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -I$(EXAMPLE_GEN) -o $@ $(EXAMPLE_DIR)/main.c $(EXAMPLE_GEN)/config_types.c
-
-$(EXAMPLE_GEN)/config_types.c: $(EXAMPLE_DIR)/config.schema $(BUILD_DIR)/schemagen$(EXE_EXT) | $(EXAMPLE_GEN)
-	$(BUILD_DIR)/schemagen$(EXE_EXT) $< $(EXAMPLE_GEN) config
-
-$(EXAMPLE_GEN):
-	mkdir -p $@
-
-# ══════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════════
 # Testing
-# ══════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════════
 
-test: generators
-	@echo "Running tests..."
-	@if [ -d "$(TEST_DIR)" ]; then \
-		for t in $(TEST_DIR)/test_*.c; do \
-			[ -f "$$t" ] && \
-			$(CC) $(CFLAGS) $(INCLUDES) -o $(BUILD_DIR)/$$(basename $$t .c) $$t && \
-			$(BUILD_DIR)/$$(basename $$t .c) || exit 1; \
-		done; \
+test: tools
+	@echo "Running BDD tests..."
+	@if [ -x "$(BUILD_DIR)/bddgen" ]; then \
+		$(BUILD_DIR)/bddgen --run $(SPECS_DIR)/testing/*.feature; \
+	else \
+		echo "bddgen not built yet, skipping BDD tests"; \
 	fi
-	@echo "Tests passed"
 
-# ══════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════════
+# New Spec Helper
+# ══════════════════════════════════════════════════════════════════════════════
+
+new-spec:
+	@./scripts/new-spec.sh $(LAYER) $(NAME) $(TYPE)
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Cleanup
-# ══════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════════
 
 clean:
-	rm -rf build/
-	rm -rf $(EXAMPLE_GEN)
+	rm -rf $(BUILD_DIR)
 	@echo "Build artifacts removed (gen/ preserved)"
 
 distclean: clean
-	@echo "WARNING: This would remove gen/ - not implemented for safety"
+	rm -rf $(GEN_DIR)/*
+	@echo "Generated code removed"

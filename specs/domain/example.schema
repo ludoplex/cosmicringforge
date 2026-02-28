@@ -1,0 +1,16 @@
+/* ═══════════════════════════════════════════════════════════════════════
+ * EXAMPLE SCHEMA — CosmicRingForge Template
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * This is an example schema demonstrating the spec-driven workflow.
+ * Edit this file, run `make regen`, and see C code generated.
+ *
+ * ═══════════════════════════════════════════════════════════════════════
+ */
+
+type Example {
+    id: u64 [doc: "Unique identifier"]
+    name: string[64] [doc: "Display name"]
+    value: i32 [doc: "Numeric value"]
+    enabled: i32 [doc: "Boolean flag (0 or 1)"]
+}

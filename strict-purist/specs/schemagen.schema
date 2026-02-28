@@ -1,0 +1,49 @@
+# Schemagen AST Types - Self-Hosting Spec
+# This schema is consumed by schemagen to generate its own types.
+# Bootstrap: hand-written schemagen-bootstrap.c processes this,
+# then generated types become part of the real schemagen.
+
+# ── Core Field Type ──────────────────────────────────────────────
+
+type SchemaField {
+    name: string[64] [not_empty]
+    base_type: u8
+    struct_name: string[64]
+    array_size: i32 [default: 0]
+    is_pointer: i32 [default: 0]
+    # Constraints
+    has_range: i32 [default: 0]
+    range_min: i64 [default: 0]
+    range_max: i64 [default: 0]
+    has_default: i32 [default: 0]
+    default_val: i64 [default: 0]
+    not_empty: i32 [default: 0]
+}
+
+# ── Type Definition ──────────────────────────────────────────────
+
+type SchemaTypeDef {
+    name: string[64] [not_empty]
+    field_count: i32 [range: 0..64]
+    has_json: i32 [default: 0]
+    # Note: fields array handled separately due to nested type
+}
+
+# ── Parse State ──────────────────────────────────────────────────
+
+type SchemaParseState {
+    type_count: i32 [range: 0..256]
+    current_line: i32 [default: 1]
+    error_code: i32 [default: 0]
+    error_msg: string[256]
+}
+
+# ── Generator Configuration ──────────────────────────────────────
+
+type SchemaGenConfig {
+    input_path: string[512] [not_empty]
+    output_dir: string[512] [not_empty]
+    profile: string[32] [default: "portable"]
+    generate_json: i32 [default: 1]
+    generate_validators: i32 [default: 1]
+}

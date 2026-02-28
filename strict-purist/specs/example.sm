@@ -1,0 +1,39 @@
+# Example State Machine
+# Demonstrates smgen self-documentation
+
+machine Example {
+    initial: Idle
+
+    state Idle {
+        entry: led_off()
+        on Start -> Running
+        on Config -> Configuring
+    }
+
+    state Configuring {
+        entry: show_config_ui()
+        exit: hide_config_ui()
+        on Done -> Idle
+        on Apply -> Running
+    }
+
+    state Running {
+        entry: motor_start()
+        exit: motor_stop()
+        on Stop -> Idle
+        on Pause -> Paused
+        on Error -> Failed
+    }
+
+    state Paused {
+        entry: led_blink()
+        on Resume -> Running
+        on Stop -> Idle
+    }
+
+    state Failed {
+        entry: alarm_on()
+        exit: alarm_off()
+        on Reset -> Idle
+    }
+}

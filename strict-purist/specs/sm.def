@@ -1,0 +1,24 @@
+// sm.def — X-Macro State Machine Definitions
+// For generators to define their own state machines
+
+// State machine state definition
+// SM_STATE(machine, state_name, entry_action, exit_action, doc)
+// SM_TRANS(machine, source, event, target, guard, action, doc)
+
+// Example: Generator State Machine
+SM_STATE(GenSM, Idle,       NULL,            NULL,           "Waiting for input")
+SM_STATE(GenSM, Parsing,    parse_start,     NULL,           "Parsing input spec")
+SM_STATE(GenSM, Generating, gen_start,       gen_cleanup,    "Generating output")
+SM_STATE(GenSM, Writing,    write_start,     write_flush,    "Writing files")
+SM_STATE(GenSM, Done,       report_success,  NULL,           "Generation complete")
+SM_STATE(GenSM, Error,      report_error,    NULL,           "Error state")
+
+SM_TRANS(GenSM, Idle,       Start,      Parsing,    NULL,           NULL,           "Begin processing")
+SM_TRANS(GenSM, Parsing,    ParseDone,  Generating, NULL,           NULL,           "Parsing complete")
+SM_TRANS(GenSM, Parsing,    ParseError, Error,      NULL,           NULL,           "Parse failed")
+SM_TRANS(GenSM, Generating, GenDone,    Writing,    NULL,           NULL,           "Generation complete")
+SM_TRANS(GenSM, Generating, GenError,   Error,      NULL,           NULL,           "Generation failed")
+SM_TRANS(GenSM, Writing,    WriteDone,  Done,       NULL,           NULL,           "Writing complete")
+SM_TRANS(GenSM, Writing,    WriteError, Error,      NULL,           NULL,           "Write failed")
+SM_TRANS(GenSM, Error,      Reset,      Idle,       NULL,           clear_error,    "Reset after error")
+SM_TRANS(GenSM, Done,       Reset,      Idle,       NULL,           NULL,           "Reset for next input")

@@ -1,0 +1,43 @@
+// uigen_tokens.def — UI Generator's own tokens (self-hosted)
+// Format: TOK(enum_name, lexeme, kind, doc)
+
+// Widget keywords
+TOK(WIDGET,   "widget",   keyword, "Widget definition")
+TOK(BUTTON,   "button",   keyword, "Button widget")
+TOK(LABEL,    "label",    keyword, "Label widget")
+TOK(INPUT,    "input",    keyword, "Input field widget")
+TOK(PANEL,    "panel",    keyword, "Panel container")
+TOK(LAYOUT,   "layout",   keyword, "Layout directive")
+TOK(STYLE,    "style",    keyword, "Style directive")
+
+// Layout keywords
+TOK(ROWS,     "rows",     keyword, "Row layout")
+TOK(COLS,     "cols",     keyword, "Column layout")
+TOK(FLEX,     "flex",     keyword, "Flex layout")
+
+// Properties
+TOK(WIDTH,    "width",    keyword, "Width property")
+TOK(HEIGHT,   "height",   keyword, "Height property")
+TOK(TEXT,     "text",     keyword, "Text property")
+TOK(ONCLICK,  "onclick",  keyword, "Click handler")
+TOK(BIND,     "bind",     keyword, "Data binding")
+
+// Operators
+TOK(LBRACE,   "{",        operator, "Block open")
+TOK(RBRACE,   "}",        operator, "Block close")
+TOK(LPAREN,   "(",        operator, "Param open")
+TOK(RPAREN,   ")",        operator, "Param close")
+TOK(COLON,    ":",        operator, "Property separator")
+TOK(SEMI,     ";",        operator, "Statement end")
+TOK(COMMA,    ",",        operator, "List separator")
+TOK(EQ,       "=",        operator, "Assignment")
+
+// Patterns
+TOK(IDENT,    "[a-zA-Z_][a-zA-Z0-9_]*", identifier, "Identifier")
+TOK(NUMBER,   "[0-9]+",                  literal,    "Integer")
+TOK(STRING,   "\"[^\"]*\"",              literal,    "String literal")
+TOK(PERCENT,  "[0-9]+%",                 literal,    "Percentage")
+
+// Skip
+TOK(WS,       "[ \\t\\n]+", whitespace, "Whitespace")
+TOK(COMMENT,  "//[^\\n]*",  whitespace, "Line comment")

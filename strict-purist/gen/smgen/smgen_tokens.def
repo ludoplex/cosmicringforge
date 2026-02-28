@@ -1,0 +1,34 @@
+// smgen_tokens.def — State Machine Generator's own tokens (self-hosted)
+// Format: TOK(enum_name, lexeme, kind, doc)
+
+// Keywords
+TOK(MACHINE,  "machine",  keyword, "State machine declaration")
+TOK(STATE,    "state",    keyword, "State definition")
+TOK(INITIAL,  "initial",  keyword, "Initial state marker")
+TOK(FINAL,    "final",    keyword, "Final state marker")
+TOK(ON,       "on",       keyword, "Event trigger")
+TOK(ENTRY,    "entry",    keyword, "Entry action")
+TOK(EXIT,     "exit",     keyword, "Exit action")
+TOK(GUARD,    "guard",    keyword, "Transition guard")
+TOK(ACTION,   "action",   keyword, "Transition action")
+
+// Operators
+TOK(ARROW,    "->",       operator, "State transition")
+TOK(LBRACE,   "{",        operator, "Block open")
+TOK(RBRACE,   "}",        operator, "Block close")
+TOK(LPAREN,   "(",        operator, "Param open")
+TOK(RPAREN,   ")",        operator, "Param close")
+TOK(COLON,    ":",        operator, "Type separator")
+TOK(SEMI,     ";",        operator, "Statement end")
+TOK(SLASH,    "/",        operator, "Action separator")
+TOK(LBRACK,   "[",        operator, "Guard open")
+TOK(RBRACK,   "]",        operator, "Guard close")
+
+// Patterns
+TOK(IDENT,    "[a-zA-Z_][a-zA-Z0-9_]*", identifier, "Identifier")
+TOK(NUMBER,   "[0-9]+",                  literal,    "Integer")
+TOK(STRING,   "\"[^\"]*\"",              literal,    "String literal")
+
+// Skip
+TOK(WS,       "[ \\t\\n]+", whitespace, "Whitespace")
+TOK(COMMENT,  "//[^\\n]*",  whitespace, "Line comment")

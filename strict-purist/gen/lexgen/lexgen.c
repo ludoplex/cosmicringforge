@@ -4,6 +4,9 @@
  * Generates table-driven lexers from token specifications.
  * Output is pure C with no runtime dependencies.
  *
+ * TRUE DOGFOODING: Uses lexgen_self.h which expands lexgen_tokens.def
+ * via X-macros to define this generator's own token types.
+ *
  * Usage: lexgen <tokens.lex> [output_dir] [prefix]
  *
  * Token format (one per line):
@@ -18,6 +21,9 @@
 #include <ctype.h>
 #include <stdint.h>
 #include <time.h>
+
+/* ── Self-hosted tokens (dogfooding) ─────────────────────────────── */
+#include "lexgen_self.h"
 
 #define LEXGEN_VERSION "1.0.0"
 #define MAX_LINE 1024

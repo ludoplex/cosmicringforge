@@ -1,0 +1,39 @@
+// tokens.def — X-Macro Token Definitions
+// Format: TOK(enum_name, lexeme, kind, doc)
+// kind: keyword, operator, literal, identifier, whitespace
+
+// Keywords
+TOK(TYPE,    "type",    keyword, "Type definition keyword")
+TOK(TABLE,   "TABLE",   keyword, "Table definition macro")
+TOK(FIELD,   "FIELD",   keyword, "Field definition macro")
+TOK(STATE,   "state",   keyword, "State definition keyword")
+TOK(MACHINE, "machine", keyword, "State machine keyword")
+TOK(ON,      "on",      keyword, "Transition trigger")
+TOK(ENTRY,   "entry",   keyword, "Entry action")
+TOK(EXIT,    "exit",    keyword, "Exit action")
+TOK(INITIAL, "initial", keyword, "Initial state marker")
+
+// Punctuation
+TOK(LBRACE,  "{",  operator, "Left brace")
+TOK(RBRACE,  "}",  operator, "Right brace")
+TOK(LPAREN,  "(",  operator, "Left parenthesis")
+TOK(RPAREN,  ")",  operator, "Right parenthesis")
+TOK(LBRACK,  "[",  operator, "Left bracket")
+TOK(RBRACK,  "]",  operator, "Right bracket")
+TOK(COLON,   ":",  operator, "Colon")
+TOK(COMMA,   ",",  operator, "Comma")
+TOK(ARROW,   "->", operator, "State transition arrow")
+TOK(SLASH,   "/",  operator, "Action separator")
+TOK(STAR,    "*",  operator, "Pointer marker")
+TOK(DOT,     ".",  operator, "Member access")
+TOK(DOTDOT,  "..", operator, "Range separator")
+TOK(AT,      "@",  operator, "Directive marker")
+
+// Literals
+TOK(NUMBER,  "[0-9]+",          literal, "Integer literal")
+TOK(STRING,  "\"[^\"]*\"",      literal, "String literal")
+TOK(IDENT,   "[a-zA-Z_][a-zA-Z0-9_]*", identifier, "Identifier")
+
+// Whitespace (skip)
+TOK(WS,      "[ \\t\\n]+",      whitespace, "Whitespace (skipped)")
+TOK(COMMENT, "#[^\\n]*",        whitespace, "Comment (skipped)")

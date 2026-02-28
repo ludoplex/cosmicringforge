@@ -4,6 +4,9 @@
  * Generates table-driven state machines from .sm specifications.
  * Output is pure C with no runtime dependencies.
  *
+ * TRUE DOGFOODING: Uses smgen_self.h which expands smgen_tokens.def
+ * via X-macros to define this generator's own token types.
+ *
  * Usage: smgen <machine.sm> [output_dir] [prefix]
  *
  * Spec format:
@@ -25,6 +28,9 @@
 #include <ctype.h>
 #include <stdint.h>
 #include <time.h>
+
+/* ── Self-hosted tokens (dogfooding) ─────────────────────────────── */
+#include "smgen_self.h"
 
 #define SMGEN_VERSION "1.0.0"
 #define MAX_LINE 1024

@@ -1,0 +1,26 @@
+// lexgen_tokens.def — Lexgen's own token definitions (self-hosted)
+// This .def file is DIRECTLY #include-able by lexgen itself
+//
+// Format: TOK(enum_name, lexeme, kind, doc)
+// kind: keyword, operator, literal, identifier, whitespace
+//
+// Lexgen uses these tokens to parse token specification files.
+
+// Keywords for .lex format
+TOK(SKIP,     "@skip",    keyword, "Skip directive")
+
+// Punctuation
+TOK(DQUOTE,   "\"",       operator, "Double quote")
+TOK(LBRACK,   "[",        operator, "Left bracket for regex")
+TOK(RBRACK,   "]",        operator, "Right bracket for regex")
+TOK(HASH,     "#",        operator, "Comment marker")
+
+// Patterns
+TOK(IDENT,    "[a-zA-Z_][a-zA-Z0-9_]*", identifier, "Token name identifier")
+TOK(STRING,   "\"[^\"]*\"",             literal,    "Literal pattern")
+TOK(REGEX,    "\\[[^\\]]*\\]",          literal,    "Regex pattern")
+
+// Whitespace (skip)
+TOK(WS,       "[ \\t]+",   whitespace, "Whitespace")
+TOK(NEWLINE,  "\\n",       whitespace, "Newline")
+TOK(COMMENT,  "#[^\\n]*",  whitespace, "Comment")

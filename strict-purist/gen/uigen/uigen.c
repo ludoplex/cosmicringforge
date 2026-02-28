@@ -4,6 +4,9 @@
  * Generates Nuklear-based UI code from .ui specifications.
  * Output is pure C with data bindings and event handlers.
  *
+ * TRUE DOGFOODING: Uses uigen_self.h which expands uigen_tokens.def
+ * via X-macros to define this generator's own token types.
+ *
  * Usage: uigen <interface.ui> [output_dir] [prefix]
  *
  * Spec format:
@@ -39,6 +42,9 @@
 #include <ctype.h>
 #include <stdint.h>
 #include <time.h>
+
+/* ── Self-hosted tokens (dogfooding) ─────────────────────────────── */
+#include "uigen_self.h"
 
 #define UIGEN_VERSION "1.0.0"
 #define MAX_LINE 1024

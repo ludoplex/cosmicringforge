@@ -1,0 +1,31 @@
+// schema.def — X-Macro Schema Specification Format
+// Defines the schemagen input format using X-macros
+
+// Schema directives
+// DIRECTIVE(name, doc)
+DIRECTIVE(json, "Generate JSON serialization functions")
+DIRECTIVE(sql,  "Generate SQL DDL statements")
+DIRECTIVE(init, "Generate initializer functions")
+
+// Schema types
+// SCHEMA_TYPE(short_name, c_type, sql_type, json_type, doc)
+SCHEMA_TYPE(i8,   int8_t,      INTEGER, number,  "8-bit signed integer")
+SCHEMA_TYPE(i16,  int16_t,     INTEGER, number,  "16-bit signed integer")
+SCHEMA_TYPE(i32,  int32_t,     INTEGER, number,  "32-bit signed integer")
+SCHEMA_TYPE(i64,  int64_t,     INTEGER, number,  "64-bit signed integer")
+SCHEMA_TYPE(u8,   uint8_t,     INTEGER, number,  "8-bit unsigned integer")
+SCHEMA_TYPE(u16,  uint16_t,    INTEGER, number,  "16-bit unsigned integer")
+SCHEMA_TYPE(u32,  uint32_t,    INTEGER, number,  "32-bit unsigned integer")
+SCHEMA_TYPE(u64,  uint64_t,    INTEGER, number,  "64-bit unsigned integer")
+SCHEMA_TYPE(f32,  float,       REAL,    number,  "32-bit float")
+SCHEMA_TYPE(f64,  double,      REAL,    number,  "64-bit float")
+SCHEMA_TYPE(bool, bool,        INTEGER, boolean, "Boolean value")
+SCHEMA_TYPE(str,  const char*, TEXT,    string,  "String pointer")
+
+// Schema constraints
+// CONSTRAINT(name, syntax, doc)
+CONSTRAINT(range,    "[range: min..max]", "Numeric range validation")
+CONSTRAINT(default,  "[default: value]",  "Default initialization value")
+CONSTRAINT(not_empty,"[not_empty]",       "String must be non-empty")
+CONSTRAINT(unique,   "[unique]",          "SQL UNIQUE constraint")
+CONSTRAINT(pk,       "[pk]",              "SQL PRIMARY KEY")

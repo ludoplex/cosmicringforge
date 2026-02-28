@@ -1,0 +1,20 @@
+// binary.def — X-Macro Binary Embedding Specification Format
+// Defines the bin2c input format using X-macros
+
+// Manifest entry format
+// BIN_ENTRY(symbol, path, doc)
+// Example entries (commented out - real manifest is separate file):
+// BIN_ENTRY(logo_png,     "assets/logo.png",     "Application logo")
+// BIN_ENTRY(font_ttf,     "assets/font.ttf",     "Default font")
+// BIN_ENTRY(icon_ico,     "assets/icon.ico",     "Window icon")
+
+// Generated code elements
+// BIN_GEN(element, type, doc)
+BIN_GEN(data_array,  const unsigned char[], "Binary data as C array")
+BIN_GEN(size_const,  const size_t,          "Size of binary data")
+BIN_GEN(header_decl, extern,                "Header declaration")
+
+// APE embedding (cosmopolitan)
+// APE_EMBED(feature, doc)
+APE_EMBED(zip_prefix, "Access via /zip/path in APE binary")
+APE_EMBED(autoload,   "Resources auto-loaded at startup")

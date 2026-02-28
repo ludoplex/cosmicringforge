@@ -1,0 +1,30 @@
+// platform.def — Platform Layer Documentation
+// NOTE: With Cosmopolitan, you DON'T need platform dispatch!
+// Cosmopolitan's libc provides unified APIs across all platforms.
+//
+// This file documents the platform abstraction approach:
+//
+// PROFILE=ape (cosmocc):
+//   - Single binary runs on Linux, macOS, Windows, *BSD
+//   - x86_64 and arm64 architectures
+//   - Use standard POSIX/C APIs - Cosmopolitan handles the rest
+//   - Runtime detection: IsLinux(), IsWindows(), IsXnu(), etc.
+//   - NO platform-specific .impl files needed!
+//
+// PROFILE=portable (native cc):
+//   - Platform-native binary
+//   - POSIX APIs work on Linux, macOS, *BSD
+//   - Windows needs MinGW or WSL for POSIX compatibility
+//
+// The Cosmopolitan philosophy: write standard C, run anywhere.
+
+// Platform info functions (see src/platform/platform.c)
+// PLAT_FUNC(ret, name, args, doc)
+PLAT_FUNC(const char*, plat_os_name,    (void), "Runtime OS name")
+PLAT_FUNC(const char*, plat_arch_name,  (void), "Architecture name")
+PLAT_FUNC(int,         plat_file_exists,(const char *path), "Check file exists")
+PLAT_FUNC(int,         plat_mkdir,      (const char *path), "Create directory")
+PLAT_FUNC(int,         plat_is_dir,     (const char *path), "Check is directory")
+PLAT_FUNC(int64_t,     plat_time_ms,    (void), "Monotonic time in ms")
+PLAT_FUNC(void,        plat_sleep_ms,   (int ms), "Sleep milliseconds")
+PLAT_FUNC(void,        plat_print_info, (void), "Print platform info")

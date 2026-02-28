@@ -1,0 +1,31 @@
+// defgen_macros.def — Defgen's own macro definitions (self-hosted)
+// Format: MACRO(name, args, output_kind, doc)
+//
+// Defgen processes .def files containing X-macros.
+// These are the macro patterns defgen recognizes.
+
+// Token definitions (for lexers)
+MACRO(TOK,       "(name, lexeme, kind, doc)",     token_enum,  "Token definition")
+
+// Schema/Table definitions (for data models)
+MACRO(TABLE,     "(name, doc)",                   struct_decl, "Table/struct declaration")
+MACRO(FIELD,     "(tbl, name, ctype, sql, flags, doc)", field, "Field definition")
+MACRO(TABLE_END, "(name)",                        struct_end,  "Table/struct end")
+
+// Type definitions
+MACRO(TYPE,      "(name, c_type, sql, json, doc)", typedef,   "Type mapping")
+
+// State machine definitions
+MACRO(SM_STATE,  "(mach, name, entry, exit, doc)", sm_state,  "State definition")
+MACRO(SM_TRANS,  "(mach, src, evt, tgt, guard, act, doc)", sm_trans, "Transition")
+MACRO(SM_EVENT,  "(mach, name, doc)",              sm_event,  "Event definition")
+
+// UI definitions
+MACRO(WIDGET,    "(name, parent, type, props, doc)", ui_widget, "Widget definition")
+MACRO(STYLE,     "(name, props, doc)",             ui_style,  "Style definition")
+
+// Platform definitions
+MACRO(PLAT_FUNC, "(ret, name, args, doc)",        plat_func, "Platform function")
+
+// Binary embedding
+MACRO(BIN,       "(name, path, doc)",             bin_embed, "Embedded binary")

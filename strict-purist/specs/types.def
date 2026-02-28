@@ -1,0 +1,21 @@
+// types.def — X-Macro Type Definitions
+// Format: TYPE(name, c_type, sql_type, json_type, doc)
+// Include this file with TYPE macro defined to expand
+
+// Integer types
+TYPE(i8,  int8_t,   INTEGER, number, "8-bit signed integer")
+TYPE(i16, int16_t,  INTEGER, number, "16-bit signed integer")
+TYPE(i32, int32_t,  INTEGER, number, "32-bit signed integer")
+TYPE(i64, int64_t,  INTEGER, number, "64-bit signed integer")
+TYPE(u8,  uint8_t,  INTEGER, number, "8-bit unsigned integer")
+TYPE(u16, uint16_t, INTEGER, number, "16-bit unsigned integer")
+TYPE(u32, uint32_t, INTEGER, number, "32-bit unsigned integer")
+TYPE(u64, uint64_t, INTEGER, number, "64-bit unsigned integer")
+
+// Float types
+TYPE(f32, float,  REAL, number, "32-bit float")
+TYPE(f64, double, REAL, number, "64-bit float")
+
+// Other primitives
+TYPE(bool, bool, INTEGER, boolean, "Boolean (0 or 1)")
+TYPE(str,  const char*, TEXT, string, "String pointer")

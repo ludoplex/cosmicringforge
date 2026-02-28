@@ -1,0 +1,22 @@
+# Ring 1 Velocity Tools - External Sources
+#
+# These tools are optional and can be installed from package managers
+# or built from source.
+
+gengetopt:
+  Source: https://ftp.gnu.org/gnu/gengetopt/
+  Package: apt install gengetopt
+  Purpose: CLI argument parser generator
+
+makeheaders:
+  Source: https://sqlite.org/src/file/tool/makeheaders.c
+  Purpose: Auto-generate header files from C source
+
+cppcheck:
+  Source: https://cppcheck.sourceforge.io/
+  Package: apt install cppcheck
+  Purpose: Static analysis
+
+AddressSanitizer/UBSan:
+  Included with GCC/Clang
+  Purpose: Runtime error detection

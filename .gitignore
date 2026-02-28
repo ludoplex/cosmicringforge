@@ -1,21 +1,21 @@
-# Build artifacts
+# Build outputs
 build/
 *.o
 *.a
-*.so
-*.dylib
 
-# Editor files
-*.swp
-*.swo
-*~
-.vscode/
-.idea/
+# Large vendored repos (use submodules instead)
+foss-visual/vendor/*/
+strict-purist/vendor/clips/
+strict-purist/vendor/civetweb/
+strict-purist/vendor/nuklear/
+strict-purist/vendor/sqlite/
+strict-purist/vendor/e9patch/
+strict-purist/vendor/kilo/
+strict-purist/vendor/cosmopolitan/cosmocc.zip
 
-# OS files
-.DS_Store
-Thumbs.db
-
-# Temporary files
-*.tmp
-*.log
+# Keep READMEs and small files
+!**/README.md
+!**/LICENSE*
+!strict-purist/vendor/lemon/
+!strict-purist/vendor/yyjson/
+!strict-purist/vendor/bin2c/

@@ -136,6 +136,20 @@ else
     echo "[bddgen] Not built yet"
 fi
 
+# apigen (API endpoint generator)
+if [ -x "$BUILD_DIR/apigen" ]; then
+    echo "[apigen] Processing specs/**/*.api..."
+    find "$SPECS_DIR" -name "*.api" | while read -r spec; do
+        layer=$(basename "$(dirname "$spec")")
+        mkdir -p "$GEN_DIR/$layer"
+        echo "  $spec → gen/$layer/"
+        "$BUILD_DIR/apigen" "$spec" "$GEN_DIR/$layer" 2>/dev/null || \
+            echo "    (skipped - apigen parse error)"
+    done
+else
+    echo "[apigen] Not built yet"
+fi
+
 # ── Ring 1 Generators (Velocity Tools - Auto-Detected) ───────────────────────
 
 echo

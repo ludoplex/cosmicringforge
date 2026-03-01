@@ -1,0 +1,66 @@
+# UserService API Specification
+# Example for apigen - REST API definition
+
+api UserService {
+    version: "1.0"
+    transport: [http]
+
+    endpoint CreateUser {
+        method: POST
+        path: "/users"
+        request: CreateUserRequest
+        response: User
+        errors: [InvalidInput, AlreadyExists]
+    }
+
+    endpoint GetUser {
+        method: GET
+        path: "/users/{id}"
+        response: User
+        errors: [NotFound]
+    }
+
+    endpoint ListUsers {
+        method: GET
+        path: "/users"
+        response: UserList
+    }
+
+    endpoint UpdateUser {
+        method: PUT
+        path: "/users/{id}"
+        request: UpdateUserRequest
+        response: User
+        errors: [InvalidInput, NotFound]
+    }
+
+    endpoint DeleteUser {
+        method: DELETE
+        path: "/users/{id}"
+        errors: [NotFound]
+    }
+
+    type CreateUserRequest {
+        name: string [not_empty]
+        email: string [email]
+        password: string [min_length: 8]
+    }
+
+    type UpdateUserRequest {
+        name: string
+        email: string
+    }
+
+    type User {
+        id: u64
+        name: string
+        email: string
+        created_at: i64
+    }
+
+    type UserList {
+        users: User
+        count: i32
+        total: i32
+    }
+}

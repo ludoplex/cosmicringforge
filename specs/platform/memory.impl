@@ -1,0 +1,18 @@
+# memory.impl — Platform-specific memory allocation
+# Example implementation directive for implgen
+
+impl platform alloc_page {
+    linux: "impl/linux_mmap.c"
+    windows: "impl/win_virtualalloc.c"
+    cosmo: "impl/cosmo_mem.c"
+}
+
+impl platform thread_create {
+    linux: "impl/linux_pthread.c"
+    windows: "impl/win_thread.c"
+}
+
+impl simd {
+    target: [avx2, sse4, neon]
+    fallback: scalar
+}

@@ -141,7 +141,7 @@ formats:
 # Ring 0 Tools (always build these first)
 # ══════════════════════════════════════════════════════════════════════════════
 
-RING0_TOOLS := $(BUILD_DIR)/schemagen $(BUILD_DIR)/lemon $(BUILD_DIR)/defgen $(BUILD_DIR)/smgen $(BUILD_DIR)/lexgen $(BUILD_DIR)/bddgen $(BUILD_DIR)/uigen $(BUILD_DIR)/hsmgen $(BUILD_DIR)/apigen
+RING0_TOOLS := $(BUILD_DIR)/schemagen $(BUILD_DIR)/lemon $(BUILD_DIR)/defgen $(BUILD_DIR)/smgen $(BUILD_DIR)/lexgen $(BUILD_DIR)/bddgen $(BUILD_DIR)/uigen $(BUILD_DIR)/hsmgen $(BUILD_DIR)/apigen $(BUILD_DIR)/implgen
 
 tools: $(BUILD_DIR) $(RING0_TOOLS)
 	@echo "Ring 0 tools ready"
@@ -175,6 +175,9 @@ $(BUILD_DIR)/hsmgen: $(TOOLS_DIR)/hsmgen/hsmgen.c | $(BUILD_DIR)
 
 $(BUILD_DIR)/apigen: $(TOOLS_DIR)/apigen/apigen.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -I$(TOOLS_DIR)/apigen -o $@ $<
+
+$(BUILD_DIR)/implgen: $(TOOLS_DIR)/implgen/implgen.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -I$(TOOLS_DIR)/implgen -o $@ $<
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Ring 1 Tools (optional velocity tools - portable via cosmocc)

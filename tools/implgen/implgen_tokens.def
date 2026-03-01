@@ -1,0 +1,55 @@
+/* implgen_tokens.def — Implementation Directive Generator tokens (self-hosted)
+ * Format: TOK(enum_name, lexeme, kind, doc)
+ */
+
+/* Keywords */
+TOK(IMPL,       "impl",       keyword, "Implementation block")
+TOK(PLATFORM,   "platform",   keyword, "Platform dispatch")
+TOK(OPTIMIZE,   "optimize",   keyword, "Optimization hints")
+TOK(SIMD,       "simd",       keyword, "SIMD configuration")
+TOK(ALLOC,      "alloc",      keyword, "Allocation strategy")
+TOK(ARENA,      "arena",      keyword, "Arena allocator")
+TOK(POOL,       "pool",       keyword, "Pool allocator")
+TOK(ERROR,      "error",      keyword, "Error handling")
+TOK(FALLBACK,   "fallback",   keyword, "Fallback option")
+TOK(TARGET,     "target",     keyword, "Target platform/SIMD")
+TOK(INLINE,     "inline",     keyword, "Inline hint")
+TOK(HOT,        "hot",        keyword, "Hot path hint")
+TOK(COLD,       "cold",       keyword, "Cold path hint")
+TOK(PURE,       "pure",       keyword, "Pure function hint")
+TOK(ALIGNMENT,  "alignment",  keyword, "Alignment specification")
+TOK(PACK,       "pack",       keyword, "Pack attribute")
+
+/* Platform names */
+TOK(LINUX,      "linux",      platform, "Linux platform")
+TOK(WINDOWS,    "windows",    platform, "Windows platform")
+TOK(MACOS,      "macos",      platform, "macOS platform")
+TOK(COSMO,      "cosmo",      platform, "Cosmopolitan platform")
+TOK(WASM,       "wasm",       platform, "WebAssembly platform")
+
+/* SIMD targets */
+TOK(SSE2,       "sse2",       simd, "SSE2 SIMD")
+TOK(SSE4,       "sse4",       simd, "SSE4 SIMD")
+TOK(AVX,        "avx",        simd, "AVX SIMD")
+TOK(AVX2,       "avx2",       simd, "AVX2 SIMD")
+TOK(AVX512,     "avx512",     simd, "AVX-512 SIMD")
+TOK(NEON,       "neon",       simd, "ARM NEON SIMD")
+TOK(SCALAR,     "scalar",     simd, "Scalar fallback")
+
+/* Operators */
+TOK(LBRACE,     "{",          operator, "Block open")
+TOK(RBRACE,     "}",          operator, "Block close")
+TOK(LBRACK,     "[",          operator, "Array open")
+TOK(RBRACK,     "]",          operator, "Array close")
+TOK(COLON,      ":",          operator, "Key-value separator")
+TOK(COMMA,      ",",          operator, "List separator")
+TOK(SEMI,       ";",          operator, "Statement end")
+
+/* Patterns */
+TOK(IDENT,      "[a-zA-Z_][a-zA-Z0-9_]*", identifier, "Identifier")
+TOK(NUMBER,     "[0-9]+",                  literal,    "Integer")
+TOK(STRING,     "\"[^\"]*\"",              literal,    "String literal")
+
+/* Skip */
+TOK(WS,         "[ \\t\\n]+", whitespace, "Whitespace")
+TOK(COMMENT,    "#[^\\n]*",   whitespace, "Line comment")

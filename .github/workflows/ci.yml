@@ -15,10 +15,7 @@ jobs:
       - name: Build Ring 0 tools
         run: make tools
 
-      - name: Run regen
-        run: make regen
-
-      - name: Verify no drift
+      - name: Verify no drift (regen + check)
         run: make verify
 
       - name: Build application

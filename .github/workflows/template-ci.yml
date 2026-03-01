@@ -73,28 +73,8 @@ jobs:
       - name: Build tools
         run: make tools
 
-      - name: Regenerate from specs
-        run: make regen
-
-      - name: Check for drift
-        run: |
-          if ! git diff --quiet gen/; then
-            echo "══════════════════════════════════════════════════════════════"
-            echo " ERROR: Generated code has drifted from specs!"
-            echo "══════════════════════════════════════════════════════════════"
-            echo ""
-            echo "Files with drift:"
-            git diff --name-only gen/
-            echo ""
-            echo "To fix:"
-            echo "  1. Run 'make regen' locally"
-            echo "  2. Review the changes: git diff gen/"
-            echo "  3. Commit the regenerated code: git add gen/ && git commit"
-            echo ""
-            echo "══════════════════════════════════════════════════════════════"
-            exit 1
-          fi
-          echo "No drift detected - generated code matches specs"
+      - name: Check for drift (regen + verify)
+        run: make verify
 
   # ── APE Build (Actually Portable Executable) ───────────────────────────────
   ape:

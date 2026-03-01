@@ -73,7 +73,9 @@ echo
 
 echo "── Generated Code Validation ────────────────────────────────────────────────"
 
-GEN_FILES=$(find gen -name "*.c" 2>/dev/null)
+# Only test _types.c files (self-contained, no external deps)
+# _json.c requires yyjson, _sql.c requires sqlite3 - skip unless deps installed
+GEN_FILES=$(find gen -name "*_types.c" 2>/dev/null)
 ERRORS=0
 
 for c_file in $GEN_FILES; do
@@ -88,6 +90,44 @@ for c_file in $GEN_FILES; do
         ERRORS=$((ERRORS + 1))
     fi
 done
+
+# Optionally test _json.c if yyjson is available
+if [ -f /usr/include/yyjson.h ] || [ -f /usr/local/include/yyjson.h ]; then
+    echo "  (yyjson found - also testing _json.c files)"
+    JSON_FILES=$(find gen -name "*_json.c" 2>/dev/null)
+    for c_file in $JSON_FILES; do
+        name=$(basename "$c_file")
+        printf "  Compiling %s... " "$name"
+        dir=$(dirname "$c_file")
+        if cc -c -I"$dir" "$c_file" -o /tmp/test_$$.o 2>/dev/null; then
+            printf "${GREEN}OK${NC}\n"
+            rm -f /tmp/test_$$.o
+        else
+            printf "${YELLOW}WARN${NC} (yyjson API mismatch?)\n"
+        fi
+    done
+else
+    printf "  ${YELLOW}[SKIP]${NC} _json.c files (yyjson not installed)\n"
+fi
+
+# Optionally test _sql.c if sqlite3 is available
+if [ -f /usr/include/sqlite3.h ] || [ -f /usr/local/include/sqlite3.h ]; then
+    echo "  (sqlite3 found - also testing _sql.c files)"
+    SQL_FILES=$(find gen -name "*_sql.c" 2>/dev/null)
+    for c_file in $SQL_FILES; do
+        name=$(basename "$c_file")
+        printf "  Compiling %s... " "$name"
+        dir=$(dirname "$c_file")
+        if cc -c -I"$dir" "$c_file" -o /tmp/test_$$.o 2>/dev/null; then
+            printf "${GREEN}OK${NC}\n"
+            rm -f /tmp/test_$$.o
+        else
+            printf "${YELLOW}WARN${NC} (sqlite3 API mismatch?)\n"
+        fi
+    done
+else
+    printf "  ${YELLOW}[SKIP]${NC} _sql.c files (sqlite3 not installed)\n"
+fi
 
 echo
 

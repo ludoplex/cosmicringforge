@@ -2,30 +2,142 @@
 
 **Current:** ~85% functional
 **Target:** 100% — all generators working, tests passing, documentation complete
+**Timeline:** 5 days elapsed (Feb 25 - Mar 1), targeting **Mar 3 completion**
 
 ---
 
-## Phase 1: Critical Fixes (Day 1)
+## Project Velocity (Actual)
+
+| Metric | Value |
+|--------|-------|
+| Project age | 5 days |
+| Total commits | 62 |
+| Generator code | 15,568 lines |
+| Working generators | 9 of 14 (64%) |
+| Commits/day | ~15 |
+| Generators/day | ~2.25 |
+
+---
+
+## Dogfooding Workflow (USE THIS)
+
+**DO NOT hand-write parsers.** Use cosmo-bde tools to generate boilerplate:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  DOGFOODING PIPELINE — 60% less hand-written code               │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  specs/generators/foo.schema                                    │
+│         │                                                       │
+│         ▼                                                       │
+│    ┌─────────┐                                                  │
+│    │schemagen│ ──► gen/generators/foo_types.c,h  (FREE)        │
+│    └─────────┘                                                  │
+│                                                                 │
+│  specs/parsing/foo.lex                                          │
+│         │                                                       │
+│         ▼                                                       │
+│    ┌────────┐                                                   │
+│    │ lexgen │ ──► gen/parsing/foo_lex.c,h        (FREE)        │
+│    └────────┘                                                   │
+│                                                                 │
+│  specs/parsing/foo.grammar                                      │
+│         │                                                       │
+│         ▼                                                       │
+│    ┌────────┐                                                   │
+│    │ lemon  │ ──► gen/parsing/foo_parse.c,h      (FREE)        │
+│    └────────┘                                                   │
+│                                                                 │
+│  tools/foogen/foogen.c  ◄── ONLY write codegen logic (~300 LOC)│
+│         │                                                       │
+│         ▼                                                       │
+│    ┌────────┐                                                   │
+│    │  make  │ ──► build/foogen                                  │
+│    └────────┘                                                   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Step-by-Step for New Generator
+
+```bash
+# 1. Create/verify schema exists
+cat specs/generators/foo.schema  # or create it
+
+# 2. Generate types (FREE - ~170 lines)
+./build/schemagen specs/generators/foo.schema gen/generators foo
+
+# 3. Create lexer spec
+cat > specs/parsing/foo.lex << 'EOF'
+# foo.lex - Token definitions for .foo files
+TOKEN KEYWORD "keyword"
+TOKEN IDENT   "[a-zA-Z_][a-zA-Z0-9_]*"
+TOKEN NUMBER  "[0-9]+"
+# etc.
+EOF
+
+# 4. Generate lexer (FREE - ~200 lines)
+./build/lexgen specs/parsing/foo.lex gen/parsing foo
+
+# 5. Create grammar spec
+cat > specs/parsing/foo.grammar << 'EOF'
+%include { #include "foo_types.h" }
+%token KEYWORD IDENT NUMBER.
+program ::= decl_list.
+decl_list ::= decl_list decl | decl.
+# etc.
+EOF
+
+# 6. Generate parser (FREE - ~300 lines)
+./build/lemon specs/parsing/foo.grammar
+mv foo_parse.c foo_parse.h gen/parsing/
+
+# 7. Write ONLY the codegen logic (~300 lines)
+cat > tools/foogen/foogen.c << 'EOF'
+#include "foogen_self.h"
+#include "../../gen/generators/foo_types.h"
+#include "../../gen/parsing/foo_lex.h"
+#include "../../gen/parsing/foo_parse.h"
+
+// Just implement: parse input → walk AST → emit C code
+EOF
+
+# 8. Add to Makefile and build
+make tools
+```
+
+**Result:** ~300 lines hand-written vs ~800 lines without dogfooding
+
+---
+
+## Phase 1: Critical Fixes (Mar 1 - Tonight)
 
 ### 1.1 Fix bddgen --run flag
 **Priority:** HIGH — blocks `make test`
+**Time:** 1 hour
 
-PR #3's bddgen lacks the `--run` flag that PR #2 had. Need to add:
+Add to `tools/bddgen/bddgen.c`:
 
 ```c
-// In tools/bddgen/bddgen.c, add argument parsing:
-if (argc >= 2 && strcmp(argv[1], "--run") == 0) {
-    // Parse and report without generating files
-    for (int i = 2; i < argc; i++) {
-        parse_feature_file(argv[i]);
-        print_feature_summary();
+int main(int argc, char *argv[]) {
+    // Add --run flag support
+    if (argc >= 2 && strcmp(argv[1], "--run") == 0) {
+        int total_features = 0, total_scenarios = 0;
+        for (int i = 2; i < argc; i++) {
+            feature_t f;
+            if (parse_feature_file(argv[i], &f) == 0) {
+                printf("Feature: %s (%d scenarios)\n", f.name, f.scenario_count);
+                total_features++;
+                total_scenarios += f.scenario_count;
+            }
+        }
+        printf("\nTotal: %d features, %d scenarios\n", total_features, total_scenarios);
+        return 0;
     }
-    return 0;
+    // ... existing code ...
 }
 ```
-
-**Files:**
-- `tools/bddgen/bddgen.c` — Add --run flag handling
 
 **Verify:**
 ```bash
@@ -36,302 +148,230 @@ make test  # Should pass
 
 ---
 
-### 1.2 Fix make test target
-**Priority:** HIGH
-
-If bddgen --run is added, test should work. Otherwise, update Makefile:
-
-```makefile
-test: tools
-	@echo "Running BDD tests..."
-	@if [ -d "$(SPECS_DIR)/testing" ] && [ -x "$(BUILD_DIR)/bddgen" ]; then \
-		for f in $(SPECS_DIR)/testing/*.feature; do \
-			$(BUILD_DIR)/bddgen "$$f" $(BUILD_DIR)/test $$(basename "$$f" .feature); \
-		done; \
-		echo "BDD harnesses generated"; \
-	fi
-```
-
----
-
-## Phase 2: Missing Generators (Days 2-5)
+## Phase 2: Missing Generators — DOGFOODED (Mar 2)
 
 ### 2.1 implgen — Platform Implementation Hints
-**Priority:** MEDIUM
-**Spec exists:** `specs/generators/impl.schema` (check if exists)
+**Priority:** HIGH
+**Schema:** `specs/generators/impl.schema` ✓ EXISTS (133 lines, 13 types)
+**Types:** Already generated → `gen/generators/impl_types.c,h`
 
-Generates platform-specific code paths:
-```
-# specs/platform/memory.impl
-platform Linux {
-    allocator: mmap
-    simd: AVX2
-}
-platform Windows {
-    allocator: VirtualAlloc
-    simd: AVX2
-}
-platform Cosmopolitan {
-    allocator: IsLinux() ? mmap : VirtualAlloc
-    simd: runtime_detect()
-}
-```
+**TODO:**
+1. Create `specs/parsing/impl.lex`
+2. Create `specs/parsing/impl.grammar`
+3. Write `tools/implgen/implgen.c` (codegen only, ~300 lines)
 
-**Output:** `{prefix}_impl.c,h` with `#if` blocks
-
-**Files to create:**
-- `tools/implgen/implgen.c`
-- `tools/implgen/implgen_tokens.def`
-- `tools/implgen/implgen_self.h`
-- `specs/generators/implgen.schema` (if not exists)
+**Output:** `{prefix}_impl.h` with platform dispatch macros
 
 ---
 
 ### 2.2 msmgen — Modal State Machines
-**Priority:** LOW
-**Use case:** Mode-switching systems (edit mode, view mode, etc.)
+**Priority:** MEDIUM
 
-Different from HSM — modes are mutually exclusive top-level states with shared sub-behaviors.
+**TODO:**
+1. Create `specs/generators/msm.schema`
+2. Generate types: `./build/schemagen specs/generators/msm.schema gen/generators msm`
+3. Create `specs/parsing/msm.lex`
+4. Create `specs/parsing/msm.grammar`
+5. Write `tools/msmgen/msmgen.c` (codegen only)
 
-```
-# specs/behavior/editor.msm
-modal EditorModes {
-    mode Normal {
-        on 'i' -> Insert
-        on ':' -> Command
-    }
-    mode Insert {
-        on ESC -> Normal
-    }
-    mode Command {
-        on ENTER -> Normal.execute
-        on ESC -> Normal
-    }
-}
-```
-
-**Files to create:**
-- `tools/msmgen/msmgen.c`
-- `tools/msmgen/msmgen_tokens.def`
-- `tools/msmgen/msmgen_self.h`
+**Output:** `{prefix}_msm.c,h` with mode switching logic
 
 ---
 
 ### 2.3 sqlgen — Database Schema Generator
-**Priority:** MEDIUM
-**Use case:** Generate SQLite schema + CRUD functions from specs
+**Priority:** HIGH (useful for real projects)
 
-```
-# specs/persistence/users.sql
-table users {
-    id: integer primary key
-    name: text not null
-    email: text unique
-    created_at: timestamp default now
-}
+**TODO:**
+1. Create `specs/generators/sql.schema`:
+   ```
+   type SqlTable { name, columns[], indexes[] }
+   type SqlColumn { name, type, constraints }
+   type SqlQuery { name, params[], return_type, sql }
+   ```
+2. Generate types
+3. Create `specs/parsing/sql.lex`
+4. Create `specs/parsing/sql.grammar`
+5. Write `tools/sqlgen/sqlgen.c`
 
-index users_email on users(email)
-
-query find_by_email(email: text) -> users {
-    SELECT * FROM users WHERE email = ?
-}
-```
-
-**Output:**
-- `{prefix}_schema.sql` — DDL statements
-- `{prefix}_db.c,h` — C functions for queries
-
-**Files to create:**
-- `tools/sqlgen/sqlgen.c`
-- `tools/sqlgen/sqlgen_tokens.def`
-- `tools/sqlgen/sqlgen_self.h`
+**Output:** `{prefix}_schema.sql` + `{prefix}_db.c,h`
 
 ---
 
 ### 2.4 siggen — Function Signature Generator
 **Priority:** LOW
-**Use case:** FFI bindings, header generation
 
-```
-# specs/interface/math.sig
-module math {
-    fn add(a: i32, b: i32) -> i32
-    fn multiply(a: f64, b: f64) -> f64
-    fn vector_dot(v1: *f32, v2: *f32, len: usize) -> f32 [simd]
-}
-```
+**TODO:**
+1. Create `specs/generators/sig.schema`
+2. Generate types
+3. Create lexer/grammar
+4. Write codegen
 
-**Output:**
-- `{prefix}_ffi.h` — Function declarations
-- `{prefix}_ffi.c` — Stub implementations or trampolines
+**Output:** `{prefix}_ffi.h` with function declarations
 
 ---
 
 ### 2.5 clipsgen — Business Rules Generator
 **Priority:** LOW
-**Use case:** Rule-based systems, validation logic
 
-```
-# specs/domain/pricing.rules
-rule ApplyDiscount {
-    when {
-        order.total > 100
-        customer.tier == "gold"
-    }
-    then {
-        order.discount = 0.15
-    }
-}
-```
+**TODO:**
+1. Create `specs/generators/rules.schema`
+2. Generate types
+3. Create lexer/grammar
+4. Write codegen
 
-**Output:** `{prefix}_rules.c,h` — Rule evaluation functions
+**Output:** `{prefix}_rules.c,h` with rule evaluation
 
 ---
 
-## Phase 3: Self-Hosting Completion (Days 6-7)
+## Phase 3: Self-Hosting Completion (Mar 3 AM)
 
-### 3.1 Complete schemagen self-hosting
-**Status:** Partially done
+### 3.1 Wire up Lemon integration
+**Time:** 2 hours
 
-Ensure `specs/generators/schemagen.schema` is parsed by schemagen itself:
-```bash
-./build/schemagen specs/generators/schemagen.schema gen/generators schemagen
+Update Makefile to use generated parsers:
+```makefile
+gen/parsing/%_parse.c: specs/parsing/%.grammar
+	$(BUILD_DIR)/lemon $<
+	mv $*_parse.c $*_parse.h gen/parsing/
 ```
 
-### 3.2 Add Lemon grammar integration
-**Status:** Grammars exist but not integrated into build
-
-Files exist:
-- `specs/parsing/schemagen.lex`
-- `specs/parsing/schemagen.grammar`
-
-Need to:
-1. Generate lexer with lexgen
-2. Generate parser with Lemon
-3. Replace hand-written parsers with generated ones
+### 3.2 Replace hand-written parsers
+For each generator that has .lex + .grammar:
+1. Generate lexer/parser
+2. Update generator to use generated code
+3. Delete hand-written parser code
 
 ---
 
-## Phase 4: Documentation & Polish (Day 8)
+## Phase 4: Documentation (Mar 3 PM)
 
 ### 4.1 Update SPEC_TYPES.md
-Mark all new generators as ✓ Working
+Mark all generators as ✓ Working
 
 ### 4.2 Add example specs
-For each new generator, add example in `specs/`:
-- `specs/platform/example.impl`
-- `specs/behavior/example.msm`
-- `specs/persistence/example.sql`
-- `specs/interface/example.sig`
-- `specs/domain/example.rules`
+```
+specs/platform/example.impl
+specs/behavior/example.msm
+specs/persistence/example.sql
+specs/interface/example.sig
+specs/domain/example.rules
+```
 
 ### 4.3 Update CLAUDE.md
-Add new generators to the format mapping table
+Add new generators to format mapping table
 
-### 4.4 Clean up MY_PLAN.md
-Convert completed items to a CHANGELOG entry
+### 4.4 Archive MY_PLAN.md
+Move completed items to CHANGELOG.md
 
 ---
 
-## Phase 5: Ring 2 Integration (Future)
+## Timeline Summary
 
-### 5.1 StateSmith integration
-- Process `.drawio` files
-- Output to `gen/imported/`
-
-### 5.2 protobuf-c integration
-- Process `.proto` files
-- Generate C bindings
-
-### 5.3 WAMR interpreter integration
-- Ring 0 compatible WASM runtime
-- For plugin system
+| Date | Target | Hours |
+|------|--------|-------|
+| **Mar 1 (Sun)** | Phase 1: bddgen --run fix | 1h |
+| **Mar 2 (Mon)** | Phase 2: 5 generators (dogfooded) | 8h |
+| **Mar 3 (Tue AM)** | Phase 3: Self-hosting | 2h |
+| **Mar 3 (Tue PM)** | Phase 4: Documentation | 2h |
+| **Mar 3 EOD** | **100% COMPLETE** | **13h total** |
 
 ---
 
 ## Checklist
 
-### Phase 1 (Critical)
+### Phase 1 (Mar 1)
 - [ ] Add `--run` flag to bddgen
 - [ ] Verify `make test` passes
 
-### Phase 2 (Generators)
-- [ ] implgen implemented
-- [ ] msmgen implemented
-- [ ] sqlgen implemented
-- [ ] siggen implemented
-- [ ] clipsgen implemented
+### Phase 2 (Mar 2) — Use dogfooding!
+- [ ] implgen: schema ✓, lex, grammar, codegen
+- [ ] msmgen: schema, lex, grammar, codegen
+- [ ] sqlgen: schema, lex, grammar, codegen
+- [ ] siggen: schema, lex, grammar, codegen
+- [ ] clipsgen: schema, lex, grammar, codegen
 
-### Phase 3 (Self-Hosting)
-- [ ] schemagen fully self-hosted
-- [ ] Lemon integration in build
+### Phase 3 (Mar 3 AM)
+- [ ] Lemon integration in Makefile
+- [ ] Replace hand-written parsers
 
-### Phase 4 (Documentation)
+### Phase 4 (Mar 3 PM)
 - [ ] SPEC_TYPES.md updated
-- [ ] Example specs for all generators
+- [ ] Example specs created
 - [ ] CLAUDE.md updated
 
-### Phase 5 (Ring 2)
-- [ ] StateSmith integration
-- [ ] protobuf-c integration
-- [ ] WAMR integration
+---
+
+## Already Done (Head Start)
+
+| File | Status |
+|------|--------|
+| `specs/generators/impl.schema` | ✓ 133 lines, 13 types |
+| `specs/generators/bddgen.schema` | ✓ exists |
+| `specs/generators/defgen.schema` | ✓ exists |
+| `specs/parsing/feature.lex` | ✓ exists |
+| `specs/parsing/feature.grammar` | ✓ exists |
+| `specs/parsing/schemagen.lex` | ✓ exists |
+| `specs/parsing/schemagen.grammar` | ✓ exists |
+| `gen/generators/impl_types.c,h` | ✓ generated |
 
 ---
 
-## Priority Order
+## Commands Cheat Sheet
 
-1. **bddgen --run** — Unblocks testing
-2. **sqlgen** — High value for real projects
-3. **implgen** — Enables platform abstraction
-4. **msmgen** — Nice to have for UI
-5. **siggen** — FFI support
-6. **clipsgen** — Business rules (specialized)
+```bash
+# Build tools
+make tools
 
----
+# Generate types from schema
+./build/schemagen specs/generators/foo.schema gen/generators foo
 
-## Time Estimates
+# Generate lexer
+./build/lexgen specs/parsing/foo.lex gen/parsing foo
 
-| Phase | Effort | Complexity |
-|-------|--------|------------|
-| Phase 1 | 1-2 hours | Low |
-| Phase 2 | 2-3 days | Medium |
-| Phase 3 | 1 day | Medium |
-| Phase 4 | 0.5 day | Low |
-| Phase 5 | 1 week | High |
+# Generate parser
+./build/lemon specs/parsing/foo.grammar
 
-**Total to 100% core:** ~5 days
-**Total with Ring 2:** ~2 weeks
+# Regenerate everything
+make regen
+
+# Test
+make test
+
+# Verify no drift
+make verify
+```
 
 ---
 
 ## Notes for LLM Agents
 
-When implementing a new generator:
+**ALWAYS dogfood.** Before writing a parser by hand:
 
-1. Copy an existing generator as template:
-   ```bash
-   cp -r tools/smgen tools/foogen
-   mv tools/foogen/smgen.c tools/foogen/foogen.c
-   # etc.
-   ```
+1. Check if `.schema` exists → use schemagen
+2. Check if `.lex` exists → use lexgen
+3. Check if `.grammar` exists → use lemon
 
-2. Update token definitions for your format
+Only hand-write the **codegen logic** (AST → C output).
 
-3. Add to Makefile RING0_TOOLS list
+**Copy-paste template:**
+```bash
+cp -r tools/smgen tools/foogen
+cd tools/foogen
+mv smgen.c foogen.c
+mv smgen_self.h foogen_self.h
+mv smgen_tokens.def foogen_tokens.def
+# Edit files, update includes
+```
 
-4. Create example spec in `specs/`
+**Commit pattern:**
+```
+feat: implement foogen (.foo → C) [dogfooded]
 
-5. Run `make tools && make regen`
+- Schema: specs/generators/foo.schema
+- Types generated by schemagen
+- Lexer generated by lexgen
+- Parser generated by lemon
+- Hand-written: codegen only (~300 lines)
 
-6. Update SPEC_TYPES.md status
-
-7. Commit with pattern:
-   ```
-   feat: implement foogen (.foo → C)
-
-   - Parses .foo specs
-   - Generates {prefix}_foo.c,h
-   - Self-hosted via X-macros
-
-   Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-   ```
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+```

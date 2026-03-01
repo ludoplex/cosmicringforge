@@ -10,19 +10,19 @@
 |-----------|-----------|---------|------|--------|
 | `.schema` | schemagen | Data types, structs, validation | 0 | ✓ Working + Self-Hosted |
 | `.def` | defgen | Constants, enums, X-Macros, config | 0 | ✓ Working |
-| `.impl` | implgen | Platform hints, SIMD, allocation | 0 | ◐ Spec Ready |
+| `.impl` | implgen | Platform hints, SIMD, allocation | 0 | ✓ Working |
 | `.sm` | smgen | Flat state machines | 0 | ✓ Working |
 | `.hsm` | hsmgen | Hierarchical state machines (UML) | 0 | ✓ Working |
-| `.msm` | msmgen | Modal state machines (mode switching) | 0 | ✗ Missing |
+| `.msm` | msmgen | Modal state machines (mode switching) | 0 | ✓ Working |
 | `.grammar` | Lemon | Parser grammar (LALR) | 0 | ✓ Vendored + Grammars Created |
 | `.lex` | lexgen | Lexer tokens, patterns | 0 | ✓ Working |
 | `.ui` | uigen | UI layouts (Nuklear) | 0 | ✓ Working |
 | `.api` | apigen | API contracts, endpoints, RPC | 0 | ✓ Working |
 | `.proto` | protobuf-c | Wire protocol, serialization | 2 | ✓ Vendored |
-| `.rules` | clipsgen | Business rules, constraints | 0 | ✗ Missing |
+| `.rules` | clipsgen | Business rules, constraints | 0 | ✓ Working |
 | `.feature` | bddgen | BDD test scenarios (Gherkin) | 0 | ✓ Working |
-| `.sql` | sqlgen | Database schema, queries | 0 | ✗ Missing |
-| `.sig` | siggen | Function signatures, FFI bindings | 0 | ✗ Missing |
+| `.sql` | sqlgen | Database schema, queries | 0 | ✓ Working |
+| `.sig` | siggen | Function signatures, FFI bindings | 0 | ✓ Working |
 
 **Legend:** ✓ Working | ◐ Spec Ready (needs generator) | ○ Stub | ✗ Missing
 

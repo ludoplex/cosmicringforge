@@ -37,15 +37,24 @@ on:
     branches: [main]
 
 jobs:
-  # ── Test Ring 0 Generators ─────────────────────────────────────────────────
+  # ── Test Ring 0 Generators (cosmocc) ───────────────────────────────────────
   generators:
     name: Ring 0 Generators
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build generators
-        run: make tools
+      - name: Install cosmocc
+        run: |
+          mkdir -p ~/.cosmocc
+          curl -sL https://cosmo.zip/pub/cosmocc/cosmocc.zip -o /tmp/cosmocc.zip
+          unzip -q /tmp/cosmocc.zip -d ~/.cosmocc
+          echo "$HOME/.cosmocc/bin" >> $GITHUB_PATH
+
+      - name: Build generators (cosmocc)
+        run: |
+          export CC=cosmocc
+          make tools
 
       - name: Test schemagen basic
         run: |

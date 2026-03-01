@@ -30,27 +30,32 @@ env:
   ENABLE_APE_BUILD: 'false'
 
 jobs:
-  # ── Build and Test ─────────────────────────────────────────────────────────
+  # ── Build and Test (cosmocc for APE portability) ──────────────────────────
   build:
     name: Build & Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies (if needed)
+      - name: Install cosmocc
         run: |
-          # Uncomment to install optional dependencies:
-          # sudo apt-get update
-          # sudo apt-get install -y libsqlite3-dev
+          mkdir -p ~/.cosmocc
+          curl -sL https://cosmo.zip/pub/cosmocc/cosmocc.zip -o /tmp/cosmocc.zip
+          unzip -q /tmp/cosmocc.zip -d ~/.cosmocc
+          echo "$HOME/.cosmocc/bin" >> $GITHUB_PATH
 
-      - name: Build Ring 0 tools
-        run: make tools
+      - name: Build Ring 0 tools (cosmocc)
+        run: |
+          export CC=cosmocc
+          make tools
 
       - name: Regenerate from specs
         run: make regen
 
-      - name: Build application
-        run: make app
+      - name: Build application (APE)
+        run: |
+          export CC=cosmocc
+          make app
 
       - name: Run tests
         run: |

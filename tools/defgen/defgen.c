@@ -27,6 +27,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
+#include <errno.h>
+#include <sys/stat.h>
 
 /* ── Self-hosted macros (dogfooding) ─────────────────────────────── */
 #include "defgen_self.h"
@@ -145,6 +147,13 @@ static void print_usage(void) {
     fprintf(stderr, "  SM_STATE / SM_TRANS                       State machines\n");
 }
 
+static int ensure_output_dir(const char *outdir) {
+    if (!outdir || !*outdir) return 0;
+    if (mkdir(outdir, 0777) == 0 || errno == EEXIST) return 0;
+    perror("mkdir");
+    return -1;
+}
+
 int main(int argc, char *argv[]) {
     if (argc < 2) {
         print_usage();
@@ -173,9 +182,9 @@ int main(int argc, char *argv[]) {
     }
     fclose(f);
 
-    char cmd[MAX_PATH];
-    snprintf(cmd, sizeof(cmd), "mkdir -p %s", outdir);
-    system(cmd);
+    if (ensure_output_dir(outdir) != 0) {
+        return 1;
+    }
 
     /* Extract just the filename for #include */
     const char *basename = strrchr(input, '/');

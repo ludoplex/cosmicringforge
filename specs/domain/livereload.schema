@@ -1,0 +1,123 @@
+# livereload.schema
+# APE Live Reload Protocol - Spec-Driven Types
+#
+# Real-time C source -> binary patching for APE executables.
+#
+# Workflow:
+#   File Watch -> cosmocc Recompile -> Object Diff -> APE Patch -> ICache Flush
+#
+# @version 1.0.0
+# @generator schemagen
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Configuration
+# ══════════════════════════════════════════════════════════════════════════════
+
+type LiveReloadConfig {
+    source_dir:       string[256]    # Directory to watch for .c changes
+    compiler:         string[64]     # Compiler path (default: cosmocc)
+    compiler_flags:   string[256]    # Additional compiler flags
+    cache_dir:        string[256]    # Object cache directory
+
+    watch_interval_ms: u32           # Watch interval (default: 100ms)
+    enable_hot_patch:  i32           # Apply patches to running binary
+    enable_file_patch: i32           # Also write patched file to disk
+
+    max_patch_size:    u64           # Max single patch size bytes
+    max_pending:       u32           # Max queued patches
+    verbose:           i32           # Verbose logging
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Function Information
+# ══════════════════════════════════════════════════════════════════════════════
+
+type FunctionInfo {
+    name:    string[64]              # Function name
+    address: u64                     # Address in object/binary
+    size:    u64                     # Function size in bytes
+    section: string[32]              # Section name (.text)
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Patch Information
+# ══════════════════════════════════════════════════════════════════════════════
+
+type PatchInfo {
+    id:             u32              # Patch ID
+    function_name:  string[64]       # Function being patched
+    target_address: u64              # Runtime address in target process
+    old_size:       u64              # Original function size
+    new_size:       u64              # New function size
+    status:         i32              # 0=pending, 1=applied, 2=failed, 3=reverted
+    error_msg:      string[256]      # Error message if failed
+    timestamp:      u64              # When patch was created/applied
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Session State
+# ══════════════════════════════════════════════════════════════════════════════
+
+type LiveReloadSession {
+    state:          i32              # 0=idle, 1=watching, 2=compiling, 3=patching
+    target_pid:     i32              # Target process PID
+    target_exe:     string[256]      # Target executable path
+
+    # Statistics
+    changes_detected:   u64          # Total file changes
+    patches_generated:  u64          # Total patches created
+    patches_applied:    u64          # Successfully applied
+    patches_failed:     u64          # Failed to apply
+    patches_reverted:   u64          # Reverted patches
+
+    # Timing
+    last_change_time:   u64          # Last file change timestamp
+    last_compile_time:  u64          # Last successful compile
+    last_patch_time:    u64          # Last patch applied
+
+    cache_dir:      string[256]      # Cache directory path
+    num_cached:     u32              # Number of cached objects
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Compilation Result
+# ══════════════════════════════════════════════════════════════════════════════
+
+type CompileResult {
+    source_path:    string[256]      # Source file compiled
+    object_path:    string[256]      # Output object file
+    exit_code:      i32              # Compiler exit code
+    stdout_size:    u64              # Size of stdout
+    stderr_size:    u64              # Size of stderr
+    compile_time_ms: u64             # Time to compile
+    success:        i32              # 1 if successful
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Events
+# ══════════════════════════════════════════════════════════════════════════════
+
+type LiveReloadEvent {
+    event_type:     i32              # Event type enum
+    timestamp:      u64              # When event occurred
+    file_path:      string[256]      # Related file path
+    function_name:  string[64]       # Related function
+    patch_id:       u32              # Related patch ID
+    patch_address:  u64              # Patch target address
+    patch_size:     u64              # Patch size
+    error_code:     i32              # Error code if applicable
+    error_msg:      string[256]      # Error message
+}
+
+# Event types:
+#   1 = FILE_CHANGE      - Source file modified
+#   2 = COMPILE_START    - Starting compilation
+#   3 = COMPILE_DONE     - Compilation succeeded
+#   4 = COMPILE_ERROR    - Compilation failed
+#   5 = DIFF_START       - Starting object diff
+#   6 = DIFF_DONE        - Diff complete
+#   7 = PATCH_GENERATED  - Patch created
+#   8 = PATCH_APPLIED    - Patch applied successfully
+#   9 = PATCH_FAILED     - Patch application failed
+#  10 = PATCH_REVERTED   - Patch was reverted
+#  11 = ICACHE_FLUSHED   - Instruction cache flushed

@@ -79,6 +79,21 @@ else
     echo "[lemon] Not built. Run 'make' first."
 fi
 
+# defgen (X-macro definitions)
+if [ -x "$BUILD_DIR/defgen" ]; then
+    echo "[defgen] Processing specs/**/*.def (X-macros)..."
+    find "$SPECS_DIR" -name "*.def" | while read -r spec; do
+        layer=$(basename "$(dirname "$spec")")
+        mkdir -p "$GEN_DIR/$layer"
+        name=$(basename "$spec" .def)
+        echo "  $spec → gen/$layer/${name}_defs.h"
+        "$BUILD_DIR/defgen" "$spec" "$GEN_DIR/$layer" "$name" 2>/dev/null || \
+            echo "    (skipped - defgen parse error)"
+    done
+else
+    echo "[defgen] Not built yet"
+fi
+
 # smgen (state machine generator)
 if [ -x "$BUILD_DIR/smgen" ]; then
     echo "[smgen] Processing specs/**/*.sm..."

@@ -153,6 +153,33 @@ jobs:
             done || echo "No feature files to validate"
           fi
 
+  # ── Live Reload (e9studio) ────────────────────────────────────────────────
+  livereload:
+    name: Live Reload
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install cosmocc
+        run: |
+          mkdir -p ~/.cosmocc
+          curl -sL https://cosmo.zip/pub/cosmocc/cosmocc.zip -o /tmp/cosmocc.zip
+          unzip -q /tmp/cosmocc.zip -d ~/.cosmocc
+          echo "$HOME/.cosmocc/bin" >> $GITHUB_PATH
+
+      - name: Build livereload tool
+        run: |
+          export CC=cosmocc
+          make tools regen e9studio
+
+      - name: Verify livereload
+        run: |
+          test -x build/livereload
+          echo "Livereload tool available for hot-patching"
+
   # ── Ring 2 Tools (Optional) ────────────────────────────────────────────────
   ring2:
     name: Ring 2 Tools

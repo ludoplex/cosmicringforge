@@ -70,6 +70,7 @@ run: $(TARGET)
 	./$(TARGET)
 
 # Live reload: hot-patch running binary
+# No sudo needed for processes you own (uses process_vm_writev)
 livereload: $(TARGET)
 	@PID=$$(pgrep -f "$(TARGET)"); \
 	if [ -z "$$PID" ]; then \
@@ -77,7 +78,7 @@ livereload: $(TARGET)
 		exit 1; \
 	fi; \
 	echo "Attaching live reload to PID $$PID..."; \
-	sudo $(FORGE_ROOT)/upstream/e9studio/test/livereload/livereload $$PID $(SRC_DIR)/main.c
+	$(FORGE_ROOT)/build/livereload $$PID $(SRC_DIR)/main.c
 
 # Build APE (Actually Portable Executable)
 ape: $(BUILD_DIR)/app.ape

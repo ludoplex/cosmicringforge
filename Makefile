@@ -73,7 +73,7 @@ GEN_SRCS := $(shell find $(GEN_DIR) -name '*.c' 2>/dev/null)
 SRC_SRCS := $(shell find $(SRC_DIR) -name '*.c' 2>/dev/null)
 VENDOR_SRCS := $(shell find $(VENDOR_DIR) -name '*.c' 2>/dev/null)
 
-.PHONY: all clean regen verify test tools help app run formats ape ring1 headers lint sanitize tsan
+.PHONY: all clean regen verify test tools help app run formats ape ring1 headers lint sanitize tsan e9studio livereload feedback dev
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Primary Targets
@@ -92,11 +92,17 @@ help:
 	@echo "│  make              Build Ring 0 tools + application                 │"
 	@echo "│  make regen        Regenerate all (auto-detect tools)               │"
 	@echo "│  make verify       Regen + drift check                              │"
-	@echo "│  make test         Run BDD tests                                    │"
-	@echo "│  make clean        Remove build artifacts                           │"
+	@echo "│  make e9studio     Build live reload tool                           │"
+	@echo "│  make feedback     Ring 0→1→2 feedback loop                         │"
+	@echo "│  make dev          Watch specs, auto-regen on change                │"
 	@echo "│  make formats      Show discovered formats                          │"
 	@echo "├─────────────────────────────────────────────────────────────────────┤"
+	@echo "│  Ring 0: .schema→types  .def→X-macros  .sm→FSM  .y→parser           │"
+	@echo "│  Ring 1: makeheaders, sanitizers, cppcheck                          │"
+	@echo "│  Ring 2: StateSmith, protobuf-c (outputs committed)                 │"
+	@echo "├─────────────────────────────────────────────────────────────────────┤"
 	@echo "│  Workflow: edit spec → make regen → make verify → make → commit     │"
+	@echo "│  Live:     make run (T1) → make feedback --app (T2) → edit (T3)     │"
 	@echo "└─────────────────────────────────────────────────────────────────────┘"
 
 formats:
@@ -135,7 +141,7 @@ formats:
 # Ring 0 Tools (always build these first)
 # ══════════════════════════════════════════════════════════════════════════════
 
-RING0_TOOLS := $(BUILD_DIR)/schemagen $(BUILD_DIR)/lemon
+RING0_TOOLS := $(BUILD_DIR)/schemagen $(BUILD_DIR)/lemon $(BUILD_DIR)/defgen $(BUILD_DIR)/smgen $(BUILD_DIR)/lexgen
 
 tools: $(BUILD_DIR) $(RING0_TOOLS)
 	@echo "Ring 0 tools ready"
@@ -148,6 +154,15 @@ $(BUILD_DIR)/schemagen: $(TOOLS_DIR)/schemagen.c | $(BUILD_DIR)
 
 $(BUILD_DIR)/lemon: $(TOOLS_DIR)/lemon.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $<
+
+$(BUILD_DIR)/defgen: $(TOOLS_DIR)/defgen/defgen.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -I$(TOOLS_DIR)/defgen -o $@ $<
+
+$(BUILD_DIR)/smgen: $(TOOLS_DIR)/smgen/smgen.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -I$(TOOLS_DIR)/smgen -o $@ $<
+
+$(BUILD_DIR)/lexgen: $(TOOLS_DIR)/lexgen/lexgen.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -I$(TOOLS_DIR)/lexgen -o $@ $<
 
 # Future Ring 0 tools (uncomment when implemented)
 # $(BUILD_DIR)/defgen: $(TOOLS_DIR)/defgen.c | $(BUILD_DIR)
@@ -212,6 +227,49 @@ sanitize: clean all
 tsan: CFLAGS += -fsanitize=thread -g
 tsan: clean all
 	@echo "Built with ThreadSanitizer"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# e9studio (Live Reload / Hot Patching)
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# e9studio provides hot-patching capabilities for APE binaries.
+# The livereload tool watches source files and patches running processes.
+#
+# See: upstream/e9studio/.claude/CLAUDE.md
+#
+# ══════════════════════════════════════════════════════════════════════════════
+
+E9STUDIO_DIR := upstream/e9studio
+E9PATCH_DIR := $(E9STUDIO_DIR)/src/e9patch
+E9LIVERELOAD_DIR := $(E9STUDIO_DIR)/test/livereload
+
+# e9studio livereload tool (uses unified procmem API)
+$(BUILD_DIR)/livereload: $(E9LIVERELOAD_DIR)/livereload.c $(E9PATCH_DIR)/e9procmem.c $(GEN_DIR)/domain/livereload_types.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -I$(E9PATCH_DIR) -I$(GEN_DIR)/domain -o $@ $^
+
+e9studio: $(BUILD_DIR)/livereload
+	@echo "e9studio livereload tool built"
+	@echo "  Hot-patch running processes without ptrace"
+	@echo "  Usage: $(BUILD_DIR)/livereload <PID> [source_file]"
+
+livereload: e9studio
+	@echo ""
+	@echo "Live Reload Ready"
+	@echo "────────────────────────────────────────────────────────────────────"
+	@echo "  1. Build and run your app: make run"
+	@echo "  2. In another terminal:    $(BUILD_DIR)/livereload \$$(pgrep app) src/main.c"
+	@echo "  3. Edit src/main.c and save - changes appear instantly!"
+	@echo ""
+	@echo "Note: No sudo needed for processes you own (uses process_vm_writev)"
+	@echo ""
+
+# Feedback loop: Ring 0→1→2 composability with live reload
+feedback:
+	@./scripts/feedback-loop.sh
+
+# Dev mode: watch specs and auto-regen
+dev:
+	@./scripts/feedback-loop.sh --specs
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Application (uses generated + handwritten code)

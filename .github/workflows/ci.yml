@@ -42,6 +42,12 @@ jobs:
           # APE binaries show as "DOS/MBR boot sector"
           file build/app | grep -iE "DOS|MBR|boot"
 
+      - name: Build e9studio livereload
+        run: |
+          export CC=cosmocc
+          make e9studio
+          test -x build/livereload
+
   # Native build as fallback verification
   native:
     runs-on: ubuntu-latest

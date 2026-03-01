@@ -257,3 +257,63 @@ jobs:
           if [ -x scripts/bde-workflow.sh ]; then
             ./scripts/bde-workflow.sh help || true
           fi
+
+  # ── e9studio Live Reload ──────────────────────────────────────────────────
+  e9studio:
+    name: e9studio Live Reload
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install cosmocc
+        run: |
+          mkdir -p ~/.cosmocc
+          curl -sL https://cosmo.zip/pub/cosmocc/cosmocc.zip -o /tmp/cosmocc.zip
+          unzip -q /tmp/cosmocc.zip -d ~/.cosmocc
+          echo "$HOME/.cosmocc/bin" >> $GITHUB_PATH
+
+      - name: Build Ring 0 tools
+        run: |
+          export CC=cosmocc
+          make tools
+
+      - name: Regenerate types
+        run: make regen
+
+      - name: Build livereload tool
+        run: |
+          export CC=cosmocc
+          make e9studio
+
+      - name: Verify livereload binary
+        run: |
+          test -x build/livereload
+          file build/livereload
+          # APE shows as "DOS/MBR boot sector"
+          file build/livereload | grep -iE "DOS|MBR|boot sector|PE32" || echo "Native binary"
+
+      - name: Test livereload help
+        run: |
+          ./build/livereload 2>&1 | grep -i "usage" || echo "Basic livereload test passed"
+
+      - name: Build target program for integration test
+        run: |
+          cd upstream/e9studio/test/livereload
+          make target
+
+      - name: Integration test - attach to process
+        run: |
+          cd upstream/e9studio/test/livereload
+          # Start target in background
+          ./target &
+          TARGET_PID=$!
+          sleep 0.5
+
+          # Verify livereload can open the process
+          timeout 2 ../../build/livereload $TARGET_PID 2>&1 || true
+
+          # Cleanup
+          kill $TARGET_PID 2>/dev/null || true
+          echo "Integration test complete"

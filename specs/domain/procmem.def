@@ -1,0 +1,84 @@
+// procmem.def — Process Memory API X-Macros
+// Format: Direct X-macro tables for #include expansion
+//
+// @version 1.0.0
+// Usage: #define X(name, val, str) ... then #include "procmem.def"
+
+// ════════════════════════════════════════════════════════════════════════════
+// Memory Access Flags - MEMACCESS_XMACRO(X)
+// X(name, value, string)
+// ════════════════════════════════════════════════════════════════════════════
+
+#ifndef MEMACCESS_XMACRO
+#define MEMACCESS_XMACRO(X) \
+    X(PROCMEM_READ,    0x01, "READ")    \
+    X(PROCMEM_WRITE,   0x02, "WRITE")   \
+    X(PROCMEM_EXECUTE, 0x04, "EXECUTE")
+#endif
+
+// ════════════════════════════════════════════════════════════════════════════
+// Operating System - PROCMEM_OS_XMACRO(X)
+// X(name, value, string)
+// ════════════════════════════════════════════════════════════════════════════
+
+#ifndef PROCMEM_OS_XMACRO
+#define PROCMEM_OS_XMACRO(X) \
+    X(PROCMEM_OS_UNKNOWN, 0, "unknown") \
+    X(PROCMEM_OS_LINUX,   1, "linux")   \
+    X(PROCMEM_OS_WINDOWS, 2, "windows") \
+    X(PROCMEM_OS_MACOS,   3, "macos")   \
+    X(PROCMEM_OS_BSD,     4, "bsd")
+#endif
+
+// ════════════════════════════════════════════════════════════════════════════
+// Architecture - PROCMEM_ARCH_XMACRO(X)
+// X(name, value, string)
+// ════════════════════════════════════════════════════════════════════════════
+
+#ifndef PROCMEM_ARCH_XMACRO
+#define PROCMEM_ARCH_XMACRO(X) \
+    X(PROCMEM_ARCH_UNKNOWN, 0, "unknown") \
+    X(PROCMEM_ARCH_X86_64,  1, "x86_64")  \
+    X(PROCMEM_ARCH_AARCH64, 2, "aarch64")
+#endif
+
+// ════════════════════════════════════════════════════════════════════════════
+// Status Codes - PROCMEM_STATUS_XMACRO(X)
+// X(name, value, string)
+// ════════════════════════════════════════════════════════════════════════════
+
+#ifndef PROCMEM_STATUS_XMACRO
+#define PROCMEM_STATUS_XMACRO(X) \
+    X(PROCMEM_OK,           0,  "ok")        \
+    X(PROCMEM_ERR_ACCESS,  -1,  "access")    \
+    X(PROCMEM_ERR_NOTFOUND,-2,  "notfound")  \
+    X(PROCMEM_ERR_PERM,    -3,  "perm")      \
+    X(PROCMEM_ERR_PLATFORM,-4,  "platform")
+#endif
+
+// ════════════════════════════════════════════════════════════════════════════
+// Memory Region Types - MEMREGION_XMACRO(X)
+// X(name, value, string)
+// ════════════════════════════════════════════════════════════════════════════
+
+#ifndef MEMREGION_XMACRO
+#define MEMREGION_XMACRO(X) \
+    X(MEMREGION_UNKNOWN, 0, "unknown") \
+    X(MEMREGION_CODE,    1, "code")    \
+    X(MEMREGION_DATA,    2, "data")    \
+    X(MEMREGION_STACK,   3, "stack")   \
+    X(MEMREGION_HEAP,    4, "heap")
+#endif
+
+// ════════════════════════════════════════════════════════════════════════════
+// Patch Status - PATCHSTATUS_XMACRO(X)
+// X(name, value, string)
+// ════════════════════════════════════════════════════════════════════════════
+
+#ifndef PATCHSTATUS_XMACRO
+#define PATCHSTATUS_XMACRO(X) \
+    X(PATCH_PENDING,  0, "pending")  \
+    X(PATCH_APPLIED,  1, "applied")  \
+    X(PATCH_FAILED,   2, "failed")   \
+    X(PATCH_REVERTED, 3, "reverted")
+#endif

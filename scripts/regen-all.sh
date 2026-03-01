@@ -108,6 +108,20 @@ else
     echo "[smgen] Not built yet"
 fi
 
+# hsmgen (hierarchical state machine generator)
+if [ -x "$BUILD_DIR/hsmgen" ]; then
+    echo "[hsmgen] Processing specs/**/*.hsm..."
+    find "$SPECS_DIR" -name "*.hsm" | while read -r spec; do
+        layer=$(basename "$(dirname "$spec")")
+        mkdir -p "$GEN_DIR/$layer"
+        echo "  $spec → gen/$layer/"
+        "$BUILD_DIR/hsmgen" "$spec" "$GEN_DIR/$layer" 2>/dev/null || \
+            echo "    (skipped - hsmgen parse error)"
+    done
+else
+    echo "[hsmgen] Not built yet"
+fi
+
 # bddgen (BDD test generator)
 if [ -x "$BUILD_DIR/bddgen" ]; then
     echo "[bddgen] Processing specs/**/*.feature..."

@@ -37,3 +37,18 @@
 [submodule "vendors/submodules/tedit-cosmo"]
 	path = vendors/submodules/tedit-cosmo
 	url = https://github.com/ludoplex/tedit-cosmo.git
+[submodule "vendors/submodules/StateSmith"]
+	path = vendors/submodules/StateSmith
+	url = https://github.com/StateSmith/StateSmith
+[submodule "vendors/submodules/eez-studio"]
+	path = vendors/submodules/eez-studio
+	url = https://github.com/eez-open/studio
+[submodule "vendors/submodules/lvgl"]
+	path = vendors/submodules/lvgl
+	url = https://github.com/lvgl/lvgl
+[submodule "vendors/submodules/protobuf-c"]
+	path = vendors/submodules/protobuf-c
+	url = https://github.com/protobuf-c/protobuf-c
+[submodule "vendors/submodules/OpenModelica"]
+	path = vendors/submodules/OpenModelica
+	url = https://github.com/OpenModelica/OpenModelica

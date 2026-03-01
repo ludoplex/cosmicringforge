@@ -1,39 +1,54 @@
-[submodule "upstream/awesome-cosmo"]
-	path = upstream/awesome-cosmo
+[submodule "vendors/submodules/awesome-cosmo"]
+	path = vendors/submodules/awesome-cosmo
 	url = https://github.com/ludoplex/awesome-cosmo.git
-[submodule "upstream/bsd"]
-	path = upstream/bsd
+[submodule "vendors/submodules/bsd"]
+	path = vendors/submodules/bsd
 	url = https://github.com/ludoplex/bsd.git
-[submodule "upstream/cosmo-bsd"]
-	path = upstream/cosmo-bsd
+[submodule "vendors/submodules/cosmo-bsd"]
+	path = vendors/submodules/cosmo-bsd
 	url = https://github.com/ludoplex/cosmo-bsd.git
-[submodule "upstream/cosmo-cross-sdk"]
-	path = upstream/cosmo-cross-sdk
+[submodule "vendors/submodules/cosmo-cross-sdk"]
+	path = vendors/submodules/cosmo-cross-sdk
 	url = https://github.com/ludoplex/cosmo-cross-sdk.git
-[submodule "upstream/cosmo-disasm"]
-	path = upstream/cosmo-disasm
+[submodule "vendors/submodules/cosmo-disasm"]
+	path = vendors/submodules/cosmo-disasm
 	url = https://github.com/ludoplex/cosmo-disasm.git
-[submodule "upstream/cosmo-gcc-plugin"]
-	path = upstream/cosmo-gcc-plugin
+[submodule "vendors/submodules/cosmo-gcc-plugin"]
+	path = vendors/submodules/cosmo-gcc-plugin
 	url = https://github.com/ludoplex/cosmo-gcc-plugin.git
-[submodule "upstream/cosmo-include"]
-	path = upstream/cosmo-include
+[submodule "vendors/submodules/cosmo-include"]
+	path = vendors/submodules/cosmo-include
 	url = https://github.com/ludoplex/cosmo-include.git
-[submodule "upstream/cosmo-sokol"]
-	path = upstream/cosmo-sokol
+[submodule "vendors/submodules/cosmo-sokol"]
+	path = vendors/submodules/cosmo-sokol
 	url = https://github.com/ludoplex/cosmo-sokol.git
-[submodule "upstream/cosmogfx"]
-	path = upstream/cosmogfx
+[submodule "vendors/submodules/cosmogfx"]
+	path = vendors/submodules/cosmogfx
 	url = https://github.com/ludoplex/cosmogfx.git
-[submodule "upstream/e9studio"]
-	path = upstream/e9studio
+[submodule "vendors/submodules/e9studio"]
+	path = vendors/submodules/e9studio
 	url = https://github.com/ludoplex/e9studio.git
-[submodule "upstream/ludoplex-binaryen"]
-	path = upstream/ludoplex-binaryen
+[submodule "vendors/submodules/ludoplex-binaryen"]
+	path = vendors/submodules/ludoplex-binaryen
 	url = https://github.com/ludoplex/binaryen.git
-[submodule "upstream/ludoplex-cosmo-bsd"]
-	path = upstream/ludoplex-cosmo-bsd
+[submodule "vendors/submodules/ludoplex-cosmo-bsd"]
+	path = vendors/submodules/ludoplex-cosmo-bsd
 	url = https://github.com/ludoplex/cosmo-bsd.git
-[submodule "upstream/tedit-cosmo"]
-	path = upstream/tedit-cosmo
+[submodule "vendors/submodules/tedit-cosmo"]
+	path = vendors/submodules/tedit-cosmo
 	url = https://github.com/ludoplex/tedit-cosmo.git
+[submodule "vendors/submodules/StateSmith"]
+	path = vendors/submodules/StateSmith
+	url = https://github.com/StateSmith/StateSmith
+[submodule "vendors/submodules/eez-studio"]
+	path = vendors/submodules/eez-studio
+	url = https://github.com/eez-open/studio
+[submodule "vendors/submodules/lvgl"]
+	path = vendors/submodules/lvgl
+	url = https://github.com/lvgl/lvgl
+[submodule "vendors/submodules/protobuf-c"]
+	path = vendors/submodules/protobuf-c
+	url = https://github.com/protobuf-c/protobuf-c
+[submodule "vendors/submodules/OpenModelica"]
+	path = vendors/submodules/OpenModelica
+	url = https://github.com/OpenModelica/OpenModelica

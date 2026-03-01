@@ -476,7 +476,7 @@ cosmicringforge/
 │   ├── defgen/
 │   ├── statesmith/             # Ring 2 imports
 │   └── protobuf/               # Ring 2 imports
-├── vendor/                     # Vendored libraries
+├── vendors/libs/                     # Vendored libraries
 │   ├── sqlite/sqlite3.c
 │   ├── civetweb/
 │   ├── nuklear/
@@ -537,7 +537,7 @@ native:         PROFILE=portable build
 
 | Web Dev Has... | This Stack Has... |
 |----------------|-------------------|
-| `npm install` | `cp lib.h vendor/` |
+| `npm install` | `cp lib.h vendors/libs/` |
 | Hot reload | `make && ./app.com` (< 1s) |
 | Package.json | Makefile (simpler) |
 | React components | Nuklear panels (less code) |

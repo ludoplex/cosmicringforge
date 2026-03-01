@@ -35,8 +35,8 @@ This document ensures the repository can be deployed as a **GitHub template** wi
 | **AddressSanitizer** | Debug | Compiler | Memory checks | `make sanitize` | Valgrind |
 | **UBSan** | Debug | Compiler | UB detection | `make sanitize` | Manual review |
 | **cppcheck** | Analyzer | System | Static analysis | `make lint` | Manual review |
-| **cosmo-disasm** | Disasm | `upstream/cosmo-disasm/` | Debug | `make disasm` | objdump |
-| **cosmo-gcc-plugin** | Compiler | `upstream/cosmo-gcc-plugin/` | APE optimize | Optional | None |
+| **cosmo-disasm** | Disasm | `vendors/cosmo-disasm/` | Debug | `make disasm` | objdump |
+| **cosmo-gcc-plugin** | Compiler | `vendors/cosmo-gcc-plugin/` | APE optimize | Optional | None |
 
 ### Ring 2: Authoring Appliances (External toolchains)
 
@@ -47,22 +47,22 @@ This document ensures the repository can be deployed as a **GitHub template** wi
 | **EEZ Studio** | UI Editor | `foss-visual/vendor/eez-studio/` | Node.js | UI → C | `make gen-eez` |
 | **LVGL** | UI Lib | `foss-visual/vendor/lvgl/` | C | GUI runtime | Linked directly |
 | **OpenModelica** | Simulator | `foss-visual/vendor/openmodelica/` | C++/OCaml | Model → C | `make gen-modelica` |
-| **Binaryen** | WASM Opt | `upstream/ludoplex-binaryen/` | C++ | WASM optimize | `make gen-wasm` |
-| **WAMR** | WASM RT | `upstream/e9studio/.../wamr/` | C | WASM execute | Linked directly |
+| **Binaryen** | WASM Opt | `vendors/ludoplex-binaryen/` | C++ | WASM optimize | `make gen-wasm` |
+| **WAMR** | WASM RT | `vendors/e9studio/.../wamr/` | C | WASM execute | Linked directly |
 
 ### Outside Rings: Upstream Components
 
 | Component | Category | Path | Purpose | Orchestration |
 |-----------|----------|------|---------|---------------|
-| **e9studio** | IDE | `upstream/e9studio/` | Binary patching IDE | `make e9studio` |
-| **cosmo-sokol** | Graphics | `upstream/cosmo-sokol/` | Cross-platform graphics | Linked |
-| **cosmo-bsd** | BSD libs | `upstream/cosmo-bsd/` | BSD utilities | Linked |
-| **cosmogfx** | Graphics | `upstream/cosmogfx/` | GPU abstraction | Linked |
-| **tedit-cosmo** | Editor | `upstream/tedit-cosmo/` | Text editor | Standalone |
-| **cosmo-include** | Headers | `upstream/cosmo-include/` | Cosmo headers | Include path |
-| **cosmo-cross-sdk** | SDK | `upstream/cosmo-cross-sdk/` | Cross-compile | `make cross` |
-| **awesome-cosmo** | Reference | `upstream/awesome-cosmo/` | Curated list | Documentation |
-| **ludoplex-cosmo-bsd** | BSD | `upstream/ludoplex-cosmo-bsd/` | BSD ports | Optional |
+| **e9studio** | IDE | `vendors/e9studio/` | Binary patching IDE | `make e9studio` |
+| **cosmo-sokol** | Graphics | `vendors/cosmo-sokol/` | Cross-platform graphics | Linked |
+| **cosmo-bsd** | BSD libs | `vendors/cosmo-bsd/` | BSD utilities | Linked |
+| **cosmogfx** | Graphics | `vendors/cosmogfx/` | GPU abstraction | Linked |
+| **tedit-cosmo** | Editor | `vendors/tedit-cosmo/` | Text editor | Standalone |
+| **cosmo-include** | Headers | `vendors/cosmo-include/` | Cosmo headers | Include path |
+| **cosmo-cross-sdk** | SDK | `vendors/cosmo-cross-sdk/` | Cross-compile | `make cross` |
+| **awesome-cosmo** | Reference | `vendors/awesome-cosmo/` | Curated list | Documentation |
+| **ludoplex-cosmo-bsd** | BSD | `vendors/ludoplex-cosmo-bsd/` | BSD ports | Optional |
 
 ---
 
@@ -218,7 +218,7 @@ template:
   preserve:
     - strict-purist/vendor/
     - foss-visual/vendor/
-    - upstream/
+    - vendors/
 
   # Directories to clear
   clear:

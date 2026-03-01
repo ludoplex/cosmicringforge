@@ -99,10 +99,10 @@ check_build "smgen" "smgen" || true
 check_build "bddgen" "bddgen" || true
 
 echo
-echo "Vendored libraries (vendor/):"
-check_dir "SQLite" "vendor/sqlite" || true
-check_dir "yyjson" "vendor/yyjson" || true
-check_dir "Nuklear" "vendor/nuklear" || true
+echo "Vendored libraries (vendors/libs/):"
+check_dir "SQLite" "vendors/libs/sqlite" || true
+check_dir "yyjson" "vendors/libs/yyjson" || true
+check_dir "Nuklear" "vendors/libs/nuklear" || true
 
 echo
 echo "APE toolchain:"

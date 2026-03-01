@@ -54,7 +54,7 @@ WASM:           Binaryen, WAMR
 cosmicringforge/
 ├── strict-purist/           # C + sh + make only
 │   ├── gen/                 # In-tree generators
-│   ├── vendor/              # Ring 0 libraries
+│   ├── vendors/libs/              # Ring 0 libraries
 │   │   ├── sqlite/
 │   │   ├── lemon/
 │   │   ├── nuklear/
@@ -68,13 +68,13 @@ cosmicringforge/
 │   ├── specs/               # .schema, .sm, .lex, .y
 │   └── src/
 ├── foss-visual/             # FOSS toolchain
-│   └── vendor/
+│   └── vendors/libs/
 │       ├── StateSmith/
 │       ├── protobuf-c/
 │       ├── eez-studio/
 │       ├── lvgl/
 │       └── openmodelica/
-├── upstream/                # External projects
+├── vendors/                # External projects
 │   ├── e9studio/            # Binary patching IDE
 │   ├── ludoplex-binaryen/   # WASM optimizer
 │   ├── cosmo-sokol/         # Graphics
@@ -147,4 +147,4 @@ git diff --exit-code gen/
 - [TOOLING.md](TOOLING.md) - Full tool details
 - [RING_CLASSIFICATION.md](RING_CLASSIFICATION.md) - Ring system
 - [strict-purist/](strict-purist/) - Pure C stack
-- [upstream/e9studio/AGENTS.md](upstream/e9studio/AGENTS.md) - e9studio context
+- [vendors/e9studio/AGENTS.md](vendors/e9studio/AGENTS.md) - e9studio context

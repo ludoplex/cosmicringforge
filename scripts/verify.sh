@@ -30,12 +30,12 @@ echo "════════════════════════�
 echo
 echo "── Checking for drift ─────────────────────────────────────────────────"
 
-# Check gen/ directory
-if git diff --quiet gen/ 2>/dev/null; then
-    echo "[OK]    gen/ is clean"
+# Check gen/ directory (exclude timestamp files from semantic drift check)
+if git diff --quiet -- gen/ ':(exclude)gen/**/GENERATOR_VERSION' ':(exclude)gen/*/GENERATOR_VERSION' ':(exclude)gen/REGEN_TIMESTAMP' 2>/dev/null; then
+    echo "[OK]    gen/ is clean (semantic check)"
 else
     echo "[FAIL]  Drift detected in gen/"
-    git diff --stat gen/
+    git diff --stat -- gen/ ':(exclude)gen/**/GENERATOR_VERSION' ':(exclude)gen/*/GENERATOR_VERSION' ':(exclude)gen/REGEN_TIMESTAMP'
     echo
     echo "Ring 2 outputs MUST be committed. Run:"
     echo "  git add gen/"

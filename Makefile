@@ -239,11 +239,11 @@ tsan: clean all
 # e9studio provides hot-patching capabilities for APE binaries.
 # The livereload tool watches source files and patches running processes.
 #
-# See: upstream/e9studio/.claude/CLAUDE.md
+# See: vendors/submodules/e9studio/.claude/CLAUDE.md
 #
 # ══════════════════════════════════════════════════════════════════════════════
 
-E9STUDIO_DIR := upstream/e9studio
+E9STUDIO_DIR := vendors/submodules/e9studio
 E9PATCH_DIR := $(E9STUDIO_DIR)/src/e9patch
 E9LIVERELOAD_DIR := $(E9STUDIO_DIR)/test/livereload
 

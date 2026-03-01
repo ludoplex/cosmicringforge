@@ -1,0 +1,83 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# shared-setup.yml - Reusable workflow for common CI steps
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# Extracted from repo-ci.yml and template-ci.yml to eliminate duplication.
+# Called via: uses: ./.github/workflows/shared-setup.yml
+#
+# Provides:
+#   - cosmocc installation
+#   - Ring 0 tools build
+#   - Regeneration from specs
+#
+# ══════════════════════════════════════════════════════════════════════════════
+
+name: Shared Setup
+
+on:
+  workflow_call:
+    inputs:
+      build-e9studio:
+        description: 'Build e9studio livereload tool'
+        required: false
+        default: false
+        type: boolean
+      run-verify:
+        description: 'Run drift verification'
+        required: false
+        default: false
+        type: boolean
+    outputs:
+      cosmocc-path:
+        description: 'Path to cosmocc'
+        value: ${{ jobs.setup.outputs.cosmocc-path }}
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      cosmocc-path: ${{ steps.cosmocc.outputs.path }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install cosmocc
+        id: cosmocc
+        run: |
+          mkdir -p ~/.cosmocc
+          curl -sL https://cosmo.zip/pub/cosmocc/cosmocc.zip -o /tmp/cosmocc.zip
+          unzip -q /tmp/cosmocc.zip -d ~/.cosmocc
+          echo "$HOME/.cosmocc/bin" >> $GITHUB_PATH
+          echo "path=$HOME/.cosmocc/bin" >> $GITHUB_OUTPUT
+
+      - name: Build Ring 0 tools
+        run: |
+          export CC=cosmocc
+          make tools
+
+      - name: Regenerate from specs
+        run: make regen
+
+      - name: Verify no drift
+        if: ${{ inputs.run-verify }}
+        run: make verify
+
+      - name: Build e9studio
+        if: ${{ inputs.build-e9studio }}
+        run: |
+          export CC=cosmocc
+          make e9studio
+
+      - name: Build application
+        run: |
+          export CC=cosmocc
+          make app
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ github.sha }}
+          path: |
+            build/
+          retention-days: 1

@@ -400,7 +400,7 @@ cosmicringforge/                    # Template repo
 │   ├── regen-all.sh
 │   ├── template-init.sh
 │   └── verify-tools.sh
-├── vendor/                         # Vendored libs
+├── vendors/libs/                         # Vendored libs
 ├── Makefile                        # Format-driven
 ├── README.md
 ├── INTEROP_MATRIX.md               # Format relationships
@@ -461,7 +461,7 @@ CONTRIBUTING.md                   # Repo contribution guide
 strict-purist/                    # Stack implementation
 foss-visual/                      # Stack implementation
 commercial/                       # Stack implementation
-upstream/                         # Upstream forks
+vendors/                         # Upstream forks
 templates/                        # Template examples
 examples/                         # Usage examples
 ```

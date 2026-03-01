@@ -103,7 +103,7 @@ Some generators have toolchain requirements that affect Ring classification:
 grep -r "GPL" LICENSES.md
 
 # Verify vendored licenses match expectations
-for f in vendor/*/LICENSE*; do
+for f in vendors/libs/*/LICENSE*; do
     echo "=== $f ==="
     head -5 "$f"
 done

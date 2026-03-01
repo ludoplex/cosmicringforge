@@ -122,7 +122,7 @@ cosmicringforge/
 │   └── simulink/      # .slx (commercial)
 ├── gen/               # Generated code (committed, drift-gated)
 ├── tools/             # Ring 0 generators (schemagen, etc.)
-├── vendor/            # Vendored C libraries
+├── vendors/libs/            # Vendored C libraries
 ├── src/               # Hand-written code
 ├── scripts/           # Automation (regen-all.sh)
 └── .claude/           # LLM context

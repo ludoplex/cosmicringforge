@@ -39,7 +39,7 @@
 
 **Outputs:** `.com` (APE) + `.wasm` (embeddable in ZipOS)
 
-**Local path:** `vendors/ludoplex-binaryen/`
+**Local path:** `vendors/submodules/ludoplex-binaryen/`
 
 ---
 
@@ -53,7 +53,7 @@
 | sokol_gfx.h | 3D graphics (Metal/D3D11/OpenGL/WebGPU) |
 | sokol_audio.h | Audio playback |
 
-**Local path:** `vendors/cosmo-sokol/`
+**Local path:** `vendors/submodules/cosmo-sokol/`
 
 ---
 
@@ -68,7 +68,7 @@
 | src/e9patch/ | Patching implementation |
 | specs/ | Spec files (.schema, .sm, .lex, .grammar) |
 
-**Local path:** `vendors/e9studio/`
+**Local path:** `vendors/submodules/e9studio/`
 
 ---
 
@@ -117,7 +117,7 @@
 ### tedit-cosmo
 **Text editor for Cosmopolitan (reference implementation).**
 
-**Local path:** `vendors/tedit-cosmo/`
+**Local path:** `vendors/submodules/tedit-cosmo/`
 
 ---
 

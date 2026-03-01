@@ -54,7 +54,7 @@ WASM:           Binaryen, WAMR
 cosmicringforge/
 ├── strict-purist/           # C + sh + make only
 │   ├── gen/                 # In-tree generators
-│   ├── vendor/              # Ring 0 libraries
+│   ├── vendors/libs/              # Ring 0 libraries
 │   │   ├── sqlite/
 │   │   ├── lemon/
 │   │   ├── nuklear/
@@ -68,7 +68,7 @@ cosmicringforge/
 │   ├── specs/               # .schema, .sm, .lex, .y
 │   └── src/
 ├── foss-visual/             # FOSS toolchain
-│   └── vendor/
+│   └── vendors/libs/
 │       ├── StateSmith/
 │       ├── protobuf-c/
 │       ├── eez-studio/

@@ -167,7 +167,7 @@ cosmicringforge/
 │   ├── glue/                   # Integration code
 │   └── platform/               # Platform-specific impl
 │
-├── vendor/                     # ══ VENDORED LIBRARIES ══
+├── vendors/libs/                     # ══ VENDORED LIBRARIES ══
 │   ├── sqlite/
 │   ├── nuklear/
 │   ├── sokol/
@@ -283,7 +283,7 @@ cosmicringforge/
 │                        COMPILATION PHASE                                 │
 │                                                                          │
 │   ┌─────────────────────────────────────────────────────────────────┐   │
-│   │   cosmocc -o app.com src/*.c gen/**/*.c vendor/**/*.c           │   │
+│   │   cosmocc -o app.com src/*.c gen/**/*.c vendors/libs/**/*.c           │   │
 │   │                                                                  │   │
 │   │   Output: Single APE binary                                      │   │
 │   │   Runs on: Linux, macOS, Windows, FreeBSD, OpenBSD, NetBSD      │   │

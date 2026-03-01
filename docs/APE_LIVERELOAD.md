@@ -2,7 +2,7 @@
 
 > **LLM Reference Document** - Detailed architecture for APE binary hot-patching.
 >
-> See also: `docs/ARCHITECTURE.md`, `vendors/e9studio/docs/`
+> See also: `docs/ARCHITECTURE.md`, `vendors/submodules/e9studio/docs/`
 
 ---
 
@@ -468,12 +468,12 @@ kill $(pgrep app)
 
 | Purpose | Path |
 |---------|------|
-| Test livereload | `vendors/e9studio/test/livereload/livereload.c` |
-| Full API | `vendors/e9studio/src/e9patch/e9livereload.c` |
-| API header | `vendors/e9studio/src/e9patch/e9livereload.h` |
-| APE parser | `vendors/e9studio/src/e9patch/e9ape.c` |
-| Procmem API | `vendors/e9studio/src/e9patch/e9procmem.h` |
-| RE notes | `vendors/e9studio/doc/ape-anatomy-analysis.md` |
+| Test livereload | `vendors/submodules/e9studio/test/livereload/livereload.c` |
+| Full API | `vendors/submodules/e9studio/src/e9patch/e9livereload.c` |
+| API header | `vendors/submodules/e9studio/src/e9patch/e9livereload.h` |
+| APE parser | `vendors/submodules/e9studio/src/e9patch/e9ape.c` |
+| Procmem API | `vendors/submodules/e9studio/src/e9patch/e9procmem.h` |
+| RE notes | `vendors/submodules/e9studio/doc/ape-anatomy-analysis.md` |
 
 ---
 

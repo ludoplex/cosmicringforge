@@ -361,7 +361,7 @@ project/
 │       ├── toolname.c    # Generator source
 │       ├── prefix_*.h    # Generated headers
 │       └── prefix_*.c    # Generated sources
-├── vendor/               # Third-party vendored code
+├── vendors/libs/               # Third-party vendored code
 ├── src/                  # Hand-written source (minimal)
 ├── tests/                # Test files
 ├── build/                # Artifacts (gitignored)

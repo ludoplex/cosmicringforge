@@ -400,7 +400,7 @@ cosmicringforge/                    # Template repo
 │   ├── regen-all.sh
 │   ├── template-init.sh
 │   └── verify-tools.sh
-├── vendor/                         # Vendored libs
+├── vendors/libs/                         # Vendored libs
 ├── Makefile                        # Format-driven
 ├── README.md
 ├── INTEROP_MATRIX.md               # Format relationships

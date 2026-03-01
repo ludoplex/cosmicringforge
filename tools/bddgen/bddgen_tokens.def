@@ -1,0 +1,30 @@
+/* bddgen_tokens.def — BDD Generator Token Definitions
+ *
+ * X-macro format: TOK(name, lexeme, kind, doc)
+ * Used by bddgen_self.h to generate token enum and tables
+ */
+
+/* Keywords */
+TOK(FEATURE,     "Feature:",    keyword, "Feature declaration")
+TOK(BACKGROUND,  "Background:", keyword, "Background section")
+TOK(SCENARIO,    "Scenario:",   keyword, "Scenario declaration")
+TOK(SCENARIO_OUTLINE, "Scenario Outline:", keyword, "Scenario outline with examples")
+TOK(EXAMPLES,    "Examples:",   keyword, "Examples table")
+TOK(GIVEN,       "Given",       keyword, "Given step")
+TOK(WHEN,        "When",        keyword, "When step")
+TOK(THEN,        "Then",        keyword, "Then step")
+TOK(AND,         "And",         keyword, "And step continuation")
+TOK(BUT,         "But",         keyword, "But step continuation")
+
+/* Literals */
+TOK(STRING,      "\"...\"",     literal, "Quoted string")
+TOK(NUMBER,      "[0-9]+",      literal, "Integer number")
+TOK(TAG,         "@...",        literal, "Tag annotation")
+TOK(PIPE,        "|",           literal, "Table column separator")
+TOK(COLON,       ":",           literal, "Colon separator")
+TOK(DOCSTRING,   "\"\"\"",      literal, "Docstring delimiter")
+TOK(PLACEHOLDER, "<...>",       literal, "Placeholder in outline")
+
+/* Identifiers */
+TOK(IDENT,       "[a-zA-Z_]+",  ident,   "Identifier")
+TOK(TEXT,        "...",         ident,   "Free-form text")

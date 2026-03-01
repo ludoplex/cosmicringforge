@@ -295,11 +295,13 @@ fi
 if [ "$VERIFY" = "1" ]; then
     echo
     echo "── Verification ────────────────────────────────────────────────────────"
-    if git diff --quiet "$GEN_DIR" 2>/dev/null; then
+    # Exclude timestamp-based files from drift check (GENERATOR_VERSION, REGEN_TIMESTAMP)
+    # These files contain build timestamps that will always differ
+    if git diff --quiet -- "$GEN_DIR" ':(exclude)gen/**/GENERATOR_VERSION' ':(exclude)gen/REGEN_TIMESTAMP' 2>/dev/null; then
         echo "[OK]    gen/ is clean (no uncommitted changes)"
     else
         echo "[FAIL]  gen/ has uncommitted changes:"
-        git diff --stat "$GEN_DIR"
+        git diff --stat -- "$GEN_DIR" ':(exclude)gen/**/GENERATOR_VERSION' ':(exclude)gen/REGEN_TIMESTAMP'
         exit 2
     fi
 fi

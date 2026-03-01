@@ -47,12 +47,12 @@ typedef struct {
     char exit_action[MAX_NAME];
     transition_t trans[MAX_TRANS];
     int trans_count;
-} mode_t;
+} msm_mode_t;
 
 typedef struct {
     char name[MAX_NAME];
     char default_mode[MAX_NAME];
-    mode_t modes[MAX_MODES];
+    msm_mode_t modes[MAX_MODES];
     int mode_count;
 } modal_t;
 
@@ -88,7 +88,7 @@ static int parse_msm(const char *filename) {
     }
 
     char line[MAX_LINE];
-    mode_t *current_mode = NULL;
+    msm_mode_t *current_mode = NULL;
 
     memset(&machine, 0, sizeof(machine));
 
@@ -263,7 +263,7 @@ static int generate_msm_c(const char *outdir, const char *prefix) {
     fprintf(out, "    switch (ctx->current) {\n");
 
     for (int i = 0; i < machine.mode_count; i++) {
-        mode_t *m = &machine.modes[i];
+        msm_mode_t *m = &machine.modes[i];
         char mode_upper[MAX_NAME];
         strncpy(mode_upper, m->name, MAX_NAME - 1);
         to_upper(mode_upper);

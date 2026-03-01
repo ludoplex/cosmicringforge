@@ -1,0 +1,31 @@
+# pricing.rules — Pricing business rules
+# Example rules spec for clipsgen
+
+rule ApplyGoldDiscount {
+    when {
+        ctx->order_total > 100
+        ctx->customer_tier == 2
+    }
+    then {
+        ctx->discount = 0.15
+    }
+}
+
+rule ApplySilverDiscount {
+    when {
+        ctx->order_total > 50
+        ctx->customer_tier == 1
+    }
+    then {
+        ctx->discount = 0.10
+    }
+}
+
+rule FreeShipping {
+    when {
+        ctx->order_total > 75
+    }
+    then {
+        ctx->shipping_cost = 0
+    }
+}

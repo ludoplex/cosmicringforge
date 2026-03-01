@@ -1,6 +1,6 @@
 # Project Context
 
-CosmicRingForge project using spec-driven development.
+cosmo-bde project using spec-driven development.
 
 ## Workflow
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 # ══════════════════════════════════════════════════════════════════════════════
-# meta-test.sh - Test CosmicRingForge generators and infrastructure
+# meta-test.sh - Test cosmo-bde generators and infrastructure
 # ══════════════════════════════════════════════════════════════════════════════
 #
 # This tests the REPO ITSELF, not template usage.
@@ -55,7 +55,7 @@ cd "$ROOT_DIR"
 mkdir -p "$TEST_DIR"
 
 echo "══════════════════════════════════════════════════════════════════════════════"
-echo " CosmicRingForge Meta-Tests (Repo Development)"
+echo " cosmo-bde Meta-Tests (Repo Development)"
 echo "══════════════════════════════════════════════════════════════════════════════"
 echo
 

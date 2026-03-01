@@ -1,5 +1,5 @@
 Feature: Ring 2 Tools - External Toolchains
-  As a developer using CosmicRingForge
+  As a developer using cosmo-bde
   I want to use Ring 2 visual authoring tools
   So that I can design state machines, protocols, and UIs visually
 

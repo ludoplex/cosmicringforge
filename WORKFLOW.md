@@ -1,4 +1,4 @@
-# CosmicRingForge Unified Workflow
+# cosmo-bde Unified Workflow
 
 > **Behavior Driven Engineering with Models** — BDE with Models.
 >
@@ -104,7 +104,7 @@ The regen script auto-detects which tools are available and uses them.
 ## The Canonical Directory Structure
 
 ```
-cosmicringforge/
+cosmo-bde/
 ├── specs/                      # ══ SOURCE OF TRUTH ══
 │   ├── domain/                 # Business domain models
 │   │   ├── entities.schema     # Core data types
@@ -850,7 +850,7 @@ verify_drift() {
 # ═══ Main ═════════════════════════════════════════════════════════════
 main() {
     log_info "═══════════════════════════════════════════════════════════"
-    log_info "CosmicRingForge Regeneration — Profile: $PROFILE"
+    log_info "cosmo-bde Regeneration — Profile: $PROFILE"
     log_info "═══════════════════════════════════════════════════════════"
 
     build_tools
@@ -1077,7 +1077,7 @@ echo "[OK]    Created: $SPEC_FILE"
 
 ```makefile
 # ═══════════════════════════════════════════════════════════════════════
-# CosmicRingForge Makefile
+# cosmo-bde Makefile
 # ═══════════════════════════════════════════════════════════════════════
 
 CC ?= cc
@@ -1147,7 +1147,7 @@ new-spec:
 # ═══ Help ═════════════════════════════════════════════════════════════
 
 help:
-	@echo "CosmicRingForge Build System"
+	@echo "cosmo-bde Build System"
 	@echo ""
 	@echo "Targets:"
 	@echo "  all      - Build APE binary (cosmocc)"

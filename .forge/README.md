@@ -1,12 +1,12 @@
-# .forge/ - CosmicRingForge Meta-Development
+# .forge/ - cosmo-bde Meta-Development
 
-**For developing CosmicRingForge ITSELF, not for template users.**
+**For developing cosmo-bde ITSELF, not for template users.**
 
 ## Two Protocols
 
 | You Are... | Use This | CI Workflow | Tests |
 |------------|----------|-------------|-------|
-| **Developing CosmicRingForge** | `.forge/` scripts | `repo-ci.yml` | `.forge/meta-test.sh` |
+| **Developing cosmo-bde** | `.forge/` scripts | `repo-ci.yml` | `.forge/meta-test.sh` |
 | **Using the template** | `scripts/` | `template-ci.yml` | `scripts/test.sh` |
 
 ## Meta Scripts

@@ -1,4 +1,4 @@
-# CosmicRingForge — Single Source of Truth Index
+# cosmo-bde — Single Source of Truth Index
 
 > **Purpose**: This document indexes ALL authoritative sources in the project.
 > When information conflicts, defer to the SSOT listed here.

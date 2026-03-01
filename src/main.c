@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════
- * CosmicRingForge — BDE with Models
+ * cosmo-bde — BDE with Models
  * Template main.c
  * ═══════════════════════════════════════════════════════════════════════
  */
@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
     (void)argc;
     (void)argv;
 
-    printf("CosmicRingForge — BDE with Models\n");
+    printf("cosmo-bde — BDE with Models\n");
     printf("Behavior Driven Engineering with Models\n\n");
 
     /* Use generated type */

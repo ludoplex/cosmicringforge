@@ -1,4 +1,4 @@
-# CosmicRingForge
+# cosmo-bde
 
 **Behavior Driven Engineering with Models** — BDE with Models.
 
@@ -9,7 +9,7 @@ All paths lead to C. All C compiles with cosmocc to Actually Portable Executable
 ┌─────────────────────────────────────────────────────────────────────────┐
 │  BDE with Models!                                              _o_     │
 │  Behavior Driven Engineering                                  / | \    │
-│  COSMICRINGFORGE                                               / \     │
+│  cosmo-bde                                               / \     │
 ├─────────────────────────────────────────────────────────────────────────┤
 │  WORKFLOW                                                               │
 │    Edit spec  →  make regen  →  git diff gen/  →  make  →  commit      │
@@ -25,8 +25,8 @@ All paths lead to C. All C compiles with cosmocc to Actually Portable Executable
 
 ```bash
 # Clone and build
-git clone https://github.com/ludoplex/cosmicringforge.git
-cd cosmicringforge
+git clone https://github.com/ludoplex/cosmo-bde.git
+cd cosmo-bde
 make
 
 # Run the example application
@@ -110,7 +110,7 @@ See [SPEC_TYPES.md](./SPEC_TYPES.md) for the complete list (15+ spec types).
 ## Directory Structure
 
 ```
-cosmicringforge/
+cosmo-bde/
 ├── specs/             # Source of truth (all spec types)
 │   ├── domain/        # .schema, .def, .rules
 │   ├── behavior/      # .sm, .hsm

@@ -1,6 +1,6 @@
 # Complete Format Interoperability Matrix
 
-**CosmicRingForge — BDE with Models**
+**cosmo-bde — BDE with Models**
 
 > **GROUND TRUTH DOCUMENT** — This is the single source of truth for format relationships.
 
@@ -8,7 +8,7 @@
 
 ## Required Reading
 
-Before working with CosmicRingForge, read these documents in order:
+Before working with cosmo-bde, read these documents in order:
 
 | Document | Purpose | Why Required |
 |----------|---------|--------------|

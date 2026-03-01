@@ -1,4 +1,4 @@
-# CosmicRingForge Stacks Reference
+# cosmo-bde Stacks Reference
 
 > **Behavior Driven Engineering with Models** — BDE with Models.
 >
@@ -444,7 +444,7 @@ fi
 ## Directory Structure
 
 ```
-cosmicringforge/
+cosmo-bde/
 ├── Makefile                    # The Orchestrator
 ├── schema/
 │   ├── app.schema              # X-macro truth (data + docs + flags)

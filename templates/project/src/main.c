@@ -1,5 +1,5 @@
 /*
- * main.c - CosmicRingForge Project Template
+ * main.c - cosmo-bde Project Template
  *
  * Uses generated types from specs/domain/app.schema
  */
@@ -12,7 +12,7 @@
 
 /* This function can be hot-patched with live reload */
 const char *get_greeting(void) {
-    return "Hello from CosmicRingForge!";
+    return "Hello from cosmo-bde!";
 }
 
 void print_config(const AppConfig *config) {

@@ -1,5 +1,5 @@
 Feature: Schema Generator (schemagen)
-  As a developer using CosmicRingForge
+  As a developer using cosmo-bde
   I want to define data types in .schema files
   So that I get consistent C structs with init/validate functions
 

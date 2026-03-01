@@ -3,7 +3,7 @@
 # verify-tools.sh - Verify all tools are available and working
 # ═══════════════════════════════════════════════════════════════════════════
 #
-# CosmicRingForge — BDE with Models
+# cosmo-bde — BDE with Models
 #
 # Checks each ring's tools and reports status.
 # Use this to verify a system is ready for development.
@@ -76,7 +76,7 @@ check_dir() {
 }
 
 echo "═══════════════════════════════════════════════════════════════════════"
-echo " CosmicRingForge — Tool Verification"
+echo " cosmo-bde — Tool Verification"
 echo "═══════════════════════════════════════════════════════════════════════"
 
 # ── Ring 0: Bootstrap ──────────────────────────────────────────────────────
@@ -231,7 +231,7 @@ echo "                           APE binary"
 echo
 
 if [ "$RING0_OK" = "1" ]; then
-    echo "System is ready for CosmicRingForge development."
+    echo "System is ready for cosmo-bde development."
     exit 0
 else
     echo "Install missing Ring 0 tools before proceeding."

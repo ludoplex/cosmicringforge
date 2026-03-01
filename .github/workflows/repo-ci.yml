@@ -1,5 +1,5 @@
 # ══════════════════════════════════════════════════════════════════════════════
-# repo-ci.yml - CI for developing CosmicRingForge ITSELF
+# repo-ci.yml - CI for developing cosmo-bde ITSELF
 # ══════════════════════════════════════════════════════════════════════════════
 #
 # This workflow tests the generators, documentation, and template system.

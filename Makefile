@@ -1,5 +1,5 @@
 # ══════════════════════════════════════════════════════════════════════════════
-# CosmicRingForge — BDE with Models
+# cosmo-bde — BDE with Models
 # Behavior Driven Engineering with Models
 # ══════════════════════════════════════════════════════════════════════════════
 #
@@ -81,12 +81,12 @@ VENDOR_SRCS := $(shell find $(VENDOR_DIR) -name '*.c' 2>/dev/null)
 
 all: tools app
 	@echo ""
-	@echo "CosmicRingForge — BDE with Models"
+	@echo "cosmo-bde — BDE with Models"
 	@echo "Build complete. Run 'make run' to execute."
 
 help:
 	@echo "┌─────────────────────────────────────────────────────────────────────┐"
-	@echo "│  CosmicRingForge — BDE with Models                                  │"
+	@echo "│  cosmo-bde — BDE with Models                                  │"
 	@echo "│  Behavior Driven Engineering with Models                            │"
 	@echo "├─────────────────────────────────────────────────────────────────────┤"
 	@echo "│  make              Build Ring 0 tools + application                 │"

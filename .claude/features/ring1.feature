@@ -1,5 +1,5 @@
 Feature: Ring 1 Tools - Velocity Layer
-  As a developer using CosmicRingForge
+  As a developer using cosmo-bde
   I want to use Ring 1 tools for enhanced productivity
   So that I can generate CLI parsers, analyze code, and debug efficiently
 

@@ -3,7 +3,7 @@
 # bde-workflow.sh - Behavior Driven Engineering Workflow
 # ══════════════════════════════════════════════════════════════════════════════
 #
-# CosmicRingForge — BDE with Models
+# cosmo-bde — BDE with Models
 #
 # This script implements the complete BDE workflow:
 #   1. Feature-first: Start with .feature specs (behavior)
@@ -49,7 +49,7 @@ banner() {
     echo "${CYAN}╔══════════════════════════════════════════════════════════════════════════╗${NC}"
     echo "${CYAN}║${NC}  ${BOLD}BDE with Models${NC}                                                        ${CYAN}║${NC}"
     echo "${CYAN}║${NC}  Behavior Driven Engineering                                             ${CYAN}║${NC}"
-    echo "${CYAN}║${NC}  CosmicRingForge                                                         ${CYAN}║${NC}"
+    echo "${CYAN}║${NC}  cosmo-bde                                                         ${CYAN}║${NC}"
     echo "${CYAN}╚══════════════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
 }

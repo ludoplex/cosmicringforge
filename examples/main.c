@@ -1,5 +1,5 @@
 /*
- * CosmicRingForge Example
+ * cosmo-bde Example
  * Demonstrates generated types from config.schema
  *
  * Build: make example
@@ -14,7 +14,7 @@
 int main(void)
 {
     printf("╔══════════════════════════════════════════════════════════════╗\n");
-    printf("║           CosmicRingForge - Example Application              ║\n");
+    printf("║           cosmo-bde - Example Application              ║\n");
     printf("╚══════════════════════════════════════════════════════════════╝\n\n");
 
     /* Initialize with defaults */

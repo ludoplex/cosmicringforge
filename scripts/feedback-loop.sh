@@ -134,7 +134,7 @@ watch_app() {
 
 full_loop() {
     echo "═══════════════════════════════════════════════════════════════════════"
-    echo "${CYAN}CosmicRingForge — Feedback Loop${NC}"
+    echo "${CYAN}cosmo-bde — Feedback Loop${NC}"
     echo "═══════════════════════════════════════════════════════════════════════"
     echo ""
 

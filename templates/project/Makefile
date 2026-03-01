@@ -1,4 +1,4 @@
-# CosmicRingForge Project Makefile
+# cosmo-bde Project Makefile
 #
 # Workflow: make regen → make verify → make → make run
 
@@ -14,7 +14,7 @@ GEN_DIR = gen/domain
 SPEC_DIR = specs/domain
 BUILD_DIR = build
 
-# CosmicRingForge root (adjust if installed elsewhere)
+# cosmo-bde root (adjust if installed elsewhere)
 FORGE_ROOT ?= $(HOME)/workspace/mbse-stacks
 
 # Sources
@@ -45,7 +45,7 @@ $(BUILD_DIR)/%.o: $(GEN_DIR)/%.c | $(BUILD_DIR)
 $(BUILD_DIR):
 	mkdir -p $@
 
-# Regenerate from specs (uses cosmicringforge tools)
+# Regenerate from specs (uses cosmo-bde tools)
 regen:
 	@echo "Regenerating from specs..."
 	@mkdir -p $(GEN_DIR)
@@ -93,7 +93,7 @@ clean:
 
 # Help
 help:
-	@echo "CosmicRingForge Project"
+	@echo "cosmo-bde Project"
 	@echo ""
 	@echo "Targets:"
 	@echo "  make          - Build native binary"

@@ -1,6 +1,6 @@
 # Complete File Format Interoperability Matrix
 
-**CosmicRingForge — BDE with Models**
+**cosmo-bde — BDE with Models**
 
 This document catalogs ALL file formats from ALL vendors and shows EXACTLY how each format can be used with every other format through the code generation pipeline.
 
@@ -330,7 +330,7 @@ This document catalogs ALL file formats from ALL vendors and shows EXACTLY how e
 │  OpenModelica (.mo)                                 │                   │
 │       ↓ omc                                         │                   │
 │       ↓                                             ↓                   │
-│  CosmicRingForge (.schema, .sm)              gen/domain/*.c             │
+│  cosmo-bde (.schema, .sm)              gen/domain/*.c             │
 │       ↓ Ring 0 generators                           │                   │
 │       ↓                                             │                   │
 │       └─────────────────────────────────────────────┴──> cosmocc ──> APE│

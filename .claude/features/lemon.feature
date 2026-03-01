@@ -1,5 +1,5 @@
 Feature: Lemon Parser Generator
-  As a developer using CosmicRingForge
+  As a developer using cosmo-bde
   I want to use Lemon for LALR(1) parsing
   So that I can generate efficient parsers for all spec formats
 

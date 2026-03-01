@@ -1,5 +1,5 @@
 # ══════════════════════════════════════════════════════════════════════════════
-# template-ci.yml - CI for projects USING CosmicRingForge as a template
+# template-ci.yml - CI for projects USING cosmo-bde as a template
 # ══════════════════════════════════════════════════════════════════════════════
 #
 # This is the workflow that template users get when they create a project.

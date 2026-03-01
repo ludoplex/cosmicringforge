@@ -1,4 +1,4 @@
-# CosmicRingForge Dogfooding Protocol
+# cosmo-bde Dogfooding Protocol
 
 > If you're not eating your own dog food, you're not cooking.
 

@@ -1,5 +1,5 @@
 Feature: Definition Generator (defgen)
-  As a developer using CosmicRingForge
+  As a developer using cosmo-bde
   I want to define constants, enums, and configs in .def files
   So that I get consistent, type-safe C code with X-Macro support
 

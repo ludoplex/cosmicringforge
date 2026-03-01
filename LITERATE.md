@@ -1,6 +1,6 @@
 # Literate Documentation System
 
-**CosmicRingForge — BDE with Models**
+**cosmo-bde — BDE with Models**
 
 ## The Enlightened Insight
 
@@ -367,7 +367,7 @@ echo "Run: make regen"
 Based on the format interoperability analysis, the GitHub template should be:
 
 ```
-cosmicringforge/                    # Template repo
+cosmo-bde/                    # Template repo
 ├── .github/
 │   ├── workflows/ci.yml            # Verify + build + test
 │   └── copilot-instructions.md     # → AGENTS.md
@@ -414,11 +414,11 @@ The key insight: **this structure IS the specification**. The Makefile discovers
 
 ## Two Protocols: Repo Development vs Template Usage
 
-CosmicRingForge has **two distinct workflows** with separate tooling:
+cosmo-bde has **two distinct workflows** with separate tooling:
 
 ### Protocol 1: Repo Development (this repo itself)
 
-For developing CosmicRingForge generators and infrastructure:
+For developing cosmo-bde generators and infrastructure:
 
 | Component | Purpose |
 |-----------|---------|
@@ -434,7 +434,7 @@ Edit generator → make tools → .forge/meta-test.sh → commit
 
 ### Protocol 2: Template Usage (after `template-init.sh`)
 
-For engineers using CosmicRingForge as a GitHub template:
+For engineers using cosmo-bde as a GitHub template:
 
 | Component | Purpose |
 |-----------|---------|

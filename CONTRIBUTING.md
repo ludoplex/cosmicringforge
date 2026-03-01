@@ -1,4 +1,4 @@
-# Contributing to CosmicRingForge
+# Contributing to cosmo-bde
 
 ## Two Protocols
 
@@ -6,18 +6,18 @@ There are TWO distinct protocols depending on what you're doing:
 
 | You Are... | Protocol | CI | Tests | Docs |
 |------------|----------|-----|-------|------|
-| **Developing CosmicRingForge** | Repo Protocol | `repo-ci.yml` | `.forge/meta-test.sh` | This file |
+| **Developing cosmo-bde** | Repo Protocol | `repo-ci.yml` | `.forge/meta-test.sh` | This file |
 | **Using the template** | Template Protocol | `template-ci.yml` | `scripts/test.sh` | `README.md` |
 
 ---
 
-## Repo Protocol (Developing CosmicRingForge)
+## Repo Protocol (Developing cosmo-bde)
 
 ### Setup
 
 ```bash
-git clone https://github.com/ludoplex/cosmicringforge.git
-cd cosmicringforge
+git clone https://github.com/ludoplex/cosmo-bde.git
+cd cosmo-bde
 chmod +x .forge/*.sh scripts/*.sh
 ./.forge/meta-test.sh  # Verify everything works
 ```
@@ -25,7 +25,7 @@ chmod +x .forge/*.sh scripts/*.sh
 ### Directory Structure (Repo Development)
 
 ```
-cosmicringforge/
+cosmo-bde/
 ├── .forge/                    # Meta tools (THIS repo only)
 │   ├── meta-test.sh           # Test generators
 │   ├── meta-audit.sh          # Audit format coverage
@@ -93,7 +93,7 @@ The `repo-ci.yml` workflow checks:
 
 ---
 
-## Template Protocol (Using CosmicRingForge)
+## Template Protocol (Using cosmo-bde)
 
 This is what template USERS do. Documented here for reference.
 
@@ -101,7 +101,7 @@ This is what template USERS do. Documented here for reference.
 
 ```bash
 # Use GitHub template or clone
-gh repo create my-project --template ludoplex/cosmicringforge
+gh repo create my-project --template ludoplex/cosmo-bde
 cd my-project
 ./scripts/template-init.sh my-project
 ```
@@ -222,5 +222,5 @@ git push origin v1.0.0
 
 ## Questions?
 
-- Issues: https://github.com/ludoplex/cosmicringforge/issues
-- Discussions: https://github.com/ludoplex/cosmicringforge/discussions
+- Issues: https://github.com/ludoplex/cosmo-bde/issues
+- Discussions: https://github.com/ludoplex/cosmo-bde/discussions

@@ -1,4 +1,4 @@
-# CosmicRingForge Architecture
+# cosmo-bde Architecture
 
 > **LLM Reference Document** - Comprehensive system architecture for AI assistants.
 >
@@ -10,7 +10,7 @@
 
 ```
 +-----------------------------------------------------------------------------+
-|                          COSMICRINGFORGE                                     |
+|                          cosmo-bde                                     |
 |                    "Behavior Driven Engineering with Models"                 |
 +-----------------------------------------------------------------------------+
 |                                                                              |
@@ -416,7 +416,7 @@ See `docs/APE_LIVERELOAD.md` for detailed live reload documentation.
 +-----------------------------------------------------------------------------+
 
 +===========================================================================+
-|               COSMICRINGFORGE (Meta Repository)                            |
+|               cosmo-bde (Meta Repository)                            |
 |               github.com/user/mbse-stacks                                  |
 +---------------------------------------------------------------------------+
 |   Purpose: Develop generators, test framework, maintain docs               |

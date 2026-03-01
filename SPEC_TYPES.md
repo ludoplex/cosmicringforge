@@ -1,4 +1,4 @@
-# CosmicRingForge Specification Types
+# cosmo-bde Specification Types
 
 > **BDE with Models** — Behavior Driven Engineering with Models.
 >

@@ -1,4 +1,4 @@
-# CosmicRingForge Project Template
+# cosmo-bde Project Template
 
 Spec-driven C development with live reload.
 

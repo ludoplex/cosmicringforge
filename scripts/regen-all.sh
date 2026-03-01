@@ -3,7 +3,7 @@
 # regen-all.sh - Regenerate all generated code from specs
 # ═══════════════════════════════════════════════════════════════════════════
 #
-# CosmicRingForge — BDE with Models
+# cosmo-bde — BDE with Models
 #
 # This script orchestrates ALL generators across ALL rings.
 # Ring 2 tools are auto-detected—available tools are used, missing are skipped.
@@ -38,7 +38,7 @@ done
 cd "$ROOT_DIR"
 
 echo "═══════════════════════════════════════════════════════════════════════"
-echo " CosmicRingForge — BDE with Models"
+echo " cosmo-bde — BDE with Models"
 echo " Regenerate All (auto-detecting tools)"
 echo "═══════════════════════════════════════════════════════════════════════"
 

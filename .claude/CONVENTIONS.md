@@ -581,4 +581,4 @@ schemagen supports multiple output formats for full composability:
 
 **Document Version**: 2.0.0
 **Last Updated**: 2026-02-28
-**Applies To**: cosmicringforge and all projects using this stack
+**Applies To**: cosmo-bde and all projects using this stack

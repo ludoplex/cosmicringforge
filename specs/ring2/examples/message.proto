@@ -6,7 +6,7 @@
 
 syntax = "proto3";
 
-package cosmicringforge;
+package cosmo-bde;
 
 // Import for timestamps
 import "google/protobuf/timestamp.proto";

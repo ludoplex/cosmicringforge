@@ -51,7 +51,7 @@ WASM:           Binaryen, WAMR
 ## Directory Map
 
 ```
-cosmicringforge/
+cosmo-bde/
 ├── strict-purist/           # C + sh + make only
 │   ├── gen/                 # In-tree generators
 │   ├── vendors/libs/              # Ring 0 libraries

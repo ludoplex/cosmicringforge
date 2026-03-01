@@ -1,4 +1,4 @@
-# X-Macros in CosmicRingForge
+# X-Macros in cosmo-bde
 
 > Define once. Expand everywhere.
 

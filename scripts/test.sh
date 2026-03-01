@@ -26,7 +26,7 @@ NC='\033[0m'
 cd "$ROOT_DIR"
 
 echo "══════════════════════════════════════════════════════════════════════════════"
-echo " CosmicRingForge — BDE with Models"
+echo " cosmo-bde — BDE with Models"
 echo " Test Runner"
 echo "══════════════════════════════════════════════════════════════════════════════"
 echo

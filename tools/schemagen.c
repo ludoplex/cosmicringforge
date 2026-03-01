@@ -2,7 +2,7 @@
  * schemagen — Schema-Driven Code Generator
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * CosmicRingForge — BDE with Models
+ * cosmo-bde — BDE with Models
  * Ring 0: Pure C, compiles with cosmocc to APE
  *
  * Generates multiple output formats from .schema specs:

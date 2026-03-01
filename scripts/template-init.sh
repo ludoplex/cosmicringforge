@@ -3,7 +3,7 @@
 # template-init.sh - Initialize project after cloning from GitHub template
 # ═══════════════════════════════════════════════════════════════════════════
 #
-# CosmicRingForge — BDE with Models
+# cosmo-bde — BDE with Models
 #
 # Usage: ./scripts/template-init.sh [project-name]
 #
@@ -53,7 +53,7 @@ check_tool() {
 # ── Main Flow ──────────────────────────────────────────────────────────────
 
 echo "═══════════════════════════════════════════════════════════════════════"
-echo " CosmicRingForge — BDE with Models"
+echo " cosmo-bde — BDE with Models"
 echo " Template Initialization"
 echo "═══════════════════════════════════════════════════════════════════════"
 echo

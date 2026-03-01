@@ -3,7 +3,7 @@
 # livereload.sh - Hot-patch running processes in real-time
 # ══════════════════════════════════════════════════════════════════════════════
 #
-# Part of CosmicRingForge (uses e9studio)
+# Part of cosmo-bde (uses e9studio)
 #
 # Usage:
 #   ./scripts/livereload.sh <app_name> [source_file]

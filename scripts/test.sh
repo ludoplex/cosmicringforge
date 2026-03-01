@@ -74,7 +74,7 @@ echo
 echo "── Generated Code Validation ────────────────────────────────────────────────"
 
 # Use vendored dependencies (yyjson, sqlite3) - always available
-VENDOR_DIR="$ROOT_DIR/vendor"
+VENDOR_DIR="$ROOT_DIR/vendors/libs"
 CFLAGS="-I$VENDOR_DIR"
 
 # Test all generated .c files using vendored deps

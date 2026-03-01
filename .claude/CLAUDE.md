@@ -31,7 +31,9 @@ The Makefile discovers formats, not lists files. Conventions derive from format 
 | Source | Generator | Output Pattern |
 |--------|-----------|----------------|
 | `.schema` | schemagen | `{name}_types.c,h` |
-| `.def` | defgen | `{name}_defs.c,h` |
+| `.def` (TOK) | defgen | `{name}_tokens.h` |
+| `.def` (TABLE) | defgen | `{name}_model.h` |
+| `.def` (X-macro) | direct #include | (no generator needed) |
 | `.sm` | smgen | `{name}_sm.c,h` |
 | `.hsm` | hsmgen | `{name}_hsm.c,h` |
 | `.lex` | lexgen | `{name}_lex.c,h` |

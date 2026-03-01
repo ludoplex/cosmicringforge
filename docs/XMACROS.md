@@ -2,6 +2,21 @@
 
 > Define once. Expand everywhere.
 
+## Implementation Status
+
+| Syntax | Status | Generator |
+|--------|--------|-----------|
+| `TOK(name, lexeme, kind, doc)` | **Implemented** | defgen → `_tokens.h` |
+| `TABLE/FIELD/TABLE_END` | **Implemented** | defgen → `_model.h` |
+| `SM_STATE/SM_TRANS` | **Implemented** | defgen (state machines) |
+| `#define NAME_XMACRO(X)` | **Implemented** | Direct #include (no generator needed) |
+| `enum Name { ... }` | *Planned* | High-level DSL → X-macro expansion |
+| `flags Name { ... }` | *Planned* | High-level DSL → X-macro expansion |
+
+**Current approach:** Write raw X-macro tables directly in `.def` files (see `procmem.def`).
+
+---
+
 X-Macros are a C preprocessor technique for maintaining consistency across related definitions. They eliminate redundancy by defining data once as a macro that takes another macro as its argument.
 
 ## The Problem X-Macros Solve

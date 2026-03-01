@@ -370,18 +370,39 @@ static void generate_header_guard(FILE *out, const char *guard) {
     fprintf(out, "#define %s\n\n", guard);
 }
 
-static const char *api_c_type(const char *spec_type) {
-    if (strcmp(spec_type, "string") == 0) return "char*";
-    if (strcmp(spec_type, "u8") == 0) return "uint8_t";
-    if (strcmp(spec_type, "u16") == 0) return "uint16_t";
-    if (strcmp(spec_type, "u32") == 0) return "uint32_t";
-    if (strcmp(spec_type, "u64") == 0) return "uint64_t";
-    if (strcmp(spec_type, "i8") == 0) return "int8_t";
-    if (strcmp(spec_type, "i16") == 0) return "int16_t";
-    if (strcmp(spec_type, "i32") == 0) return "int32_t";
-    if (strcmp(spec_type, "i64") == 0) return "int64_t";
-    if (strcmp(spec_type, "bool") == 0) return "int";
-    return spec_type;  /* Custom type */
+/* Store the current prefix for type lookup */
+static const char *current_prefix = NULL;
+
+static int is_custom_type(const char *spec_type) {
+    /* Check if it's one of the API-defined types */
+    for (int i = 0; i < api.type_count; i++) {
+        if (strcmp(api.types[i].name, spec_type) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* Return C type string - caller must use provided buffer for custom types */
+static void api_c_type_buf(const char *spec_type, char *buf, size_t buf_size) {
+    if (strcmp(spec_type, "string") == 0) { strncpy(buf, "char*", buf_size - 1); return; }
+    if (strcmp(spec_type, "u8") == 0) { strncpy(buf, "uint8_t", buf_size - 1); return; }
+    if (strcmp(spec_type, "u16") == 0) { strncpy(buf, "uint16_t", buf_size - 1); return; }
+    if (strcmp(spec_type, "u32") == 0) { strncpy(buf, "uint32_t", buf_size - 1); return; }
+    if (strcmp(spec_type, "u64") == 0) { strncpy(buf, "uint64_t", buf_size - 1); return; }
+    if (strcmp(spec_type, "i8") == 0) { strncpy(buf, "int8_t", buf_size - 1); return; }
+    if (strcmp(spec_type, "i16") == 0) { strncpy(buf, "int16_t", buf_size - 1); return; }
+    if (strcmp(spec_type, "i32") == 0) { strncpy(buf, "int32_t", buf_size - 1); return; }
+    if (strcmp(spec_type, "i64") == 0) { strncpy(buf, "int64_t", buf_size - 1); return; }
+    if (strcmp(spec_type, "bool") == 0) { strncpy(buf, "int", buf_size - 1); return; }
+    
+    /* Custom type - add prefix and _t suffix */
+    if (is_custom_type(spec_type) && current_prefix) {
+        snprintf(buf, buf_size, "%s_%s_t", current_prefix, spec_type);
+    } else {
+        strncpy(buf, spec_type, buf_size - 1);
+    }
+    buf[buf_size - 1] = '\0';
 }
 
 static int generate_api_h(const char *outdir, const char *prefix) {
@@ -405,6 +426,9 @@ static int generate_api_h(const char *outdir, const char *prefix) {
         return -1;
     }
 
+    /* Set current prefix for type lookup */
+    current_prefix = prefix;
+
     generate_header_guard(out, guard);
 
     fprintf(out, "#include <stdint.h>\n");
@@ -420,26 +444,50 @@ static int generate_api_h(const char *outdir, const char *prefix) {
         fprintf(out, "typedef struct {\n");
         for (int j = 0; j < t->field_count; j++) {
             field_t *f = &t->fields[j];
-            fprintf(out, "    %s %s;\n", api_c_type(f->c_type), f->name);
+            char type_buf[128];
+            api_c_type_buf(f->c_type, type_buf, sizeof(type_buf));
+            fprintf(out, "    %s %s;\n", type_buf, f->name);
         }
         fprintf(out, "} %s_%s_t;\n\n", prefix, t->name);
     }
 
-    /* Error codes */
+    /* Error codes - track unique errors to avoid duplicates */
+    char seen_errors[MAX_ENDPOINTS * MAX_ERRORS][MAX_NAME];
+    int seen_count = 0;
+
     fprintf(out, "/* Error codes */\n");
     fprintf(out, "typedef enum {\n");
     fprintf(out, "    %s_OK = 0,\n", prefix);
     fprintf(out, "    %s_ERR_INVALID_INPUT,\n", prefix);
     fprintf(out, "    %s_ERR_NOT_FOUND,\n", prefix);
     fprintf(out, "    %s_ERR_INTERNAL,\n", prefix);
-    /* Add custom errors from endpoints */
+    
+    /* Add base errors to seen list */
+    strncpy(seen_errors[seen_count++], "INVALID_INPUT", MAX_NAME - 1);
+    strncpy(seen_errors[seen_count++], "NOT_FOUND", MAX_NAME - 1);
+    strncpy(seen_errors[seen_count++], "INTERNAL", MAX_NAME - 1);
+    
+    /* Add custom errors from endpoints (deduplicated) */
     for (int i = 0; i < api.endpoint_count; i++) {
         endpoint_t *ep = &api.endpoints[i];
         for (int j = 0; j < ep->error_count; j++) {
             char upper[MAX_NAME];
             to_snake_case(ep->errors[j], upper, sizeof(upper));
             to_upper(upper);
-            fprintf(out, "    %s_ERR_%s,\n", prefix, upper);
+            
+            /* Check if already seen */
+            int is_duplicate = 0;
+            for (int k = 0; k < seen_count; k++) {
+                if (strcmp(seen_errors[k], upper) == 0) {
+                    is_duplicate = 1;
+                    break;
+                }
+            }
+            
+            if (!is_duplicate && seen_count < MAX_ENDPOINTS * MAX_ERRORS) {
+                strncpy(seen_errors[seen_count++], upper, MAX_NAME - 1);
+                fprintf(out, "    %s_ERR_%s,\n", prefix, upper);
+            }
         }
     }
     fprintf(out, "    %s_ERR_COUNT\n", prefix);

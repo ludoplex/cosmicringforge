@@ -27,7 +27,7 @@ typedef struct {
 } UserService_User_t;
 
 typedef struct {
-    User users;
+    UserService_User_t users;
     int32_t count;
     int32_t total;
 } UserService_UserList_t;
@@ -38,12 +38,7 @@ typedef enum {
     UserService_ERR_INVALID_INPUT,
     UserService_ERR_NOT_FOUND,
     UserService_ERR_INTERNAL,
-    UserService_ERR_INVALID_INPUT,
     UserService_ERR_ALREADY_EXISTS,
-    UserService_ERR_NOT_FOUND,
-    UserService_ERR_INVALID_INPUT,
-    UserService_ERR_NOT_FOUND,
-    UserService_ERR_NOT_FOUND,
     UserService_ERR_COUNT
 } UserService_error_t;
 

@@ -239,10 +239,13 @@ fi
 
 # ── Stamp Files ────────────────────────────────────────────────────────────
 
-echo
-echo "── Updating timestamps ───────────────────────────────────────────────────"
-date -u +"%Y-%m-%dT%H:%M:%SZ" > "$GEN_DIR/REGEN_TIMESTAMP"
-echo "  gen/REGEN_TIMESTAMP updated"
+# Skip timestamp update during verify to avoid false drift detection
+if [ "$VERIFY" != "1" ]; then
+    echo
+    echo "── Updating timestamps ───────────────────────────────────────────────────"
+    date -u +"%Y-%m-%dT%H:%M:%SZ" > "$GEN_DIR/REGEN_TIMESTAMP"
+    echo "  gen/REGEN_TIMESTAMP updated"
+fi
 
 # ── Verification ───────────────────────────────────────────────────────────
 

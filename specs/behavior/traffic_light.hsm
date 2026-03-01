@@ -1,0 +1,31 @@
+# TrafficLight Hierarchical State Machine
+# Example for hsmgen - demonstrates nested states and history
+
+machine TrafficLight {
+    initial: Operating.Red
+
+    state Operating {
+        initial: Red
+        on Fault -> Error
+
+        state Red {
+            entry: show_red()
+            on Timer -> Green
+        }
+
+        state Green {
+            entry: show_green()
+            on Timer -> Yellow
+        }
+
+        state Yellow {
+            entry: show_yellow()
+            on Timer -> Red
+        }
+    }
+
+    state Error {
+        entry: blink_all()
+        on Reset -> Operating.history
+    }
+}

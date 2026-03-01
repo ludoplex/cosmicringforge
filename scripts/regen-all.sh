@@ -108,6 +108,20 @@ else
     echo "[smgen] Not built yet"
 fi
 
+# hsmgen (hierarchical state machine generator)
+if [ -x "$BUILD_DIR/hsmgen" ]; then
+    echo "[hsmgen] Processing specs/**/*.hsm..."
+    find "$SPECS_DIR" -name "*.hsm" | while read -r spec; do
+        layer=$(basename "$(dirname "$spec")")
+        mkdir -p "$GEN_DIR/$layer"
+        echo "  $spec → gen/$layer/"
+        "$BUILD_DIR/hsmgen" "$spec" "$GEN_DIR/$layer" 2>/dev/null || \
+            echo "    (skipped - hsmgen parse error)"
+    done
+else
+    echo "[hsmgen] Not built yet"
+fi
+
 # bddgen (BDD test generator)
 if [ -x "$BUILD_DIR/bddgen" ]; then
     echo "[bddgen] Processing specs/**/*.feature..."
@@ -120,6 +134,20 @@ if [ -x "$BUILD_DIR/bddgen" ]; then
     done
 else
     echo "[bddgen] Not built yet"
+fi
+
+# apigen (API endpoint generator)
+if [ -x "$BUILD_DIR/apigen" ]; then
+    echo "[apigen] Processing specs/**/*.api..."
+    find "$SPECS_DIR" -name "*.api" | while read -r spec; do
+        layer=$(basename "$(dirname "$spec")")
+        mkdir -p "$GEN_DIR/$layer"
+        echo "  $spec → gen/$layer/"
+        "$BUILD_DIR/apigen" "$spec" "$GEN_DIR/$layer" 2>/dev/null || \
+            echo "    (skipped - apigen parse error)"
+    done
+else
+    echo "[apigen] Not built yet"
 fi
 
 # ── Ring 1 Generators (Velocity Tools - Auto-Detected) ───────────────────────

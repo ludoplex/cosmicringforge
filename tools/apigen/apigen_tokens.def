@@ -1,0 +1,37 @@
+/* apigen_tokens.def — API Generator Token Definitions
+ *
+ * X-macro format: TOK(name, lexeme, kind, doc)
+ * Used by apigen_self.h to generate token enum and tables
+ */
+
+/* Keywords */
+TOK(API,         "api",         keyword, "API declaration")
+TOK(ENDPOINT,    "endpoint",    keyword, "Endpoint declaration")
+TOK(TYPE,        "type",        keyword, "Type declaration")
+TOK(VERSION,     "version:",    keyword, "API version")
+TOK(TRANSPORT,   "transport:",  keyword, "Transport protocols")
+TOK(METHOD,      "method:",     keyword, "HTTP method")
+TOK(PATH,        "path:",       keyword, "URL path")
+TOK(REQUEST,     "request:",    keyword, "Request type")
+TOK(RESPONSE,    "response:",   keyword, "Response type")
+TOK(ERRORS,      "errors:",     keyword, "Error types")
+TOK(HANDLER,     "handler:",    keyword, "Handler function")
+
+/* HTTP methods */
+TOK(GET,         "GET",         method, "HTTP GET")
+TOK(POST,        "POST",        method, "HTTP POST")
+TOK(PUT,         "PUT",         method, "HTTP PUT")
+TOK(DELETE,      "DELETE",      method, "HTTP DELETE")
+TOK(PATCH,       "PATCH",       method, "HTTP PATCH")
+
+/* Operators */
+TOK(LBRACE,      "{",           operator, "Open brace")
+TOK(RBRACE,      "}",           operator, "Close brace")
+TOK(LBRACKET,    "[",           operator, "Open bracket")
+TOK(RBRACKET,    "]",           operator, "Close bracket")
+TOK(COLON,       ":",           operator, "Colon")
+TOK(COMMA,       ",",           operator, "Comma")
+
+/* Identifiers and literals */
+TOK(IDENT,       "[a-zA-Z_]+",  ident,   "Identifier")
+TOK(STRING,      "\"...\"",     literal, "Quoted string")

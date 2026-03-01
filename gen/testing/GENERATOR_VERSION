@@ -1,3 +1,6 @@
-defgen 1.0.0
+bddgen 1.0.0
 generated: 2026-03-01T21:21:41Z
 profile: portable
+features: 1
+scenarios: 15
+steps: 74

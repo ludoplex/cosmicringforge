@@ -1,0 +1,7 @@
+apigen 1.0.0
+generated: 2026-03-01T21:21:41Z
+profile: portable
+api: UserService
+version: 1.0
+endpoints: 5
+types: 4

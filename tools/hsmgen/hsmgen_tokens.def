@@ -1,0 +1,28 @@
+/* hsmgen_tokens.def — Hierarchical State Machine Generator Token Definitions
+ *
+ * X-macro format: TOK(name, lexeme, kind, doc)
+ * Used by hsmgen_self.h to generate token enum and tables
+ */
+
+/* Keywords */
+TOK(MACHINE,     "machine",     keyword, "Machine declaration")
+TOK(STATE,       "state",       keyword, "State declaration")
+TOK(INITIAL,     "initial:",    keyword, "Initial state marker")
+TOK(ENTRY,       "entry:",      keyword, "Entry action")
+TOK(EXIT,        "exit:",       keyword, "Exit action")
+TOK(ON,          "on",          keyword, "Event trigger")
+TOK(HISTORY,     "history",     keyword, "History state marker")
+
+/* Operators */
+TOK(ARROW,       "->",          operator, "Transition arrow")
+TOK(LBRACE,      "{",           operator, "Open brace")
+TOK(RBRACE,      "}",           operator, "Close brace")
+TOK(LBRACKET,    "[",           operator, "Open bracket (guard)")
+TOK(RBRACKET,    "]",           operator, "Close bracket")
+TOK(SLASH,       "/",           operator, "Action separator")
+TOK(DOT,         ".",           operator, "State path separator")
+TOK(LPAREN,      "(",           operator, "Open paren")
+TOK(RPAREN,      ")",           operator, "Close paren")
+
+/* Identifiers */
+TOK(IDENT,       "[a-zA-Z_]+",  ident,   "Identifier")

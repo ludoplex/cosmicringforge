@@ -1,0 +1,28 @@
+/* msmgen_tokens.def — Modal State Machine Generator tokens (self-hosted)
+ * Format: TOK(enum_name, lexeme, kind, doc)
+ */
+
+/* Keywords */
+TOK(MODAL,      "modal",      keyword, "Modal machine declaration")
+TOK(MODE,       "mode",       keyword, "Mode definition")
+TOK(SHARED,     "shared",     keyword, "Shared behavior")
+TOK(ON,         "on",         keyword, "Event trigger")
+TOK(ENTRY,      "entry",      keyword, "Entry action")
+TOK(EXIT,       "exit",       keyword, "Exit action")
+TOK(DEFAULT,    "default",    keyword, "Default mode")
+
+/* Operators */
+TOK(ARROW,      "->",         operator, "Mode transition")
+TOK(LBRACE,     "{",          operator, "Block open")
+TOK(RBRACE,     "}",          operator, "Block close")
+TOK(LPAREN,     "(",          operator, "Param open")
+TOK(RPAREN,     ")",          operator, "Param close")
+TOK(SEMI,       ";",          operator, "Statement end")
+
+/* Patterns */
+TOK(IDENT,      "[a-zA-Z_][a-zA-Z0-9_]*", identifier, "Identifier")
+TOK(CHAR,       "'.'",                     literal,    "Character literal")
+
+/* Skip */
+TOK(WS,         "[ \\t\\n]+", whitespace, "Whitespace")
+TOK(COMMENT,    "#[^\\n]*",   whitespace, "Line comment")

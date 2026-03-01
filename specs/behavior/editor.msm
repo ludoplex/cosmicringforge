@@ -1,0 +1,27 @@
+# editor.msm — Vi-like editor modes
+# Example modal state machine
+
+modal EditorModes {
+    default: Normal
+
+    mode Normal {
+        on i -> Insert
+        on v -> Visual
+        on : -> Command
+    }
+
+    mode Insert {
+        on ESC -> Normal
+    }
+
+    mode Visual {
+        on ESC -> Normal
+        on y -> Normal
+        on d -> Normal
+    }
+
+    mode Command {
+        on ENTER -> Normal
+        on ESC -> Normal
+    }
+}

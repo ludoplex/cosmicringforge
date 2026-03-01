@@ -28,6 +28,8 @@
 #include <ctype.h>
 #include <stdint.h>
 #include <time.h>
+#include <errno.h>
+#include <sys/stat.h>
 
 /* ── Self-hosted tokens (dogfooding) ─────────────────────────────── */
 #include "smgen_self.h"
@@ -526,6 +528,13 @@ static void generate_version(const char *outdir, const char *profile) {
     fclose(out);
 }
 
+static int ensure_output_dir(const char *outdir) {
+    if (!outdir || !*outdir) return 0;
+    if (mkdir(outdir, 0777) == 0 || errno == EEXIST) return 0;
+    perror("mkdir");
+    return -1;
+}
+
 /* ── Main ─────────────────────────────────────────────────────────── */
 
 static void print_usage(void) {
@@ -573,9 +582,9 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Parsed machine '%s': %d states, %d events, %d transitions\n",
             machine.name, machine.state_count, machine.event_count, machine.transition_count);
 
-    char cmd[MAX_PATH];
-    snprintf(cmd, sizeof(cmd), "mkdir -p %s", outdir);
-    system(cmd);
+    if (ensure_output_dir(outdir) != 0) {
+        return 1;
+    }
 
     if (generate_sm_h(outdir, prefix) != 0) return 1;
     if (generate_sm_c(outdir, prefix) != 0) return 1;

@@ -21,6 +21,8 @@
 #include <ctype.h>
 #include <stdint.h>
 #include <time.h>
+#include <errno.h>
+#include <sys/stat.h>
 
 /* ── Self-hosted tokens (dogfooding) ─────────────────────────────── */
 #include "lexgen_self.h"
@@ -389,6 +391,13 @@ static void generate_version(const char *outdir, const char *profile) {
     fclose(out);
 }
 
+static int ensure_output_dir(const char *outdir) {
+    if (!outdir || !*outdir) return 0;
+    if (mkdir(outdir, 0777) == 0 || errno == EEXIST) return 0;
+    perror("mkdir");
+    return -1;
+}
+
 /* ── Main ─────────────────────────────────────────────────────────── */
 
 static void print_usage(void) {
@@ -424,9 +433,9 @@ int main(int argc, char *argv[]) {
 
     fprintf(stderr, "Parsed %d tokens from %s\n", token_count, input);
 
-    char cmd[MAX_PATH];
-    snprintf(cmd, sizeof(cmd), "mkdir -p %s", outdir);
-    system(cmd);
+    if (ensure_output_dir(outdir) != 0) {
+        return 1;
+    }
 
     if (generate_lexer_h(outdir, prefix) != 0) return 1;
     if (generate_lexer_c(outdir, prefix) != 0) return 1;

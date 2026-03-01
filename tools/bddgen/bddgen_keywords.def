@@ -1,0 +1,19 @@
+// bddgen_keywords.def — Gherkin keyword definitions (self-hosted)
+// This .def file is DIRECTLY #include-able by bddgen itself
+//
+// Format: KW(enum_name, lexeme, kind, doc)
+// kind: section, step
+
+// Section keywords
+KW(FEATURE,    "Feature",          section, "Feature declaration")
+KW(BACKGROUND, "Background",       section, "Background steps shared by all scenarios")
+KW(SCENARIO,   "Scenario",         section, "Scenario declaration")
+KW(OUTLINE,    "Scenario Outline", section, "Parameterized scenario")
+KW(EXAMPLES,   "Examples",         section, "Example data table for Scenario Outline")
+
+// Step keywords
+KW(GIVEN,      "Given",            step,    "Precondition step")
+KW(WHEN,       "When",             step,    "Action step")
+KW(THEN,       "Then",             step,    "Assertion step")
+KW(AND,        "And",              step,    "Continuation step")
+KW(BUT,        "But",              step,    "Negation continuation step")

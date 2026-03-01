@@ -141,7 +141,7 @@ formats:
 # Ring 0 Tools (always build these first)
 # ══════════════════════════════════════════════════════════════════════════════
 
-RING0_TOOLS := $(BUILD_DIR)/schemagen $(BUILD_DIR)/lemon $(BUILD_DIR)/defgen $(BUILD_DIR)/smgen $(BUILD_DIR)/lexgen
+RING0_TOOLS := $(BUILD_DIR)/schemagen $(BUILD_DIR)/lemon $(BUILD_DIR)/defgen $(BUILD_DIR)/smgen $(BUILD_DIR)/lexgen $(BUILD_DIR)/bddgen
 
 tools: $(BUILD_DIR) $(RING0_TOOLS)
 	@echo "Ring 0 tools ready"
@@ -163,6 +163,9 @@ $(BUILD_DIR)/smgen: $(TOOLS_DIR)/smgen/smgen.c | $(BUILD_DIR)
 
 $(BUILD_DIR)/lexgen: $(TOOLS_DIR)/lexgen/lexgen.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -I$(TOOLS_DIR)/lexgen -o $@ $<
+
+$(BUILD_DIR)/bddgen: $(TOOLS_DIR)/bddgen/bddgen.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -I$(TOOLS_DIR)/bddgen -o $@ $<
 
 # Future Ring 0 tools (uncomment when implemented)
 # $(BUILD_DIR)/defgen: $(TOOLS_DIR)/defgen.c | $(BUILD_DIR)

@@ -1,0 +1,6 @@
+bddgen 1.0.0
+generated: 2026-03-01T21:06:46Z
+profile: portable
+feature: E9 Live Reload - Hot Patching APE Binaries
+scenarios: 15
+background_steps: 3

@@ -146,27 +146,45 @@ jobs:
           fi
 
   # ── Live Reload (e9studio) ────────────────────────────────────────────────
+  # NOTE: e9studio is a private submodule - this job will be skipped if unavailable
   livereload:
     name: Live Reload
     runs-on: ubuntu-latest
     needs: build
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+        # Don't use recursive - e9studio is private
+
+      - name: Check for e9studio submodule
+        id: check-submodule
+        run: |
+          if git submodule update --init vendors/submodules/e9studio 2>/dev/null; then
+            echo "available=true" >> $GITHUB_OUTPUT
+          else
+            echo "e9studio submodule not accessible (private repo)"
+            echo "available=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Setup cosmocc
+        if: steps.check-submodule.outputs.available == 'true'
         uses: ./.github/actions/setup-cosmocc
 
       - name: Build livereload tool
+        if: steps.check-submodule.outputs.available == 'true'
         run: |
           export CC=cosmocc
           make tools regen e9studio
 
       - name: Verify livereload
+        if: steps.check-submodule.outputs.available == 'true'
         run: |
           test -x build/livereload
           echo "Livereload tool available for hot-patching"
+
+      - name: Report skipped
+        if: steps.check-submodule.outputs.available != 'true'
+        run: echo "Live reload skipped (e9studio is a private submodule)"
 
   # ── Ring 2 Tools (Optional) ────────────────────────────────────────────────
   ring2:

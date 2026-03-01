@@ -671,8 +671,12 @@ static void print_usage(void) {
     fprintf(stderr, "bddgen %s — BDD Test Generator\n", BDDGEN_VERSION);
     fprintf(stderr, "\n");
     fprintf(stderr, "Usage: bddgen <feature.feature> [output_dir] [prefix]\n");
+    fprintf(stderr, "       bddgen --run <feature.feature> [more.feature ...]\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "Parses Gherkin .feature files and generates C test harness.\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "Options:\n");
+    fprintf(stderr, "  --run    Parse and report only, do not generate files\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "Output:\n");
     fprintf(stderr, "  <prefix>_bdd.h    — Test declarations, step prototypes\n");
@@ -684,6 +688,41 @@ int main(int argc, char *argv[]) {
     if (argc < 2) {
         print_usage();
         return 1;
+    }
+
+    /* --run mode: parse and report only, no file generation */
+    if (strcmp(argv[1], "--run") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Error: --run requires at least one .feature file\n");
+            return 1;
+        }
+        int total_features = 0, total_scenarios = 0, total_steps = 0;
+        for (int i = 2; i < argc; i++) {
+            /* Reset state for each file */
+            feature_count = 0;
+            step_count = 0;
+
+            if (parse_feature(argv[i]) != 0) {
+                fprintf(stderr, "Error: Failed to parse %s\n", argv[i]);
+                continue;
+            }
+            for (int f = 0; f < feature_count; f++) {
+                printf("Feature: %s (%d scenario(s), %d background step(s))\n",
+                       features[f].name, features[f].scenario_count,
+                       features[f].background_step_count);
+                for (int s = 0; s < features[f].scenario_count; s++) {
+                    printf("  Scenario: %s (%d step(s))\n",
+                           features[f].scenarios[s].name,
+                           features[f].scenarios[s].step_count);
+                }
+                total_scenarios += features[f].scenario_count;
+            }
+            total_features += feature_count;
+            total_steps += step_count;
+        }
+        printf("\nTotal: %d feature(s), %d scenario(s), %d step(s)\n",
+               total_features, total_scenarios, total_steps);
+        return 0;
     }
 
     const char *input = argv[1];

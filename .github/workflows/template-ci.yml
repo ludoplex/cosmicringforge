@@ -37,12 +37,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install cosmocc
-        run: |
-          mkdir -p ~/.cosmocc
-          curl -sL https://cosmo.zip/pub/cosmocc/cosmocc.zip -o /tmp/cosmocc.zip
-          unzip -q /tmp/cosmocc.zip -d ~/.cosmocc
-          echo "$HOME/.cosmocc/bin" >> $GITHUB_PATH
+      - name: Setup cosmocc
+        uses: ./.github/actions/setup-cosmocc
 
       - name: Build Ring 0 tools (cosmocc)
         run: |
@@ -91,12 +87,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install cosmocc
-        run: |
-          mkdir -p ~/.cosmocc
-          curl -L https://cosmo.zip/pub/cosmocc/cosmocc.zip -o /tmp/cosmocc.zip
-          unzip -q /tmp/cosmocc.zip -d ~/.cosmocc
-          echo "$HOME/.cosmocc/bin" >> $GITHUB_PATH
+      - name: Setup cosmocc
+        uses: ./.github/actions/setup-cosmocc
 
       - name: Build APE binary
         run: |
@@ -163,12 +155,8 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install cosmocc
-        run: |
-          mkdir -p ~/.cosmocc
-          curl -sL https://cosmo.zip/pub/cosmocc/cosmocc.zip -o /tmp/cosmocc.zip
-          unzip -q /tmp/cosmocc.zip -d ~/.cosmocc
-          echo "$HOME/.cosmocc/bin" >> $GITHUB_PATH
+      - name: Setup cosmocc
+        uses: ./.github/actions/setup-cosmocc
 
       - name: Build livereload tool
         run: |

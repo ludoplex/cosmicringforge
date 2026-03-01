@@ -129,9 +129,7 @@ jobs:
         run: make run
 
       - name: Verify regen produces same output (drift check)
-        run: |
-          make regen
-          git diff --exit-code gen/ || (echo "Drift detected!" && exit 1)
+        run: make verify
 
   # ── Test Meta Scripts ──────────────────────────────────────────────────────
   meta-tests:
@@ -180,7 +178,8 @@ jobs:
 
       - name: Verify APE binary
         run: |
-          file build/app | grep -iE "portable|MS-DOS|PE32"
+          # APE shows as "DOS/MBR boot sector" with file command
+          file build/app | grep -iE "DOS|MBR|boot sector|portable|PE32"
 
   # ── Documentation Checks ───────────────────────────────────────────────────
   docs:

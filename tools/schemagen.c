@@ -734,7 +734,9 @@ int main(int argc, char *argv[]) {
 
     char cmd[512];
     snprintf(cmd, sizeof(cmd), "mkdir -p %s", outdir);
-    system(cmd);
+    if (system(cmd) != 0) {
+        fprintf(stderr, "Warning: mkdir -p %s may have failed\n", outdir);
+    }
 
     char path[512];
     char prefix_lower[MAX_NAME];

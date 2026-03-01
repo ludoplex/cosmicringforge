@@ -460,8 +460,13 @@ static void gen_json_impl(FILE *out, const char *prefix) {
             }
         }
 
-        fprintf(out, "\n    size_t len = yyjson_mut_write(doc, 0, buf, size, NULL);\n");
+        fprintf(out, "\n    size_t len = 0;\n");
+        fprintf(out, "    char *json_str = yyjson_mut_write(doc, 0, &len);\n");
         fprintf(out, "    yyjson_mut_doc_free(doc);\n");
+        fprintf(out, "    if (!json_str) return -1;\n");
+        fprintf(out, "    if (len >= size) { free(json_str); return -1; }\n");
+        fprintf(out, "    memcpy(buf, json_str, len + 1);\n");
+        fprintf(out, "    free(json_str);\n");
         fprintf(out, "    return (int)len;\n");
         fprintf(out, "}\n\n");
 

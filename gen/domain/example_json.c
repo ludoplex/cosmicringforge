@@ -15,8 +15,13 @@ int Example_to_json(const Example *obj, char *buf, size_t size) {
     yyjson_mut_obj_add_int(doc, root, "value", obj->value);
     yyjson_mut_obj_add_int(doc, root, "enabled", obj->enabled);
 
-    size_t len = yyjson_mut_write(doc, 0, buf, size, NULL);
+    size_t len = 0;
+    char *json_str = yyjson_mut_write(doc, 0, &len);
     yyjson_mut_doc_free(doc);
+    if (!json_str) return -1;
+    if (len >= size) { free(json_str); return -1; }
+    memcpy(buf, json_str, len + 1);
+    free(json_str);
     return (int)len;
 }
 

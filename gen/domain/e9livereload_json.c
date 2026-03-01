@@ -19,8 +19,13 @@ int E9LiveReloadConfig_to_json(const E9LiveReloadConfig *obj, char *buf, size_t 
     yyjson_mut_obj_add_uint(doc, root, "max_patch_size", obj->max_patch_size);
     yyjson_mut_obj_add_uint(doc, root, "max_pending_patches", obj->max_pending_patches);
 
-    size_t len = yyjson_mut_write(doc, 0, buf, size, NULL);
+    size_t len = 0;
+    char *json_str = yyjson_mut_write(doc, 0, &len);
     yyjson_mut_doc_free(doc);
+    if (!json_str) return -1;
+    if (len >= size) { free(json_str); return -1; }
+    memcpy(buf, json_str, len + 1);
+    free(json_str);
     return (int)len;
 }
 
@@ -70,8 +75,13 @@ int E9PatchState_to_json(const E9PatchState *obj, char *buf, size_t size) {
     yyjson_mut_obj_add_int(doc, root, "is_self_patch", obj->is_self_patch);
     yyjson_mut_obj_add_str(doc, root, "exe_path", obj->exe_path);
 
-    size_t len = yyjson_mut_write(doc, 0, buf, size, NULL);
+    size_t len = 0;
+    char *json_str = yyjson_mut_write(doc, 0, &len);
     yyjson_mut_doc_free(doc);
+    if (!json_str) return -1;
+    if (len >= size) { free(json_str); return -1; }
+    memcpy(buf, json_str, len + 1);
+    free(json_str);
     return (int)len;
 }
 
@@ -129,8 +139,13 @@ int E9PendingPatch_to_json(const E9PendingPatch *obj, char *buf, size_t size) {
     yyjson_mut_obj_add_str(doc, root, "error_msg", obj->error_msg);
     yyjson_mut_obj_add_uint(doc, root, "timestamp", obj->timestamp);
 
-    size_t len = yyjson_mut_write(doc, 0, buf, size, NULL);
+    size_t len = 0;
+    char *json_str = yyjson_mut_write(doc, 0, &len);
     yyjson_mut_doc_free(doc);
+    if (!json_str) return -1;
+    if (len >= size) { free(json_str); return -1; }
+    memcpy(buf, json_str, len + 1);
+    free(json_str);
     return (int)len;
 }
 
@@ -180,8 +195,13 @@ int E9LiveReloadSession_to_json(const E9LiveReloadSession *obj, char *buf, size_
     yyjson_mut_obj_add_str(doc, root, "cache_dir", obj->cache_dir);
     yyjson_mut_obj_add_uint(doc, root, "num_cached_objects", obj->num_cached_objects);
 
-    size_t len = yyjson_mut_write(doc, 0, buf, size, NULL);
+    size_t len = 0;
+    char *json_str = yyjson_mut_write(doc, 0, &len);
     yyjson_mut_doc_free(doc);
+    if (!json_str) return -1;
+    if (len >= size) { free(json_str); return -1; }
+    memcpy(buf, json_str, len + 1);
+    free(json_str);
     return (int)len;
 }
 
@@ -227,8 +247,13 @@ int E9CompilerInvocation_to_json(const E9CompilerInvocation *obj, char *buf, siz
     yyjson_mut_obj_add_uint(doc, root, "stderr_size", obj->stderr_size);
     yyjson_mut_obj_add_uint(doc, root, "compile_time_ms", obj->compile_time_ms);
 
-    size_t len = yyjson_mut_write(doc, 0, buf, size, NULL);
+    size_t len = 0;
+    char *json_str = yyjson_mut_write(doc, 0, &len);
     yyjson_mut_doc_free(doc);
+    if (!json_str) return -1;
+    if (len >= size) { free(json_str); return -1; }
+    memcpy(buf, json_str, len + 1);
+    free(json_str);
     return (int)len;
 }
 
@@ -269,8 +294,13 @@ int E9LiveReloadEvent_to_json(const E9LiveReloadEvent *obj, char *buf, size_t si
     yyjson_mut_obj_add_int(doc, root, "error_code", obj->error_code);
     yyjson_mut_obj_add_str(doc, root, "error_msg", obj->error_msg);
 
-    size_t len = yyjson_mut_write(doc, 0, buf, size, NULL);
+    size_t len = 0;
+    char *json_str = yyjson_mut_write(doc, 0, &len);
     yyjson_mut_doc_free(doc);
+    if (!json_str) return -1;
+    if (len >= size) { free(json_str); return -1; }
+    memcpy(buf, json_str, len + 1);
+    free(json_str);
     return (int)len;
 }
 

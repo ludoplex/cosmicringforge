@@ -1,0 +1,66 @@
+# objdiff.schema
+# Object File Diffing - Function-level binary comparison
+#
+# Used by live reload to detect which functions changed after recompilation.
+# Backends: Binaryen WASM (via WAMR) or native objdump fallback.
+#
+# @version 1.0.0
+# @generator schemagen
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Symbol Information
+# ══════════════════════════════════════════════════════════════════════════════
+
+type ObjSymbol {
+    name:       string[128]      # Symbol name
+    address:    u64              # Offset in object file
+    size:       u64              # Symbol size in bytes
+    type:       i32              # 0=unknown, 1=function, 2=data, 3=section
+    bind:       i32              # 0=local, 1=global, 2=weak
+    section:    string[32]       # Section name (.text, .data, etc.)
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Function Diff Result
+# ══════════════════════════════════════════════════════════════════════════════
+
+type FuncDiff {
+    name:       string[128]      # Function name
+    status:     i32              # 0=unchanged, 1=modified, 2=added, 3=removed
+    old_addr:   u64              # Address in old object
+    new_addr:   u64              # Address in new object
+    old_size:   u64              # Size in old object
+    new_size:   u64              # Size in new object
+    similarity: u32              # 0-100 percentage similarity (for modified)
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Diff Session
+# ══════════════════════════════════════════════════════════════════════════════
+
+type DiffSession {
+    old_path:   string[256]      # Old object file path
+    new_path:   string[256]      # New object file path
+    backend:    i32              # 0=objdump, 1=binaryen
+    status:     i32              # 0=pending, 1=complete, 2=error
+
+    # Statistics
+    total_funcs:     u32         # Total functions analyzed
+    unchanged_funcs: u32         # Functions with no changes
+    modified_funcs:  u32         # Functions with changes
+    added_funcs:     u32         # New functions
+    removed_funcs:   u32         # Deleted functions
+
+    error_msg:  string[256]      # Error message if status=2
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# WAMR Runtime State (for Binaryen backend)
+# ══════════════════════════════════════════════════════════════════════════════
+
+type WamrState {
+    initialized: i32             # Runtime initialized
+    module_path: string[256]     # Path to binaryen.wasm
+    memory_size: u64             # WASM linear memory size
+    error_msg:   string[256]     # Last error
+}

@@ -1,0 +1,64 @@
+# procmem.schema
+# Unified Process Memory API - Cross-platform hot-patching
+#
+# Backends:
+#   Linux:   process_vm_readv/writev (no ptrace, no stop required)
+#   Windows: ReadProcessMemory/WriteProcessMemory
+#   Self:    mprotect + direct access (for self-patching)
+#
+# @version 1.0.0
+# @generator schemagen
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Process Handle
+# ══════════════════════════════════════════════════════════════════════════════
+
+type ProcHandle {
+    pid:        i32              # Process ID (0 = self)
+    handle:     u64              # Platform handle (HANDLE on Windows, unused on Linux)
+    flags:      u32              # Access flags
+    error_code: i32              # Last error code
+    error_msg:  string[256]      # Last error message
+}
+
+# Flags
+#   PROCMEM_READ    = 0x01
+#   PROCMEM_WRITE   = 0x02
+#   PROCMEM_EXECUTE = 0x04
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Memory Region
+# ══════════════════════════════════════════════════════════════════════════════
+
+type MemRegion {
+    base:       u64              # Base address
+    size:       u64              # Region size
+    protect:    u32              # Protection flags (RWX)
+    type:       i32              # 0=unknown, 1=code, 2=data, 3=stack, 4=heap
+    name:       string[64]       # Region name (e.g., "[heap]", "libc.so")
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Patch Operation
+# ══════════════════════════════════════════════════════════════════════════════
+
+type PatchOp {
+    id:         u32              # Operation ID
+    address:    u64              # Target address
+    size:       u64              # Patch size
+    status:     i32              # 0=pending, 1=applied, 2=failed, 3=reverted
+    timestamp:  u64              # When applied
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Platform Info
+# ══════════════════════════════════════════════════════════════════════════════
+
+type PlatformInfo {
+    os:         i32              # 0=unknown, 1=linux, 2=windows, 3=macos, 4=bsd
+    arch:       i32              # 0=unknown, 1=x86_64, 2=aarch64
+    page_size:  u32              # Memory page size
+    can_remote: i32              # Can patch other processes
+    can_self:   i32              # Can self-patch (always 1)
+    backend:    string[32]       # "process_vm", "ptrace", "win32", "mach", "self"
+}

@@ -1,4 +1,43 @@
-# CosmicRingForge - LLM Context
+# BDE with Models - LLM Context
+
+## 🔒 IMMUTABLE: Directory Structure (DO NOT CHANGE)
+
+```
+bde-with-models/
+├── vendors/                    # ALL third-party code lives here
+│   ├── libs/                   # Single-file vendored libraries
+│   │   ├── sqlite3.c,h         #   - Public domain
+│   │   └── yyjson.c,h          #   - MIT
+│   └── submodules/             # Git submodules (external repos)
+│       ├── e9studio/           #   - Binary patching (ludoplex)
+│       ├── ludoplex-binaryen/  #   - WASM IR diffing
+│       ├── cosmo-sokol/        #   - GUI (Sokol + Nuklear)
+│       ├── StateSmith/         #   - Ring 2: State machines
+│       ├── eez-studio/         #   - Ring 2: Embedded GUI
+│       ├── lvgl/               #   - Ring 2: Graphics library
+│       ├── protobuf-c/         #   - Ring 2: Serialization
+│       └── OpenModelica/       #   - Ring 2: Simulation
+├── tools/                      # Ring 0 generators (Pure C)
+│   ├── ring1/                  #   - Ring 1 velocity tools
+│   └── *.c                     #   - schemagen, lexgen, etc.
+├── specs/                      # Human-authored specifications
+│   └── {layer}/*.{format}      #   - domain, behavior, parsing, etc.
+├── gen/                        # Generated code (committed)
+│   ├── {layer}/                #   - Mirrors specs/ structure
+│   └── imported/               #   - Ring 2 tool outputs
+├── model/                      # Ring 2 external tool sources
+├── src/                        # Application source code
+├── scripts/                    # Automation scripts
+└── templates/                  # Project templates
+```
+
+**This structure is FINAL. Do not create alternative directories like:**
+- ❌ `vendor/` (use `vendors/libs/`)
+- ❌ `upstream/` (use `vendors/submodules/`)
+- ❌ `foss-visual/vendor/` (use `vendors/submodules/`)
+- ❌ `third-party/`, `external/`, `deps/` (use `vendors/`)
+
+---
 
 ## 🚨 MANDATORY: Read Upstream Docs FIRST
 

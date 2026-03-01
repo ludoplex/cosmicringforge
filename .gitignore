@@ -3,19 +3,13 @@ build/
 *.o
 *.a
 
-# Large vendored repos (use submodules instead)
-foss-visual/vendor/*/
-strict-purist/vendor/clips/
-strict-purist/vendor/civetweb/
-strict-purist/vendor/nuklear/
-strict-purist/vendor/sqlite/
-strict-purist/vendor/e9patch/
-strict-purist/vendor/kilo/
-strict-purist/vendor/cosmopolitan/cosmocc.zip
+# Editor/IDE
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
 
-# Keep READMEs and small files
-!**/README.md
-!**/LICENSE*
-!strict-purist/vendor/lemon/
-!strict-purist/vendor/yyjson/
-!strict-purist/vendor/bin2c/
+# OS
+.DS_Store
+Thumbs.db

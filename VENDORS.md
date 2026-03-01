@@ -220,4 +220,4 @@ Check [jart/cosmopolitan/issues](https://github.com/jart/cosmopolitan/issues) be
 
 ---
 
-*Part of CosmicRingForge. Last updated: 2026-03-01*
+*Part of BDE with Models. Last updated: 2026-03-01*

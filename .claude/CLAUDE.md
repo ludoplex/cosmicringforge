@@ -81,24 +81,41 @@ Note: cosmocc bundles Clang 19 and GCC 14.1.0 - use `-mclang` for 3x faster C++ 
 
 **Platform issues exist** - check [VENDORS.md](../VENDORS.md) and [GitHub issues](https://github.com/jart/cosmopolitan/issues) before debugging.
 
-## Format → Output Mapping (Ring 0 Implemented)
-| Source | Generator | Output Pattern | Status |
-|--------|-----------|----------------|--------|
-| `.schema` | schemagen | `{name}_types.c,h` | ✅ Implemented |
-| `.def` (TOK) | defgen | `{name}_tokens.h` | ✅ Implemented |
-| `.def` (TABLE) | defgen | `{name}_model.h` | ✅ Implemented |
-| `.def` (X-macro) | direct #include | (no generator needed) | ✅ Native |
-| `.sm` | smgen | `{name}_sm.c,h` | ✅ Implemented |
-| `.hsm` | hsmgen | `{name}_hsm.c,h` | ✅ Implemented |
-| `.lex` | lexgen | `{name}_lex.c,h` | ✅ Implemented |
-| `.grammar` | Lemon | `{name}_parse.c,h` | ✅ Implemented |
-| `.ui` | uigen | `{name}_ui.c` (Nuklear) | ✅ Implemented |
-| `.feature` | bddgen | `{name}_bdd.c` | ✅ Implemented |
-| `.proto` | protoc | `{name}.pb-c.c,h` | Ring 2 |
-| `.drawio` | StateSmith | `{name}_sm.c,h` | Ring 2 |
+## Format → Output Mapping
 
-**Lemon Bindings Pattern:** lexgen + Lemon compose to parse ANY DSL → generate ANY target.
-All generators are self-hosted (use their own `*_self.h` + `*_tokens.def`).
+### Ring 0 (tools/)
+| Source | Generator | Output Pattern |
+|--------|-----------|----------------|
+| `.schema` | schemagen | `{name}_types.c,h` |
+| `.def` | defgen | `{name}_tokens.h`, `{name}_model.h` |
+| `.sm` | smgen | `{name}_sm.c,h` |
+| `.hsm` | hsmgen | `{name}_hsm.c,h` |
+| `.lex` | lexgen | `{name}_lex.c,h` |
+| `.grammar` | Lemon | `{name}_parse.c,h` |
+| `.ui` | uigen | `{name}_ui.c` (Nuklear) |
+| `.feature` | bddgen | `{name}_bdd.c` |
+
+### Ring 1 (tools/ring1/)
+| Source | Tool | Output |
+|--------|------|--------|
+| `.c` | makeheaders | `{name}.h` (auto-generated) |
+| `.ggo` | gengetopt | `{name}_cli.c,h` |
+| `.c` | cppcheck | lint report |
+| `.c` | ASan/UBSan/TSan | instrumented binary |
+
+### Ring 2 (model/ → gen/imported/)
+| Source | Tool | Output |
+|--------|------|--------|
+| `.drawio` | StateSmith | `{name}_sm.c,h` |
+| `.proto` | protobuf-c | `{name}.pb-c.c,h` |
+| `.mo` | OpenModelica | `{name}_sim.c,h` |
+| `.slx` | Simulink Coder | `{name}_ert.c,h` |
+| `.emx` | Rhapsody | `{name}_model.c,h` |
+| `.eez-project` | EEZ Studio | `{name}_gui.c,h` |
+| `.wat` | Binaryen/WAMR | `{name}_wasm.c,h` |
+
+**Lemon Bindings:** lexgen + Lemon compose to parse ANY DSL → generate ANY target.
+All Ring 0 generators are self-hosted (`*_self.h` + `*_tokens.def`).
 
 ## Directory Structure
 ```

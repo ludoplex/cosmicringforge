@@ -1,0 +1,44 @@
+/* sqlgen_tokens.def — SQL Schema Generator tokens (self-hosted)
+ * Format: TOK(enum_name, lexeme, kind, doc)
+ */
+
+/* Keywords */
+TOK(TABLE,      "table",      keyword, "Table definition")
+TOK(INDEX,      "index",      keyword, "Index definition")
+TOK(QUERY,      "query",      keyword, "Query definition")
+TOK(ON,         "on",         keyword, "Index target")
+TOK(PRIMARY,    "primary",    keyword, "Primary key")
+TOK(KEY,        "key",        keyword, "Key modifier")
+TOK(UNIQUE,     "unique",     keyword, "Unique constraint")
+TOK(NOT,        "not",        keyword, "Not modifier")
+TOK(NULL_KW,    "null",       keyword, "Null constraint")
+TOK(DEFAULT,    "default",    keyword, "Default value")
+TOK(REFERENCES, "references", keyword, "Foreign key")
+TOK(CASCADE,    "cascade",    keyword, "Cascade action")
+TOK(NOW,        "now",        keyword, "Current timestamp")
+
+/* Types */
+TOK(INTEGER,    "integer",    type, "Integer type")
+TOK(TEXT,       "text",       type, "Text type")
+TOK(REAL,       "real",       type, "Real/float type")
+TOK(BLOB,       "blob",       type, "Binary type")
+TOK(BOOLEAN,    "boolean",    type, "Boolean type")
+TOK(TIMESTAMP,  "timestamp",  type, "Timestamp type")
+
+/* Operators */
+TOK(LBRACE,     "{",          operator, "Block open")
+TOK(RBRACE,     "}",          operator, "Block close")
+TOK(LPAREN,     "(",          operator, "Param open")
+TOK(RPAREN,     ")",          operator, "Param close")
+TOK(COLON,      ":",          operator, "Type separator")
+TOK(COMMA,      ",",          operator, "List separator")
+TOK(ARROW,      "->",         operator, "Return type")
+
+/* Patterns */
+TOK(IDENT,      "[a-zA-Z_][a-zA-Z0-9_]*", identifier, "Identifier")
+TOK(NUMBER,     "[0-9]+",                  literal,    "Integer")
+TOK(STRING,     "\"[^\"]*\"",              literal,    "String literal")
+
+/* Skip */
+TOK(WS,         "[ \\t\\n]+", whitespace, "Whitespace")
+TOK(COMMENT,    "#[^\\n]*",   whitespace, "Line comment")

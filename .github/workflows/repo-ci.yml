@@ -288,12 +288,12 @@ jobs:
 
       - name: Build target program for integration test
         run: |
-          cd upstream/e9studio/test/livereload
+          cd vendors/e9studio/test/livereload
           make target
 
       - name: Integration test - attach to process
         run: |
-          cd upstream/e9studio/test/livereload
+          cd vendors/e9studio/test/livereload
           # Start target in background
           ./target &
           TARGET_PID=$!

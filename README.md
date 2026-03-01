@@ -148,7 +148,7 @@ Hot-patch running binaries in real-time. Edit C source, save, see changes instan
 ./build/app
 
 # Terminal 2: Attach live reload
-sudo ./upstream/e9studio/test/livereload/livereload $(pgrep app) src/main.c
+sudo ./vendors/e9studio/test/livereload/livereload $(pgrep app) src/main.c
 
 # Terminal 3: Edit and save
 vim src/main.c

@@ -1,39 +1,39 @@
-[submodule "upstream/awesome-cosmo"]
-	path = upstream/awesome-cosmo
+[submodule "vendors/awesome-cosmo"]
+	path = vendors/awesome-cosmo
 	url = https://github.com/ludoplex/awesome-cosmo.git
-[submodule "upstream/bsd"]
-	path = upstream/bsd
+[submodule "vendors/bsd"]
+	path = vendors/bsd
 	url = https://github.com/ludoplex/bsd.git
-[submodule "upstream/cosmo-bsd"]
-	path = upstream/cosmo-bsd
+[submodule "vendors/cosmo-bsd"]
+	path = vendors/cosmo-bsd
 	url = https://github.com/ludoplex/cosmo-bsd.git
-[submodule "upstream/cosmo-cross-sdk"]
-	path = upstream/cosmo-cross-sdk
+[submodule "vendors/cosmo-cross-sdk"]
+	path = vendors/cosmo-cross-sdk
 	url = https://github.com/ludoplex/cosmo-cross-sdk.git
-[submodule "upstream/cosmo-disasm"]
-	path = upstream/cosmo-disasm
+[submodule "vendors/cosmo-disasm"]
+	path = vendors/cosmo-disasm
 	url = https://github.com/ludoplex/cosmo-disasm.git
-[submodule "upstream/cosmo-gcc-plugin"]
-	path = upstream/cosmo-gcc-plugin
+[submodule "vendors/cosmo-gcc-plugin"]
+	path = vendors/cosmo-gcc-plugin
 	url = https://github.com/ludoplex/cosmo-gcc-plugin.git
-[submodule "upstream/cosmo-include"]
-	path = upstream/cosmo-include
+[submodule "vendors/cosmo-include"]
+	path = vendors/cosmo-include
 	url = https://github.com/ludoplex/cosmo-include.git
-[submodule "upstream/cosmo-sokol"]
-	path = upstream/cosmo-sokol
+[submodule "vendors/cosmo-sokol"]
+	path = vendors/cosmo-sokol
 	url = https://github.com/ludoplex/cosmo-sokol.git
-[submodule "upstream/cosmogfx"]
-	path = upstream/cosmogfx
+[submodule "vendors/cosmogfx"]
+	path = vendors/cosmogfx
 	url = https://github.com/ludoplex/cosmogfx.git
-[submodule "upstream/e9studio"]
-	path = upstream/e9studio
+[submodule "vendors/e9studio"]
+	path = vendors/e9studio
 	url = https://github.com/ludoplex/e9studio.git
-[submodule "upstream/ludoplex-binaryen"]
-	path = upstream/ludoplex-binaryen
+[submodule "vendors/ludoplex-binaryen"]
+	path = vendors/ludoplex-binaryen
 	url = https://github.com/ludoplex/binaryen.git
-[submodule "upstream/ludoplex-cosmo-bsd"]
-	path = upstream/ludoplex-cosmo-bsd
+[submodule "vendors/ludoplex-cosmo-bsd"]
+	path = vendors/ludoplex-cosmo-bsd
 	url = https://github.com/ludoplex/cosmo-bsd.git
-[submodule "upstream/tedit-cosmo"]
-	path = upstream/tedit-cosmo
+[submodule "vendors/tedit-cosmo"]
+	path = vendors/tedit-cosmo
 	url = https://github.com/ludoplex/tedit-cosmo.git

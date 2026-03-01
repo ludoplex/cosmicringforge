@@ -74,7 +74,7 @@ cosmicringforge/
 │       ├── eez-studio/
 │       ├── lvgl/
 │       └── openmodelica/
-├── upstream/                # External projects
+├── vendors/                # External projects
 │   ├── e9studio/            # Binary patching IDE
 │   ├── ludoplex-binaryen/   # WASM optimizer
 │   ├── cosmo-sokol/         # Graphics
@@ -147,4 +147,4 @@ git diff --exit-code gen/
 - [TOOLING.md](TOOLING.md) - Full tool details
 - [RING_CLASSIFICATION.md](RING_CLASSIFICATION.md) - Ring system
 - [strict-purist/](strict-purist/) - Pure C stack
-- [upstream/e9studio/AGENTS.md](upstream/e9studio/AGENTS.md) - e9studio context
+- [vendors/e9studio/AGENTS.md](vendors/e9studio/AGENTS.md) - e9studio context

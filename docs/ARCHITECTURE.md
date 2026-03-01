@@ -426,7 +426,7 @@ See `docs/APE_LIVERELOAD.md` for detailed live reload documentation.
 |   |   +-- defgen.c                                                         |
 |   |   +-- lempar.c                                                         |
 |   |                                                                        |
-|   +-- upstream/e9studio/      <- Live reload submodule                     |
+|   +-- vendors/e9studio/      <- Live reload submodule                     |
 |   |   +-- src/e9patch/                                                     |
 |   |   +-- specs/                                                           |
 |   |   +-- gen/                                                             |
@@ -514,7 +514,7 @@ sudo ./build/livereload $(pgrep app) src/main.c  # Attach live reload
 | Spec Types | `SPEC_TYPES.md` |
 | This Document | `docs/ARCHITECTURE.md` |
 | APE/LiveReload | `docs/APE_LIVERELOAD.md` |
-| e9studio | `upstream/e9studio/` |
+| e9studio | `vendors/e9studio/` |
 
 ---
 

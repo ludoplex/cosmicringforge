@@ -26,7 +26,7 @@
 
 ---
 
-## Priority 2: Local Vendor Repos (in upstream/)
+## Priority 2: Local Vendor Repos (in vendors/)
 
 ### ludoplex-binaryen
 **WASM-based IR for object diffing. Cosmopolitan-compatible.**
@@ -39,7 +39,7 @@
 
 **Outputs:** `.com` (APE) + `.wasm` (embeddable in ZipOS)
 
-**Local path:** `upstream/ludoplex-binaryen/`
+**Local path:** `vendors/ludoplex-binaryen/`
 
 ---
 
@@ -53,7 +53,7 @@
 | sokol_gfx.h | 3D graphics (Metal/D3D11/OpenGL/WebGPU) |
 | sokol_audio.h | Audio playback |
 
-**Local path:** `upstream/cosmo-sokol/`
+**Local path:** `vendors/cosmo-sokol/`
 
 ---
 
@@ -68,63 +68,63 @@
 | src/e9patch/ | Patching implementation |
 | specs/ | Spec files (.schema, .sm, .lex, .grammar) |
 
-**Local path:** `upstream/e9studio/`
+**Local path:** `vendors/e9studio/`
 
 ---
 
 ### cosmo-bsd / ludoplex-cosmo-bsd
 **BSD utilities ported to Cosmopolitan.**
 
-**Local paths:** `upstream/cosmo-bsd/`, `upstream/ludoplex-cosmo-bsd/`
+**Local paths:** `vendors/cosmo-bsd/`, `vendors/ludoplex-cosmo-bsd/`
 
 ---
 
 ### cosmo-disasm
 **Disassembler for APE binaries.**
 
-**Local path:** `upstream/cosmo-disasm/`
+**Local path:** `vendors/cosmo-disasm/`
 
 ---
 
 ### cosmo-gcc-plugin
 **GCC plugin for Cosmopolitan-specific optimizations.**
 
-**Local path:** `upstream/cosmo-gcc-plugin/`
+**Local path:** `vendors/cosmo-gcc-plugin/`
 
 ---
 
 ### cosmogfx
 **Graphics utilities for Cosmopolitan.**
 
-**Local path:** `upstream/cosmogfx/`
+**Local path:** `vendors/cosmogfx/`
 
 ---
 
 ### cosmo-include
 **Additional headers for Cosmopolitan.**
 
-**Local path:** `upstream/cosmo-include/`
+**Local path:** `vendors/cosmo-include/`
 
 ---
 
 ### cosmo-cross-sdk
 **Cross-compilation SDK.**
 
-**Local path:** `upstream/cosmo-cross-sdk/`
+**Local path:** `vendors/cosmo-cross-sdk/`
 
 ---
 
 ### tedit-cosmo
 **Text editor for Cosmopolitan (reference implementation).**
 
-**Local path:** `upstream/tedit-cosmo/`
+**Local path:** `vendors/tedit-cosmo/`
 
 ---
 
 ### awesome-cosmo
 **Curated list of Cosmopolitan resources.**
 
-**Local path:** `upstream/awesome-cosmo/`
+**Local path:** `vendors/awesome-cosmo/`
 
 ---
 

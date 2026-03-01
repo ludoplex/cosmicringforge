@@ -461,7 +461,7 @@ CONTRIBUTING.md                   # Repo contribution guide
 strict-purist/                    # Stack implementation
 foss-visual/                      # Stack implementation
 commercial/                       # Stack implementation
-upstream/                         # Upstream forks
+vendors/                         # Upstream forks
 templates/                        # Template examples
 examples/                         # Usage examples
 ```

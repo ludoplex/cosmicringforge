@@ -19,3 +19,4 @@ strict-purist/vendor/cosmopolitan/cosmocc.zip
 !strict-purist/vendor/lemon/
 !strict-purist/vendor/yyjson/
 !strict-purist/vendor/bin2c/
+_codeql_detected_source_root

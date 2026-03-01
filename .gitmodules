@@ -1,0 +1,39 @@
+[submodule "upstream/awesome-cosmo"]
+	path = upstream/awesome-cosmo
+	url = https://github.com/ludoplex/awesome-cosmo.git
+[submodule "upstream/bsd"]
+	path = upstream/bsd
+	url = https://github.com/ludoplex/bsd.git
+[submodule "upstream/cosmo-bsd"]
+	path = upstream/cosmo-bsd
+	url = https://github.com/ludoplex/cosmo-bsd.git
+[submodule "upstream/cosmo-cross-sdk"]
+	path = upstream/cosmo-cross-sdk
+	url = https://github.com/ludoplex/cosmo-cross-sdk.git
+[submodule "upstream/cosmo-disasm"]
+	path = upstream/cosmo-disasm
+	url = https://github.com/ludoplex/cosmo-disasm.git
+[submodule "upstream/cosmo-gcc-plugin"]
+	path = upstream/cosmo-gcc-plugin
+	url = https://github.com/ludoplex/cosmo-gcc-plugin.git
+[submodule "upstream/cosmo-include"]
+	path = upstream/cosmo-include
+	url = https://github.com/ludoplex/cosmo-include.git
+[submodule "upstream/cosmo-sokol"]
+	path = upstream/cosmo-sokol
+	url = https://github.com/ludoplex/cosmo-sokol.git
+[submodule "upstream/cosmogfx"]
+	path = upstream/cosmogfx
+	url = https://github.com/ludoplex/cosmogfx.git
+[submodule "upstream/e9studio"]
+	path = upstream/e9studio
+	url = https://github.com/ludoplex/e9studio.git
+[submodule "upstream/ludoplex-binaryen"]
+	path = upstream/ludoplex-binaryen
+	url = https://github.com/ludoplex/binaryen.git
+[submodule "upstream/ludoplex-cosmo-bsd"]
+	path = upstream/ludoplex-cosmo-bsd
+	url = https://github.com/ludoplex/cosmo-bsd.git
+[submodule "upstream/tedit-cosmo"]
+	path = upstream/tedit-cosmo
+	url = https://github.com/ludoplex/tedit-cosmo.git

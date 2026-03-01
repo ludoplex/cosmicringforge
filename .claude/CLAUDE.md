@@ -1,12 +1,42 @@
 # CosmicRingForge - LLM Context
 
+## 🚨 MANDATORY: Read Upstream Docs FIRST
+
+**BEFORE writing ANY code**, you MUST read and understand these repositories:
+
+| Priority | Repository | What to Read | Why |
+|----------|------------|--------------|-----|
+| **1** | [jart/cosmopolitan](https://github.com/jart/cosmopolitan) | README, tool/cosmocc/README.md, ape/ | ALL code compiles with cosmocc |
+| **2** | Vendor repos below | README + examples | Integration patterns |
+
+**Vendor Repositories (must understand):**
+
+| Repo | Purpose | Key Files |
+|------|---------|-----------|
+| ludoplex/binaryen | WASM IR diffing (.com + .wasm) | README, examples/ |
+| ludoplex/cosmo-sokol | GUI (Sokol + Nuklear) | README, demos/ |
+| nicbarker/clay | Layout engine (single-header C) | clay.h, examples/ |
+
+**Implemented:** `tools/uigen/` generates Nuklear UI from `.ui` specs (self-hosted).
+**Composable:** lexgen + Lemon can target Clay, LVGL, or any UI framework.
+
+**If you skip this step**, you WILL make mistakes like:
+- Using TinyCC (incompatible - relocation errors)
+- Using libclang library (incompatible - relocation errors)
+- Missing cosmocc flags (-mclang for 3x faster C++)
+- Wrong APE structure assumptions (PE is ground truth, not ELF)
+
+**Full vendor documentation:** [VENDORS.md](../VENDORS.md)
+
+---
+
 ## Overview
 **Behavior Driven Engineering with Models** — BDE with Models.
 
 Framework for the design and development of any application. All paths lead to C.
 All tools compile with cosmocc to APE (Actually Portable Executable).
 
-## Required Reading (in order)
+## Required Reading (after upstream docs)
 1. **RING_CLASSIFICATION.md** — Tool rings, portability, cosmocc setup
 2. **INTEROP_MATRIX.md** — Format relationships (ground truth)
 3. **LITERATE.md** — Conventions, traceability
@@ -19,28 +49,56 @@ Directory Structure = Format Graph = Build Rules = Documentation
 The Makefile discovers formats, not lists files. Conventions derive from format relationships.
 
 ## Ring Classification
-| Ring | Bootstrap | Examples |
-|------|-----------|----------|
-| **0** | C + sh + make | schemagen, Lemon, SQLite, Nuklear, yyjson, CLIPS |
-| **1** | Ring 0 + C tools | gengetopt, cppcheck, sanitizers |
-| **2** | External toolchains | StateSmith, protobuf-c, MATLAB, Rhapsody |
+
+| Ring | Bootstrap | Tools | Directory |
+|------|-----------|-------|-----------|
+| **0** | C + sh + make | schemagen, lexgen, defgen, smgen, uigen, Lemon | `tools/` |
+| **1** | Ring 0 + C tools | makeheaders, gengetopt, cppcheck, ASan/UBSan/TSan | `tools/ring1/` |
+| **2** | External toolchains | StateSmith, Rhapsody, Simulink, OpenModelica, EEZ, protobuf-c | `model/` → `gen/imported/` |
 
 **The Rule:** Ring 2 outputs committed, builds succeed with Ring 0 only.
 
-## Format → Output Mapping
-| Source | Generator | Output Pattern |
-|--------|-----------|----------------|
-| `.schema` | schemagen | `{name}_types.c,h` |
-| `.def` (TOK) | defgen | `{name}_tokens.h` |
-| `.def` (TABLE) | defgen | `{name}_model.h` |
-| `.def` (X-macro) | direct #include | (no generator needed) |
-| `.sm` | smgen | `{name}_sm.c,h` |
-| `.hsm` | hsmgen | `{name}_hsm.c,h` |
-| `.lex` | lexgen | `{name}_lex.c,h` |
-| `.grammar` | Lemon | `{name}_parse.c,h` |
-| `.feature` | bddgen | `{name}_bdd.c` |
-| `.proto` | protoc | `{name}.pb-c.c,h` |
-| `.drawio` | StateSmith | `{name}_sm.c,h` |
+**Ring 2 Categories:**
+- **State Machines:** StateSmith (.drawio), Rhapsody (.emx), Simulink/Stateflow (.sfx)
+- **Data/Schema:** protobuf-c (.proto), RTI DDS (.idl), flatcc (.fbs)
+- **UI/Visual:** EEZ Studio (.eez-project), Qt Design Studio (.qml)
+- **Modeling:** OpenModelica (.mo), Simulink Coder (.slx)
+- **WebAssembly:** Binaryen (.wat), WAMR (interpreter is Ring 0!)
+
+See **RING_CLASSIFICATION.md** for full details.
+
+## ⚠️ CRITICAL: Tool Compatibility
+
+| Tool | Status | Notes |
+|------|--------|-------|
+| **TinyCC (libtcc)** | ❌ BANNED | "Invalid relocation entry" with cosmopolitan.a |
+| **Binaryen** | ✅ OK | Use ludoplex/binaryen (.com + .wasm outputs) |
+| **Clang (cosmocc)** | ✅ OK | cosmocc bundles Clang 19 (`-mclang` flag) |
+| **libclang (library)** | ⚠️ Avoid | Programmatic AST access has relocation issues |
+
+TinyCC appears attractive for fast compilation but is fundamentally incompatible with Cosmopolitan.
+Note: cosmocc bundles Clang 19 and GCC 14.1.0 - use `-mclang` for 3x faster C++ compile.
+
+**Platform issues exist** - check [VENDORS.md](../VENDORS.md) and [GitHub issues](https://github.com/jart/cosmopolitan/issues) before debugging.
+
+## Format → Output Mapping (Ring 0 Implemented)
+| Source | Generator | Output Pattern | Status |
+|--------|-----------|----------------|--------|
+| `.schema` | schemagen | `{name}_types.c,h` | ✅ Implemented |
+| `.def` (TOK) | defgen | `{name}_tokens.h` | ✅ Implemented |
+| `.def` (TABLE) | defgen | `{name}_model.h` | ✅ Implemented |
+| `.def` (X-macro) | direct #include | (no generator needed) | ✅ Native |
+| `.sm` | smgen | `{name}_sm.c,h` | ✅ Implemented |
+| `.hsm` | hsmgen | `{name}_hsm.c,h` | ✅ Implemented |
+| `.lex` | lexgen | `{name}_lex.c,h` | ✅ Implemented |
+| `.grammar` | Lemon | `{name}_parse.c,h` | ✅ Implemented |
+| `.ui` | uigen | `{name}_ui.c` (Nuklear) | ✅ Implemented |
+| `.feature` | bddgen | `{name}_bdd.c` | ✅ Implemented |
+| `.proto` | protoc | `{name}.pb-c.c,h` | Ring 2 |
+| `.drawio` | StateSmith | `{name}_sm.c,h` | Ring 2 |
+
+**Lemon Bindings Pattern:** lexgen + Lemon compose to parse ANY DSL → generate ANY target.
+All generators are self-hosted (use their own `*_self.h` + `*_tokens.def`).
 
 ## Directory Structure
 ```
@@ -87,6 +145,7 @@ Same workflow for ALL formats (native or Ring 2).
 ## Key Files
 | Purpose | Path |
 |---------|------|
+| **Vendor Repos** | `VENDORS.md` (**READ FIRST**) |
 | Format Matrix | `INTEROP_MATRIX.md` |
 | Spec Types | `SPEC_TYPES.md` |
 | Literate System | `LITERATE.md` |

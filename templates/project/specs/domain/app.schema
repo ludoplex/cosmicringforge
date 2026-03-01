@@ -1,0 +1,19 @@
+# app.schema
+# Application configuration and core types
+#
+# @version 1.0.0
+# @generator schemagen
+
+type AppConfig {
+    name:        string[64]     # Application name
+    version:     string[16]     # Version string
+    debug:       i32            # Debug mode flag
+    log_level:   i32            # 0=off, 1=error, 2=warn, 3=info, 4=debug
+}
+
+type Message {
+    id:          u32            # Message ID
+    timestamp:   u64            # Unix timestamp
+    content:     string[256]    # Message content
+    sender:      string[64]     # Sender name
+}

@@ -139,6 +139,24 @@ make clean        # Remove build artifacts
 make help         # Show all targets
 ```
 
+## Live Reload
+
+Hot-patch running binaries in real-time. Edit C source, save, see changes instantly:
+
+```bash
+# Terminal 1: Run your app
+./build/app
+
+# Terminal 2: Attach live reload
+sudo ./upstream/e9studio/test/livereload/livereload $(pgrep app) src/main.c
+
+# Terminal 3: Edit and save
+vim src/main.c
+# Watch Terminal 1 - changes appear instantly!
+```
+
+Uses stat-based polling (100ms latency). Works on all platforms APE supports.
+
 ## Use as GitHub Template
 
 1. Click "Use this template" on GitHub

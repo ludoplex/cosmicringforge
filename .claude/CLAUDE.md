@@ -57,6 +57,24 @@ make            # Build
 make run        # Execute
 ```
 
+## Live Reload
+
+Hot-patch running binaries in real-time (e9studio):
+
+```bash
+# Terminal 1: Run target
+./build/app
+
+# Terminal 2: Attach live reload
+sudo ./upstream/e9studio/test/livereload/livereload $(pgrep app) src/main.c
+
+# Terminal 3: Edit and save
+vim src/main.c
+# Changes appear instantly in Terminal 1!
+```
+
+Live reload uses stat-based polling (100ms) - works on all platforms.
+
 ## Universal Workflow
 ```
 Edit spec → make regen → make verify → make → commit

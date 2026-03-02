@@ -130,8 +130,18 @@ static int generate_rules_h(const char *outdir, const char *prefix) {
     }
     fprintf(out, "} %s_rule_id_t;\n\n", prefix);
 
-    fprintf(out, "/* Forward declare context - user must define */\n");
-    fprintf(out, "typedef struct %s_ctx %s_ctx_t;\n\n", prefix, prefix);
+    /* Generate placeholder context struct (can be overridden) */
+    fprintf(out, "/* Context struct - define %s_CTX_DEFINED before including to use your own */\n", upper);
+    fprintf(out, "#ifndef %s_CTX_DEFINED\n", upper);
+    fprintf(out, "typedef struct %s_ctx {\n", prefix);
+    fprintf(out, "    double order_total;     /* placeholder field */\n");
+    fprintf(out, "    int customer_tier;      /* placeholder field */\n");
+    fprintf(out, "    double discount;        /* placeholder field */\n");
+    fprintf(out, "    double shipping_cost;   /* placeholder field */\n");
+    fprintf(out, "} %s_ctx_t;\n", prefix);
+    fprintf(out, "#else\n");
+    fprintf(out, "typedef struct %s_ctx %s_ctx_t;\n", prefix, prefix);
+    fprintf(out, "#endif\n\n");
 
     fprintf(out, "/* Rule evaluation */\n");
     fprintf(out, "int %s_evaluate_all(%s_ctx_t *ctx);\n", prefix, prefix);

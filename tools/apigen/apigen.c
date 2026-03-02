@@ -432,7 +432,8 @@ static int generate_api_h(const char *outdir, const char *prefix) {
     generate_header_guard(out, guard);
 
     fprintf(out, "#include <stdint.h>\n");
-    fprintf(out, "#include <stdbool.h>\n\n");
+    fprintf(out, "#include <stdbool.h>\n");
+    fprintf(out, "#include <stddef.h>\n\n");
 
     /* API info */
     fprintf(out, "/* API: %s v%s */\n\n", api.name, api.version);

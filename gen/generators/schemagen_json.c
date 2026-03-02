@@ -94,7 +94,6 @@ int SchemaTypeDef_from_json(const char *json, SchemaTypeDef *obj) {
     if (v_field_count) obj->field_count = yyjson_get_int(v_field_count);
     yyjson_val *v_has_json = yyjson_obj_get(root, "has_json");
     if (v_has_json) obj->has_json = yyjson_get_int(v_has_json);
-    yyjson_val *v_# Note = yyjson_obj_get(root, "# Note");
 
     yyjson_doc_free(doc);
     return 0;

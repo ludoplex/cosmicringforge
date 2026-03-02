@@ -21,7 +21,6 @@ table SchemaTypeDef {
     name:string;
     field_count:int32;
     has_json:int32;
-    # Note:fields;
 }
 
 table SchemaParseState {

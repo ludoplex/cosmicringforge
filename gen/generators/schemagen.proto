@@ -23,7 +23,6 @@ message SchemaTypeDef {
     string name = 1;
     int32 field_count = 2;
     int32 has_json = 3;
-    fields # Note = 4;
 }
 
 message SchemaParseState {

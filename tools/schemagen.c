@@ -102,6 +102,13 @@ static void to_lower(char *s) {
     for (; *s; s++) *s = (char)tolower((unsigned char)*s);
 }
 
+/* Sanitize string for use as C identifier (replace non-alnum with _) */
+static void sanitize_c_ident(char *s) {
+    for (; *s; s++) {
+        if (!isalnum((unsigned char)*s)) *s = '_';
+    }
+}
+
 static void to_snake_case(char *dest, const char *src, size_t size) {
     size_t j = 0;
     for (size_t i = 0; src[i] && j < size - 1; i++) {
@@ -287,8 +294,10 @@ static int parse_schema(const char *filename) {
     while (fgets(line, sizeof(line), f)) {
         trim(line);
 
-        if (line[0] == '\0' || strncmp(line, "/*", 2) == 0 || strncmp(line, "//", 2) == 0) continue;
-        if (line[0] == '*') continue;
+        /* Skip empty lines and comments */
+        if (line[0] == '\0' || line[0] == '#') continue;
+        if (strncmp(line, "/*", 2) == 0 || strncmp(line, "//", 2) == 0) continue;
+        if (line[0] == '*') continue;  /* continuation of block comment */
 
         if (strncmp(line, "type ", 5) == 0) {
             if (type_count >= MAX_TYPES) {
@@ -745,14 +754,18 @@ int main(int argc, char *argv[]) {
 
     char path[512];
     char prefix_lower[MAX_NAME];
+    char prefix_safe[MAX_NAME];
     safe_strcpy(prefix_lower, prefix, sizeof(prefix_lower));
     to_lower(prefix_lower);
+    sanitize_c_ident(prefix_lower);  /* Make valid C identifier */
+    safe_strcpy(prefix_safe, prefix, sizeof(prefix_safe));
+    sanitize_c_ident(prefix_safe);   /* Preserve case but sanitize */
 
     /* C types */
     if (mode & OUT_C) {
         snprintf(path, sizeof(path), "%s/%s_types.h", outdir, prefix_lower);
         FILE *out = fopen(path, "w");
-        if (out) { gen_c_header(out, prefix); fclose(out); fprintf(stderr, "Generated %s\n", path); }
+        if (out) { gen_c_header(out, prefix_safe); fclose(out); fprintf(stderr, "Generated %s\n", path); }
 
         snprintf(path, sizeof(path), "%s/%s_types.c", outdir, prefix_lower);
         out = fopen(path, "w");
@@ -764,7 +777,7 @@ int main(int argc, char *argv[]) {
     if (mode & OUT_JSON) {
         snprintf(path, sizeof(path), "%s/%s_json.h", outdir, prefix_lower);
         FILE *out = fopen(path, "w");
-        if (out) { gen_json_header(out, prefix); fclose(out); fprintf(stderr, "Generated %s\n", path); }
+        if (out) { gen_json_header(out, prefix_safe); fclose(out); fprintf(stderr, "Generated %s\n", path); }
 
         snprintf(path, sizeof(path), "%s/%s_json.c", outdir, prefix_lower);
         out = fopen(path, "w");
@@ -775,7 +788,7 @@ int main(int argc, char *argv[]) {
     if (mode & OUT_SQL) {
         snprintf(path, sizeof(path), "%s/%s_sql.h", outdir, prefix_lower);
         FILE *out = fopen(path, "w");
-        if (out) { gen_sql_header(out, prefix); fclose(out); fprintf(stderr, "Generated %s\n", path); }
+        if (out) { gen_sql_header(out, prefix_safe); fclose(out); fprintf(stderr, "Generated %s\n", path); }
 
         snprintf(path, sizeof(path), "%s/%s_sql.c", outdir, prefix_lower);
         out = fopen(path, "w");

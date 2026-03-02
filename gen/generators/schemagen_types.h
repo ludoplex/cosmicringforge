@@ -29,7 +29,6 @@ struct SchemaTypeDef {
     char name[64];
     int32_t field_count;
     int32_t has_json;
-    fields # Note;
 };
 
 struct SchemaParseState {

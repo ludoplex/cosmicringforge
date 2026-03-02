@@ -66,15 +66,14 @@ int SchemaTypeDef_create_table(sqlite3 *db) {
     const char *sql = "CREATE TABLE IF NOT EXISTS schema_type_def (\n"
         "    name TEXT,\n"
         "    field_count INTEGER,\n"
-        "    has_json INTEGER,\n"
-        "    # Note BLOB\n"
+        "    has_json INTEGER\n"
         ")";
     return sqlite3_exec(db, sql, NULL, NULL, NULL);
 }
 
 int SchemaTypeDef_insert(sqlite3 *db, const SchemaTypeDef *obj) {
     sqlite3_stmt *stmt;
-    const char *sql = "INSERT INTO schema_type_def (name, field_count, has_json, # Note) VALUES (?, ?, ?, ?)";
+    const char *sql = "INSERT INTO schema_type_def (name, field_count, has_json) VALUES (?, ?, ?)";
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) return -1;
     sqlite3_bind_text(stmt, 1, obj->name, -1, SQLITE_STATIC);
     sqlite3_bind_int64(stmt, 2, obj->field_count);

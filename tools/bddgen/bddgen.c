@@ -93,6 +93,23 @@ static void trim(char *s) {
     while (end > s && isspace((unsigned char)*end)) *end-- = '\0';
 }
 
+/* Escape quotes and backslashes for C string literals */
+static void escape_c_string(const char *src, char *dst, size_t dst_size) {
+    size_t j = 0;
+    for (size_t i = 0; src[i] && j < dst_size - 1; i++) {
+        char c = src[i];
+        if (c == '"' || c == '\\') {
+            if (j < dst_size - 2) {
+                dst[j++] = '\\';
+                dst[j++] = c;
+            }
+        } else {
+            dst[j++] = c;
+        }
+    }
+    dst[j] = '\0';
+}
+
 static void to_snake_case(const char *src, char *dst, size_t dst_size) {
     size_t j = 0;
     for (size_t i = 0; src[i] && j < dst_size - 1; i++) {
@@ -483,9 +500,11 @@ static int generate_bdd_c(const char *outdir, const char *prefix) {
     fprintf(out, "static const step_info_t steps[] = {\n");
     for (int i = 0; i < step_count; i++) {
         char func_name[MAX_NAME];
+        char escaped_text[MAX_TEXT * 2];
         to_snake_case(steps[i].text, func_name, sizeof(func_name));
+        escape_c_string(steps[i].text, escaped_text, sizeof(escaped_text));
         fprintf(out, "    {\"%s\", %d, %d, step_%s},\n",
-                steps[i].text, steps[i].resolved_keyword, 
+                escaped_text, steps[i].resolved_keyword,
                 steps[i].line_number, func_name);
     }
     fprintf(out, "};\n");

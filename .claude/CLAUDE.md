@@ -1,181 +1,91 @@
 # BDE with Models - LLM Context
 
-## 🔒 IMMUTABLE: Directory Structure (DO NOT CHANGE)
+## 🔒 IMMUTABLE: Directory Structure
 
 ```
 bde-with-models/
-├── vendors/                    # ALL third-party code lives here
-│   ├── libs/                   # Single-file vendored libraries
-│   │   ├── sqlite3.c,h         #   - Public domain
-│   │   └── yyjson.c,h          #   - MIT
-│   └── submodules/             # Git submodules (external repos)
-│       ├── e9studio/           #   - Binary patching (ludoplex)
-│       ├── ludoplex-binaryen/  #   - WASM IR diffing
-│       ├── cosmo-sokol/        #   - GUI (Sokol + Nuklear)
-│       ├── StateSmith/         #   - Ring 2: State machines
-│       ├── eez-studio/         #   - Ring 2: Embedded GUI
-│       ├── lvgl/               #   - Ring 2: Graphics library
-│       ├── protobuf-c/         #   - Ring 2: Serialization
-│       └── OpenModelica/       #   - Ring 2: Simulation
-├── tools/                      # Ring 0 generators (Pure C)
-│   ├── ring1/                  #   - Ring 1 velocity tools
-│   └── *.c                     #   - schemagen, lexgen, etc.
-├── specs/                      # Human-authored specifications
-│   └── {layer}/*.{format}      #   - domain, behavior, parsing, etc.
-├── gen/                        # Generated code (committed)
-│   ├── {layer}/                #   - Mirrors specs/ structure
-│   └── imported/               #   - Ring 2 tool outputs
-├── model/                      # Ring 2 external tool sources
-├── src/                        # Application source code
-├── scripts/                    # Automation scripts
-└── templates/                  # Project templates
+├── vendors/libs/           # Vendored single-file libs (yyjson, sqlite3)
+├── vendors/submodules/     # Git submodules (e9studio, cosmo-sokol, etc.)
+├── tools/                  # Ring 0 generators (Pure C)
+├── specs/{layer}/          # Human-authored specifications
+├── gen/{layer}/            # Generated code (committed)
+├── model/                  # Ring 2 external tool sources
+├── src/                    # Application source code
+└── scripts/                # Automation scripts
 ```
 
-**This structure is FINAL. Do not create alternative directories like:**
-- ❌ `vendor/` (use `vendors/libs/`)
-- ❌ `upstream/` (use `vendors/submodules/`)
-- ❌ `foss-visual/vendor/` (use `vendors/submodules/`)
-- ❌ `third-party/`, `external/`, `deps/` (use `vendors/`)
+**DO NOT create:** `vendor/`, `upstream/`, `third-party/`, `external/`, `deps/`
 
 ---
 
-## 🚨 MANDATORY: Read Upstream Docs FIRST
+## 🚨 MANDATORY: Read Before Coding
 
-**BEFORE writing ANY code**, you MUST read and understand these repositories:
+| Priority | Repository | What to Read |
+|----------|------------|--------------|
+| **1** | [jart/cosmopolitan](https://github.com/jart/cosmopolitan) | README, tool/cosmocc/ |
+| **2** | [VENDORS.md](../VENDORS.md) | All vendor integrations |
 
-| Priority | Repository | What to Read | Why |
-|----------|------------|--------------|-----|
-| **1** | [jart/cosmopolitan](https://github.com/jart/cosmopolitan) | README, tool/cosmocc/README.md, ape/ | ALL code compiles with cosmocc |
-| **2** | Vendor repos below | README + examples | Integration patterns |
-
-**Vendor Repositories (must understand):**
-
-| Repo | Purpose | Key Files |
-|------|---------|-----------|
-| ludoplex/binaryen | WASM IR diffing (.com + .wasm) | README, examples/ |
-| ludoplex/cosmo-sokol | GUI (Sokol + Nuklear) | README, demos/ |
-| nicbarker/clay | Layout engine (single-header C) | clay.h, examples/ |
-
-**Implemented:** `tools/uigen/` generates Nuklear UI from `.ui` specs (self-hosted).
-**Composable:** lexgen + Lemon can target Clay, LVGL, or any UI framework.
-
-**If you skip this step**, you WILL make mistakes like:
+**If you skip this**, you WILL make mistakes like:
 - Using TinyCC (incompatible - relocation errors)
-- Using libclang library (incompatible - relocation errors)
 - Missing cosmocc flags (-mclang for 3x faster C++)
-- Wrong APE structure assumptions (PE is ground truth, not ELF)
-
-**Full vendor documentation:** [VENDORS.md](../VENDORS.md)
 
 ---
 
 ## Overview
-**Behavior Driven Engineering with Models** — BDE with Models.
 
-Framework for the design and development of any application. All paths lead to C.
+**Behavior Driven Engineering with Models** — All paths lead to C.
 All tools compile with cosmocc to APE (Actually Portable Executable).
-
-## Required Reading (after upstream docs)
-1. **RING_CLASSIFICATION.md** — Tool rings, portability, cosmocc setup
-2. **INTEROP_MATRIX.md** — Format relationships (ground truth)
-3. **LITERATE.md** — Conventions, traceability
-
-## The Enlightened Principle
-```
-Directory Structure = Format Graph = Build Rules = Documentation
-```
-
-The Makefile discovers formats, not lists files. Conventions derive from format relationships.
 
 ## Ring Classification
 
 | Ring | Bootstrap | Tools | Directory |
 |------|-----------|-------|-----------|
-| **0** | C + sh + make | schemagen, lexgen, defgen, smgen, uigen, Lemon | `tools/` |
-| **1** | Ring 0 + C tools | makeheaders, gengetopt, cppcheck, ASan/UBSan/TSan | `tools/ring1/` |
-| **2** | External toolchains | StateSmith, Rhapsody, Simulink, OpenModelica, EEZ, protobuf-c | `model/` → `gen/imported/` |
+| **0** | C + sh + make | schemagen, lexgen, defgen, smgen, uigen, bddgen, Lemon | `tools/` |
+| **1** | Ring 0 + C tools | makeheaders, gengetopt, cppcheck, sanitizers | `tools/ring1/` |
+| **2** | External toolchains | StateSmith, Rhapsody, protobuf-c, OpenModelica | `model/` → `gen/imported/` |
 
 **The Rule:** Ring 2 outputs committed, builds succeed with Ring 0 only.
 
-**Ring 2 Categories:**
-- **State Machines:** StateSmith (.drawio), Rhapsody (.emx), Simulink/Stateflow (.sfx)
-- **Data/Schema:** protobuf-c (.proto), RTI DDS (.idl), flatcc (.fbs)
-- **UI/Visual:** EEZ Studio (.eez-project), Qt Design Studio (.qml)
-- **Modeling:** OpenModelica (.mo), Simulink Coder (.slx)
-- **WebAssembly:** Binaryen (.wat), WAMR (interpreter is Ring 0!)
-
-See **RING_CLASSIFICATION.md** for full details.
-
-## ⚠️ CRITICAL: Tool Compatibility
+## ⚠️ Tool Compatibility
 
 | Tool | Status | Notes |
 |------|--------|-------|
-| **TinyCC (libtcc)** | ❌ BANNED | "Invalid relocation entry" with cosmopolitan.a |
-| **Binaryen** | ✅ OK | Use ludoplex/binaryen (.com + .wasm outputs) |
-| **Clang (cosmocc)** | ✅ OK | cosmocc bundles Clang 19 (`-mclang` flag) |
-| **libclang (library)** | ⚠️ Avoid | Programmatic AST access has relocation issues |
+| **TinyCC** | ❌ BANNED | "Invalid relocation entry" with cosmopolitan.a |
+| **cosmocc** | ✅ OK | Bundles Clang 19 + GCC 14.1.0 |
+| **libclang** | ⚠️ Avoid | Relocation issues |
 
-TinyCC appears attractive for fast compilation but is fundamentally incompatible with Cosmopolitan.
-Note: cosmocc bundles Clang 19 and GCC 14.1.0 - use `-mclang` for 3x faster C++ compile.
+## Format → Output Mapping (Ring 0)
 
-**Platform issues exist** - check [VENDORS.md](../VENDORS.md) and [GitHub issues](https://github.com/jart/cosmopolitan/issues) before debugging.
-
-## Format → Output Mapping
-
-### Ring 0 (tools/)
-| Source | Generator | Output Pattern |
-|--------|-----------|----------------|
-| `.schema` | schemagen | `{name}_types.c,h` |
-| `.def` | defgen | `{name}_tokens.h`, `{name}_model.h` |
+| Source | Generator | Output |
+|--------|-----------|--------|
+| `.schema` | schemagen | `{name}_types.c,h`, `{name}_json.c,h`, `{name}_sql.c,h` |
+| `.def` | defgen | `{name}_defs.h` (X-macros) |
 | `.sm` | smgen | `{name}_sm.c,h` |
 | `.hsm` | hsmgen | `{name}_hsm.c,h` |
+| `.msm` | msmgen | `{name}_msm.c,h` |
 | `.lex` | lexgen | `{name}_lex.c,h` |
 | `.grammar` | Lemon | `{name}_parse.c,h` |
 | `.ui` | uigen | `{name}_ui.c` (Nuklear) |
-| `.feature` | bddgen | `{name}_bdd.c` |
+| `.feature` | bddgen | `{name}_bdd.c,h` |
+| `.api` | apigen | `{name}_api.c,h` |
+| `.rules` | clipsgen | `{name}_rules.c,h` |
+| `.sql` | sqlgen | `{name}_db.c,h` |
+| `.sig` | siggen | `{name}_ffi.h` |
+| `.impl` | implgen | `{name}_impl.h` |
 
-### Ring 1 (tools/ring1/)
-| Source | Tool | Output |
-|--------|------|--------|
-| `.c` | makeheaders | `{name}.h` (auto-generated) |
-| `.ggo` | gengetopt | `{name}_cli.c,h` |
-| `.c` | cppcheck | lint report |
-| `.c` | ASan/UBSan/TSan | instrumented binary |
-
-### Ring 2 (model/ → gen/imported/)
-| Source | Tool | Output |
-|--------|------|--------|
-| `.drawio` | StateSmith | `{name}_sm.c,h` |
-| `.proto` | protobuf-c | `{name}.pb-c.c,h` |
-| `.mo` | OpenModelica | `{name}_sim.c,h` |
-| `.slx` | Simulink Coder | `{name}_ert.c,h` |
-| `.emx` | Rhapsody | `{name}_model.c,h` |
-| `.eez-project` | EEZ Studio | `{name}_gui.c,h` |
-| `.wat` | Binaryen/WAMR | `{name}_wasm.c,h` |
-
-**Lemon Bindings:** lexgen + Lemon compose to parse ANY DSL → generate ANY target.
 All Ring 0 generators are self-hosted (`*_self.h` + `*_tokens.def`).
 
-## Directory Structure
-```
-specs/{layer}/*.{format}  →  gen/{layer}/*_{role}.c,h
-model/*                   →  gen/imported/*
-```
-
-Layers: `domain`, `behavior`, `interface`, `parsing`, `testing`
-
 ## Commands
+
 ```bash
 make formats    # Show discovered formats
-make regen      # Regenerate all (auto-detect tools)
+make regen      # Regenerate all
 make verify     # Regen + drift check
 make            # Build
 make run        # Execute
 ```
 
-## Live Reload
-
-Hot-patch running binaries in real-time (e9studio):
+## Live Reload (e9studio)
 
 ```bash
 # Terminal 1: Run target
@@ -184,35 +94,32 @@ Hot-patch running binaries in real-time (e9studio):
 # Terminal 2: Attach live reload
 sudo ./vendors/submodules/e9studio/test/livereload/livereload $(pgrep app) src/main.c
 
-# Terminal 3: Edit and save
-vim src/main.c
-# Changes appear instantly in Terminal 1!
+# Terminal 3: Edit and save - changes appear instantly!
 ```
 
-Live reload uses stat-based polling (100ms) - works on all platforms.
-
 ## Universal Workflow
+
 ```
 Edit spec → make regen → make verify → make → commit
 ```
 
-Same workflow for ALL formats (native or Ring 2).
-
 ## Key Files
+
 | Purpose | Path |
 |---------|------|
-| **Vendor Repos** | `VENDORS.md` (**READ FIRST**) |
+| Vendor Repos | `VENDORS.md` |
 | Format Matrix | `INTEROP_MATRIX.md` |
 | Spec Types | `SPEC_TYPES.md` |
-| Literate System | `LITERATE.md` |
-| Stacks Reference | `STACKS_REFERENCE.md` |
+| Conventions | `LITERATE.md` |
 
 ## Naming Convention
-- Files: `{name}_{role}.c` (role from format: `_types`, `_sm`, `_bdd`, etc.)
-- Functions: `{Type}_{action}()` (init, validate, step, etc.)
+
+- Files: `{name}_{role}.c` (role: `_types`, `_sm`, `_bdd`, etc.)
+- Functions: `{Type}_{action}()` (init, validate, step)
 - Generators: `{name}gen.c`
 
 ## Generated File Header
+
 ```c
 /* AUTO-GENERATED by {generator} {version} — DO NOT EDIT
  * @source {spec_file}:{lines}
@@ -222,6 +129,7 @@ Same workflow for ALL formats (native or Ring 2).
 ```
 
 ## When Working on This Repo
+
 1. Check `make formats` to see what exists
 2. Edit specs in `specs/{layer}/`
 3. Run `make regen` then `make verify`

@@ -29,6 +29,7 @@ on:
       - 'tools/**'
       - 'scripts/**'
       - '.forge/**'
+      - '.claude/**'
       - 'specs/**'
       - 'src/**'
       - 'Makefile'
